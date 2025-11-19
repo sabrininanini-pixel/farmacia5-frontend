@@ -536,10 +536,7 @@ body.vertical-forced {
     transition: all 0.3s ease;
 }
 
-/* ✅ Esconde o botão no mobile, mostra no desktop */
-#orientation-toggle {
-    display: none;
-}
+
 
 @media (min-width: 768px) {
     #orientation-toggle {
@@ -1374,7 +1371,7 @@ function realizarMudancaParaConferencia(sheetName) {
 
 
 <button onclick="toggleScreenOrientation()" id="orientation-toggle" class="hidden md:flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg shadow-sm hover:bg-purple-200 transition duration-150 text-sm font-medium border border-purple-300">
-    <span id="orientation-text">Tela Horizontal</span>
+    <span id="orientation-text">Tela Horizontal -</span>
 </button>
 
                     <button onclick="confirmClearAllSheets()" class="flex items-center space-x-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg shadow-sm hover:bg-red-100 transition duration-150 text-sm font-medium border border-red-200">
