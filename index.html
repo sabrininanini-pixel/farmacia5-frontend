@@ -676,16 +676,6 @@ body {
 
         let currentUser = null;
 
-
-		// --- Configurações de Performance ---
-const PERFORMANCE_MODE = true;
-const DEBOUNCE_INPUT = 50; // Reduzido para resposta mais rápida
-
-		// --- Cache de busca otimizado ---
-let buscaCache = new Map();
-let ultimaBuscaCache = 0;
-const CACHE_DURACAO_BUSCA = 30000; // 30 segundos
-
         /**
          * ✅ SISTEMA DE LEMBRAR LOGIN - VERSÃO FORTE
          */
@@ -1745,123 +1735,83 @@ function renderNotasFiscaisInfo(notasFiscaisInfo) {
                 console.error("Erro ao carregar dados da Nota Fiscal para cache:", error);
             }
         }
-/**
- * ⚡ CACHE OTIMIZADO - Pré-carregamento mais rápido
- */
-function updateNotaFiscalCache(data) {
-    if (!data || data.length === 0) {
-        notaFiscalData = [];
-        codigoBarrasIndex = {};
-        buscaCache.clear(); // Limpa cache antigo
-        return;
-    }
-
-    notaFiscalData = data;
-    
-    // ✅ CONSTRUÇÃO MAIS RÁPIDA DO ÍNDICE
-    const dataRows = (data.length > 0 && data[0][0] === "Descrição") ? data.slice(1) : data;
-    const novoIndex = {};
-    
-    // ✅ LOOP OTIMIZADO
-    for (let i = 0; i < dataRows.length; i++) {
-        const row = dataRows[i];
-        if (row && row.length >= 3) {
-            const codigoBarras = String(row[2] || '').trim();
-            if (codigoBarras) {
-                novoIndex[codigoBarras] = row[0] || '';
-            }
-        }
-    }
-    
-    codigoBarrasIndex = novoIndex;
-    buscaCache.clear(); // Limpa cache para recarregar com novos dados
-    ultimaBuscaCache = Date.now();
-    
-    console.log(`⚡ Índice otimizado: ${Object.keys(codigoBarrasIndex).length} itens`);
-}
 
         /**
- * ⚡ BUSCA OTIMIZADA - Com cache e verificação rápida
- */
-function buscarDescricaoPorCodigo(codigoBarras) {
-    const codigoLimpo = String(codigoBarras).trim();
-    
-    // ✅ Cache rápido - verifica primeiro no cache
-    const agora = Date.now();
-    if (agora - ultimaBuscaCache < CACHE_DURACAO_BUSCA && buscaCache.has(codigoLimpo)) {
-        return buscaCache.get(codigoLimpo);
-    }
-    
-    // ✅ Busca direta no índice (já pré-carregado)
-    const resultado = codigoBarrasIndex[codigoLimpo] || '';
-    
-    // ✅ Atualiza cache
-    buscaCache.set(codigoLimpo, resultado);
-    ultimaBuscaCache = agora;
-    
-    return resultado;
-}
+         * Atualiza o cache local com os dados da Nota Fiscal para busca rápida
+         */
+        function updateNotaFiscalCache(data) {
+            if (!data || data.length === 0) {
+                notaFiscalData = [];
+                codigoBarrasIndex = {};
+                return;
+            }
+
+            notaFiscalData = data;
+            codigoBarrasIndex = {};
+
+            const dataRows = (data.length > 0 && data[0][0] === "Descrição") ? data.slice(1) : data;
+
+            dataRows.forEach(row => {
+                if (row.length >= 3) {
+                    const descricao = row[0] || '';
+                    const codigoBarras = String(row[2] || '').trim();
+                    
+                    if (codigoBarras && codigoBarras !== '') {
+                        codigoBarrasIndex[codigoBarras] = descricao;
+                    }
+                }
+            });
+
+            console.log(`Índice de códigos de barras atualizado: ${Object.keys(codigoBarrasIndex).length} itens`);
+        }
+
+        /**
+         * Busca a descrição correspondente a um código de barras no cache local
+         */
+        function buscarDescricaoPorCodigo(codigoBarras) {
+            const codigoLimpo = String(codigoBarras).trim();
+            return codigoBarrasIndex[codigoLimpo] || '';
+        }
+
         /**
  * Manipula o input em tempo real nas células da Contagem Loja
- */
-/**
- * ⚡ MANIPULA INPUT OTIMIZADO - Resposta imediata
  */
 function handleContagemCellInput(element) {
     const codigoBarras = element.textContent.trim();
     lastInputTime = Date.now();
     
     if (codigoBarras && codigoBarras.length > 5) {
+        const descricao = buscarDescricaoPorCodigo(codigoBarras);
         const row = element.closest('tr');
         const descCell = row.querySelector('.descricao-cell');
         
-        // ✅ FEEDBACK VISUAL IMEDIATO - mostra código digitado
-        if (descCell && !descCell.textContent) {
-            descCell.textContent = "Processando...";
-        }
-        
-        // ✅ PROCESSAMENTO ASSÍNCROMO - não bloqueia a interface
-        setTimeout(() => {
-            processarCodigoBarras(codigoBarras, element, row, descCell);
-        }, 10);
-    }
-}
-
-/**
- * ⚡ FUNÇÃO SEPARADA PARA PROCESSAMENTO
- */
-function processarCodigoBarras(codigoBarras, element, row, descCell) {
-    const descricao = buscarDescricaoPorCodigo(codigoBarras);
-    
-    if (descricao) {
-        // ✅ ENCONTRADO NA NOTA - atualização rápida
-        if (descCell && descCell.textContent !== descricao) {
-            descCell.textContent = descricao;
-            row.classList.remove('bg-red-50');
-            
-            const cacheKey = `${CACHE_KEY}_${currentContador}`;
-            const cachedData = loadFromCache(cacheKey);
-            const sheetRangeC = descCell.getAttribute('data-sheet-range');
-            cachedData[sheetRangeC] = descricao;
-            saveToCache(cachedData, cacheKey);
-        }
-    } else {
-        // ✅ NÃO ENCONTRADO - aplica lógica específica
-        if (codigoBarras.length === 13 && /^\d+$/.test(codigoBarras)) {
-            if (descCell) {
-                descCell.textContent = "Produto Bipado não consta na Nota Fiscal";
+        if (descricao) {
+            if (descCell && descCell.textContent.trim() !== descricao) {
+                descCell.textContent = descricao;
+                row.classList.remove('bg-red-50');
+                
                 const cacheKey = `${CACHE_KEY}_${currentContador}`;
                 const cachedData = loadFromCache(cacheKey);
                 const sheetRangeC = descCell.getAttribute('data-sheet-range');
-                cachedData[sheetRangeC] = "Produto Bipado não consta na Nota Fiscal";
+                cachedData[sheetRangeC] = descricao;
                 saveToCache(cachedData, cacheKey);
             }
         } else {
-            if (descCell) {
-                descCell.textContent = '';
+            // ✅ NOVA LÓGICA: Se tem 13 dígitos e não está na nota fiscal
+            if (codigoBarras.length === 13 && /^\d+$/.test(codigoBarras)) {
+                if (descCell) {
+                    descCell.textContent = "Produto Bipado não consta na Nota Fiscal";
+                    const sheetRangeC = descCell.getAttribute('data-sheet-range');
+                    cachedData[sheetRangeC] = "Produto Bipado não consta na Nota Fiscal";
+                }
+            } else {
+                // Comportamento original para outros casos
+                if (descCell) {
+                    descCell.textContent = '';
+                }
             }
+            row.classList.add('bg-red-50');
         }
-        row.classList.add('bg-red-50');
     }
 }
 
@@ -2218,8 +2168,8 @@ function handleContagemCellEdit(element, sheetRange, sheetName) {
             }
         }
 
-  /**
- * ⚡ ENTER OTIMIZADO - Resposta mais rápida
+       /**
+ * GERENCIA O COMPORTAMENTO DO ENTER NA CONTAGEM LOJA.
  */
 function handleContagemKeyPress(event, sheetRange, sheetName) {
     if (event.keyCode === 13) {
@@ -2228,18 +2178,40 @@ function handleContagemKeyPress(event, sheetRange, sheetName) {
         const element = event.target;
         const codigoBarras = element.textContent.trim();
         
-        // ✅ SOM IMEDIATO - não espera pela busca
         if (codigoBarras && codigoBarras.length > 5) {
             const descricao = buscarDescricaoPorCodigo(codigoBarras);
-            if (!descricao) {
-                playErrorSoundIfAllowed(); // Som imediato
+            const row = element.closest('tr');
+            const descCell = row.querySelector('.descricao-cell');
+            
+            if (descricao) {
+                if (descCell) {
+                    descCell.textContent = descricao;
+                }
+                row.classList.remove('bg-red-50');
+            } else {
+                // ✅ NOVA LÓGICA: Se tem 13 dígitos e não está na nota fiscal
+                if (codigoBarras.length === 13 && /^\d+$/.test(codigoBarras)) {
+                    if (descCell) {
+                        descCell.textContent = "Produto Bipado não consta na Nota Fiscal";
+                        const cacheKey = `${CACHE_KEY}_${currentContador}`;
+                        const cachedData = loadFromCache(cacheKey);
+                        const sheetRangeC = descCell.getAttribute('data-sheet-range');
+                        cachedData[sheetRangeC] = "Produto Bipado não consta na Nota Fiscal";
+                        saveToCache(cachedData, cacheKey);
+                    }
+                } else {
+                    // Comportamento original para outros casos
+                    if (descCell) {
+                        descCell.textContent = '';
+                    }
+                }
+                row.classList.add('bg-red-50');
+                playErrorSoundIfAllowed();
             }
         }
         
-        // ✅ Processa a edição normalmente
         handleContagemCellEdit(element, sheetRange, sheetName);
 
-        // ✅ NAVEGAÇÃO RÁPIDA - foco na próxima célula
         const currentRow = parseInt(sheetRange.slice(1));
         const nextRow = currentRow + 1;
         const nextRange = `A${nextRow}`;
@@ -2249,6 +2221,8 @@ function handleContagemKeyPress(event, sheetRange, sheetName) {
             nextCell.focus();
             moveCursorToEnd(nextCell); 
             nextCell.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            showNotification("Fim da lista pré-renderizada. Pressione F5 para recarregar a página e continuar a contagem.", 'warning', 5000);
         }
     }
 }
