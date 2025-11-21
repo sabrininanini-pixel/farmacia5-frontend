@@ -3480,9 +3480,10 @@ function filtrarDivergencias() {
             }
             
             // Verifica se tem OBS preenchida
-            if (obsCell && obsCell.textContent.trim() !== '') {
-                isDivergencia = true;
-            }
+           const danosDefeitoCell = cells[6]; // 7ª coluna
+if (danosDefeitoCell && danosDefeitoCell.textContent.trim() !== '') {
+    isDivergencia = true;
+}
             
             if (isFilterActive) {
                 // Modo "Mostrar todas" - mostra todas as linhas
