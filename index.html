@@ -1419,6 +1419,13 @@ function realizarMudancaParaConferencia(sheetName) {
                     </svg>
                     <span>Integrar nota</span>
                 </button>
+
+				<button onclick="abrirOpcoesEmail()" class="flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg shadow-sm hover:bg-purple-200 transition duration-150 text-sm font-medium border border-purple-300">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    </svg>
+    <span>Enviar por Email</span>
+</button>
                 
 <button onclick="toggleScrollMode('CONFERENCIA')" id="scroll-button-conferencia" class="flex md:hidden items-center space-x-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg shadow-sm hover:bg-indigo-200 transition duration-150 text-sm font-medium border border-indigo-300">
     <span>Modo Scroll</span>
@@ -3598,6 +3605,174 @@ function handleDanosDefeitoEdit(element, sheetRange, sheetName) {
     setTimeout(() => {
         applyConferenciaStyles(7);
     }, 100);
+}
+
+
+		/**
+ * ✅ ABRIR OPÇÕES DE EMAIL
+ */
+function abrirOpcoesEmail() {
+    // Primeiro gera o PDF (ou prepara para download)
+    gerarPDFParaEmail();
+    
+    // Mostra modal com opções
+    const modalHtml = `
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
+                <h3 class="text-lg font-bold mb-4">Enviar Conferência por Email</h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    <strong>Instruções:</strong><br>
+                    1. Clique no seu provedor de email preferido<br>
+                    2. Faça o download do PDF primeiro (se necessário)<br>
+                    3. Anexe o PDF manualmente no email
+                </p>
+                <div class="space-y-3">
+                    <button onclick="abrirGmail()" class="w-full flex items-center space-x-3 px-4 py-3 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition duration-150 text-sm font-medium border border-red-200">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24">
+                            <path fill="#EA4335" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#4285F4" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="#34A853" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        <span>Abrir Gmail</span>
+                    </button>
+                    
+                    <button onclick="abrirOutlook()" class="w-full flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition duration-150 text-sm font-medium border border-blue-200">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24">
+                            <path fill="#0078D4" d="M12 12L2.53 4.66A10 10 0 0112 2zm0 0l9.47-7.34A10 10 0 0012 2zm0 0V2A10 10 0 1022 12z"/>
+                        </svg>
+                        <span>Abrir Outlook</span>
+                    </button>
+                    
+                    <button onclick="fecharModalEmail()" class="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition duration-150">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const modal = document.createElement('div');
+    modal.id = 'email-modal';
+    modal.innerHTML = modalHtml;
+    document.body.appendChild(modal);
+}
+
+/**
+ * ✅ FECHAR MODAL EMAIL
+ */
+function fecharModalEmail() {
+    const modal = document.getElementById('email-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+ */
+function gerarPDFParaEmail() {
+    // Simplesmente chama a função de impressão existente
+    // O usuário pode salvar o PDF e depois anexar
+    showNotification('Prepare o PDF para anexar no email...', 'info', 3000);
+    
+    // Opcional: auto-print após 1 segundo
+    setTimeout(() => {
+        window.print();
+    }, 1000);
+}
+
+avascript
+/**
+ * ✅ EXTRAIR NOME DA LOJA DA URL
+ */
+function extrairNomeDaLoja() {
+    const hostname = window.location.hostname;
+    
+    // Remove o .gtgo.com.br e pega a parte antes
+    const partes = hostname.split('.');
+    if (partes.length > 0) {
+        let nomeLoja = partes[0];
+        
+        // Adiciona hífen entre letras e números
+        nomeLoja = nomeLoja.replace(/([a-zA-Z])(\d)/, '$1-$2');
+        
+        // Remove tudo depois dos números
+        nomeLoja = nomeLoja.replace(/(-\d+).*$/, '$1');
+        
+        return nomeLoja;
+    }
+    
+    return 'Loja';
+}
+
+/**
+ * ✅ EXTRAIR NÚMEROS DAS NOTAS FISCAIS
+ */
+function extrairNumerosNotasFiscais() {
+    const notas = [];
+    
+    // Procura pelas informações das notas fiscais acima da tabela
+    const elementosNotas = document.querySelectorAll('#dynamic-table-content-conferencia .mb-4 > div');
+    
+    elementosNotas.forEach(elemento => {
+        const texto = elemento.textContent;
+        
+        // Procura por "Nfe:" seguido de números
+        const matchNfe = texto.match(/Nfe:\s*(\d+)/i);
+        if (matchNfe) {
+            notas.push(matchNfe[1]);
+        }
+        
+        // Também procura por "NF:" (formato antigo)
+        const matchNF = texto.match(/NF:\s*(\d+)/i);
+        if (matchNF && !notas.includes(matchNF[1])) {
+            notas.push(matchNF[1]);
+        }
+    });
+    
+    return notas;
+}
+
+/**
+ * ✅ FORMATAR LISTA DE NOTAS FISCAIS
+ */
+function formatarNotasFiscais(notas) {
+    if (notas.length === 0) return 'NFe(s) não identificada(s)';
+    if (notas.length === 1) return `Nfe: ${notas[0]}`;
+    
+    return `Nfe: ${notas.join(', ')}`;
+}
+
+
+		**
+ * ✅ ABRIR GMAIL
+ */
+function abrirGmail() {
+    const nomeLoja = extrairNomeDaLoja();
+    const notas = extrairNumerosNotasFiscais();
+    const notasFormatadas = formatarNotasFiscais(notas);
+    
+    const assunto = `Divergência em Relatório de Conferência na NFe da (${nomeLoja}) - ${new Date().toLocaleDateString('pt-BR')}`;
+    const corpo = `Prezado(a),\n\nSegue em anexo a divergência encontrada no relatório de conferência da nota fiscal ${notasFormatadas} da (${nomeLoja}).\n\nAtenciosamente,\n`;
+    
+    const url = `https://mail.google.com/mail/?view=cm&fs=1&to=&su=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+    window.open(url, '_blank');
+    fecharModalEmail();
+}
+
+/**
+ * ✅ ABRIR OUTLOOK
+ */
+function abrirOutlook() {
+    const nomeLoja = extrairNomeDaLoja();
+    const notas = extrairNumerosNotasFiscais();
+    const notasFormatadas = formatarNotasFiscais(notas);
+    
+    const assunto = `Divergência em Relatório de Conferência na NFe da (${nomeLoja}) - ${new Date().toLocaleDateString('pt-BR')}`;
+    const corpo = `Prezado(a),%0D%0A%0D%0ASegue em anexo a divergência encontrada no relatório de conferência da nota fiscal ${notasFormatadas} da (${nomeLoja}).%0D%0A%0D%0AAtenciosamente,%0D%0A`;
+    
+    const url = `https://outlook.live.com/mail/0/deeplink/compose?to=&subject=${encodeURIComponent(assunto)}&body=${corpo}`;
+    window.open(url, '_blank');
+    fecharModalEmail();
 }
 		
     </script>
