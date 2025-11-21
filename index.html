@@ -494,21 +494,7 @@ body {
 .bg-red-100:hover {
     background-color: #fecaca !important; /* Vermelho um pouco mais forte no hover */
 }
-
-/* ✅ ESTILO DO BOTÃO IGUALAR TRANSPARENTE */
-.igualar-btn {
-    background: transparent !important;
-    color: #4B5563 !important; /* Cor cinza (texto normal) */
-    border: 1px solid transparent !important;
-    transition: all 0.2s ease-in-out;
-}
-
-.igualar-btn:hover {
-    background: #F3F4F6 !important; /* Cinza muito claro no hover */
-    border-color: #D1D5DB !important; /* Borda cinza no hover */
-    color: #374151 !important; /* Texto um pouco mais escuro no hover */
-}
-		   
+	   
 </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -1598,21 +1584,31 @@ function renderTable(sheetName, data, headers) {
             }
 
             // ✅ ADICIONAR BOTÃO ✓ NA COLUNA "AJUSTAR" (índice 5)
-if (isConferencia && i === 5) { // Coluna "Ajustar"
-    const diferencaValue = adjustedRow[4] !== undefined ? parseFloat(String(adjustedRow[4]).replace(',', '.')) : 0;
-    const quantidadeNF = adjustedRow[2] !== undefined ? parseFloat(String(adjustedRow[2]).replace(',', '.')) : 0;
-    
-    if (!isNaN(diferencaValue) && diferencaValue !== 0 && !isNaN(quantidadeNF)) {
-       html += `<td class="text-center">
+            if (isConferencia && i === 5) { // Coluna "Ajustar"
+                const diferencaValue = adjustedRow[4] !== undefined ? parseFloat(String(adjustedRow[4]).replace(',', '.')) : 0;
+                const quantidadeNF = adjustedRow[2] !== undefined ? parseFloat(String(adjustedRow[2]).replace(',', '.')) : 0;
+                
+                if (!isNaN(diferencaValue) && diferencaValue !== 0 && !isNaN(quantidadeNF)) {
+                   html += `<td class="text-center">
             <button onclick="igualarContagem('${sheetRowIndex}', ${quantidadeNF})" 
-                    class="w-8 h-8 bg-transparent text-gray-600 rounded-lg hover:bg-gray-100 transition duration-150 text-sm font-medium border border-transparent hover:border-gray-300 flex items-center justify-center mx-auto">
+                    class="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition duration-150 text-sm font-medium border border-blue-200 flex items-center justify-center mx-auto shadow-sm">
                 ↺
             </button>
          </td>`;
-    } else {
-        html += `<td></td>`;
-    }
+                } else {
+                    html += `<td></td>`;
+                }
+            } else {
+                html += `<td ${editAttributes} class="${cellClasses}">${cellValue}</td>`;
+            }
+        }
+        html += `</tr>`;
+    });
+    
+    html += `</tbody></table></div>`;
+    return html;
 }
+
 
         /**
          * Gerencia a busca de dados e a renderização do conteúdo da aba.
@@ -3380,7 +3376,6 @@ function performGlobalSearch() {
         showNotification(`Busca: "${searchTerm}" - Nenhum resultado encontrado`, 'warning', 3000);
     }
 }
-	}		
 /**
  * 🎯 DESTACAR TEXTO ENCONTRADO
  */
