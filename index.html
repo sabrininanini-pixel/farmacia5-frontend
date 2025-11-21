@@ -1604,7 +1604,7 @@ function renderTable(sheetName, data, headers) {
                 if (!isNaN(diferencaValue) && diferencaValue !== 0 && !isNaN(quantidadeNF)) {
                    html += `<td class="text-center">
             <button onclick="igualarContagem('${sheetRowIndex}', ${quantidadeNF})" 
-                    class="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition duration-150 text-sm font-medium border border-blue-200 flex items-center justify-center mx-auto shadow-sm">
+                    class="w-8 h-8 bg-transparent text-gray-600 rounded-lg hover:bg-gray-100 transition duration-150 text-sm font-medium border border-transparent hover:border-gray-300 flex items-center justify-center mx-auto">
                 ↺
             </button>
          </td>`;
