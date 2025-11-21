@@ -6,7 +6,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 	
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conferir Nota Fiscal</title>
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -494,53 +494,7 @@ body {
 .bg-red-100:hover {
     background-color: #fecaca !important; /* Vermelho um pouco mais forte no hover */
 }
-
-
-/* ✅ MODO HORIZONTAL FORÇADO */
-body.horizontal-forced {
-    /* Estilos específicos para quando o botão ativa modo horizontal */
-    min-width: 100vh;
-    transform: rotate(90deg);
-    transform-origin: center center;
-    width: 100vh;
-    height: 100vw;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    margin-top: -50vw;
-    margin-left: -50vh;
-}
-
-body.horizontal-forced header.print-hidden {
-    padding: 8px 0 !important;
-    transform: rotate(-90deg);
-}
-
-body.horizontal-forced .bg-white {
-    transform: rotate(-90deg);
-    height: 100vw;
-}
-
-/* ✅ MODO VERTICAL FORÇADO */
-body.vertical-forced {
-    /* Estilos para modo vertical (padrão) */
-    transform: none;
-    width: 100%;
-    height: auto;
-    position: static;
-    margin: 0;
-}
-
-/* ✅ BOTÃO DE ORIENTAÇÃO */
-#orientation-toggle {
-    transition: all 0.3s ease;
-}
-
-
-
-
-
-		   
+	   
 </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -1364,11 +1318,6 @@ function realizarMudancaParaConferencia(sheetName) {
     <span>Modo Scroll</span>
 </button>
 
-
-<button onclick="toggleScreenOrientation()" id="orientation-toggle" class="hidden md:flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg shadow-sm hover:bg-purple-200 transition duration-150 text-sm font-medium border border-purple-300">
-    <span id="orientation-text">Tela Horizontal -</span>
-</button>
-
                     <button onclick="confirmClearAllSheets()" class="flex items-center space-x-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg shadow-sm hover:bg-red-100 transition duration-150 text-sm font-medium border border-red-200">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-2 0v6a1 1 0 102 0V7z" clip-rule="evenodd" /></svg>
                         <span>Apagar Dados</span>
@@ -1447,11 +1396,6 @@ function realizarMudancaParaConferencia(sheetName) {
                     </svg>
                     <span>Integrar nota</span>
                 </button>
-
-		<button onclick="toggleScreenOrientation()" id="orientation-toggle" class="hidden md:flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg shadow-sm hover:bg-purple-200 transition duration-150 text-sm font-medium border border-purple-300">
-    <span id="orientation-text">Tela Horizontal</span>
-</button>
-				
                 
                 <button onclick="toggleScrollMode('CONFERENCIA')" id="scroll-button-conferencia" class="flex items-center space-x-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg shadow-sm hover:bg-indigo-200 transition duration-150 text-sm font-medium border border-indigo-300">
                     <span>Modo Scroll</span>
@@ -3444,135 +3388,6 @@ function abrirIntegracaoNota() {
     window.open(url, '_blank');
     showNotification('Abrindo sistema de integração...', 'info', 2000);
 }
-
-javascript
-// ✅ VARIÁVEIS GLOBAIS PARA ORIENTAÇÃO
-let currentOrientation = 'portrait';
-let isOrientationLocked = false;
-
-// ✅ BOTÃO QUE SIMULA A ROTAÇÃO FÍSICA REAL
-function toggleScreenOrientation() {
-    if (!screen.orientation) {
-        // Fallback para navegadores que não suportam a API
-        showNotification('Seu navegador não suporta rotação de tela', 'error');
-        return;
-    }
-
-    if (currentOrientation === 'portrait') {
-        // 🔄 SIMULA GIRAR CELULAR PARA PAISAGEM
-        screen.orientation.lock('landscape')
-            .then(() => {
-                currentOrientation = 'landscape';
-                isOrientationLocked = true;
-                updateOrientationButton();
-                showNotification('Modo paisagem ativado', 'success');
-            })
-            .catch(error => {
-                console.log('Erro ao travar paisagem:', error);
-                // Fallback: usa CSS para simular
-                forceLandscapeWithCSS();
-            });
-    } else {
-        // 🔄 SIMULA GIRAR CELULAR PARA RETRATO
-        screen.orientation.lock('portrait')
-            .then(() => {
-                currentOrientation = 'portrait';
-                isOrientationLocked = true;
-                updateOrientationButton();
-                showNotification('Modo retrato ativado', 'success');
-            })
-            .catch(error => {
-                console.log('Erro ao travar retrato:', error);
-                // Fallback: usa CSS para simular
-                forcePortraitWithCSS();
-            });
-    }
-}
-
-// ✅ FALLBACK COM CSS (quando a API falha)
-function forceLandscapeWithCSS() {
-    document.documentElement.style.transform = 'rotate(90deg)';
-    document.documentElement.style.transformOrigin = 'center center';
-    document.documentElement.style.width = '100vh';
-    document.documentElement.style.height = '100vw';
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.transform = 'rotate(-90deg)';
-    currentOrientation = 'landscape';
-    isOrientationLocked = true;
-    updateOrientationButton();
-}
-
-function forcePortraitWithCSS() {
-    document.documentElement.style.transform = '';
-    document.documentElement.style.width = '';
-    document.documentElement.style.height = '';
-    document.documentElement.style.overflow = '';
-    document.body.style.transform = '';
-    currentOrientation = 'portrait';
-    isOrientationLocked = true;
-    updateOrientationButton();
-}
-
-// ✅ ATUALIZA O BOTÃO
-function updateOrientationButton() {
-    const button = document.getElementById('orientation-toggle');
-    const text = document.getElementById('orientation-text');
-    
-    if (button && text) {
-        if (currentOrientation === 'landscape') {
-            text.textContent = 'Voltar ao Normal';
-            button.classList.remove('bg-purple-100', 'text-purple-700');
-            button.classList.add('bg-orange-100', 'text-orange-700');
-        } else {
-            text.textContent = 'Tela Horizontal';
-            button.classList.remove('bg-orange-100', 'text-orange-700');
-            button.classList.add('bg-purple-100', 'text-purple-700');
-        }
-    }
-}
-
-// ✅ BLOQUEIA ROTAÇÃO FÍSICA AUTOMÁTICA
-window.addEventListener('orientationchange', function() {
-    if (isOrientationLocked) {
-        // Se está travado pelo botão, ignora rotação física
-        console.log('Rotação física ignorada - modo travado pelo botão');
-        return;
-    }
-});
-
-// ✅ INICIALIZAÇÃO
-function initializeOrientation() {
-    // Detecta orientação inicial
-    currentOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
-    updateOrientationButton();
-}
-
-// ✅ DESTRAVA ORIENTAÇÃO QUANDO MUDAR DE ABA (opcional)
-function unlockOrientationOnTabChange() {
-    if (isOrientationLocked && screen.orientation && screen.orientation.unlock) {
-        screen.orientation.unlock();
-        isOrientationLocked = false;
-        currentOrientation = 'portrait';
-        updateOrientationButton();
-    }
-}
-
-
-
-
-		
-
-
-
-
-
-
-
-
-
-
-
-		
 		
     </script>
 </body>
