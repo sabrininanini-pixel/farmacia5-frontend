@@ -1565,7 +1565,7 @@ function renderTable(sheetName, data, headers) {
 
             if (isCellEditable) {
                 editAttributes = `contenteditable="true"
-                                 onblur="handleCellEdit(this, '${sheetRange}', '${sheetName}')"
+                                 onblur="handleDanosDefeitoEdit(this, '${sheetRange}', '${sheetName}')"
                                  data-original-value="${cellValue}"
                                  data-sheet-range="${sheetRange}"`;
                 
@@ -2365,46 +2365,47 @@ function applyExpandMode(table, columnsToTarget) {
         });
     });
 }
-     /**
- * ✅ APLICA FORMATAÇÃO CONDICIONAL NA ABA CONFERENCIA - VERSÃO ATUALIZADA
- * - Diferença negativa: Vermelho
- * - Diferença positiva: Verde  
- * - Danos/Defeito preenchido: Vermelho suave
- * - Agora com 7 colunas (nova coluna Ajustar)
+    /**
+ * ✅ APLICA FORMATAÇÃO CONDICIONAL NA ABA CONFERENCIA - VERSÃO CORRIGIDA
+ * - Diferença negativa: Vermelho na coluna Diferença E Danos/Defeito
+ * - Diferença positiva: Verde apenas na coluna Diferença
+ * - Danos/Defeito preenchido: Vermelho suave apenas na coluna Danos/Defeito
  */
 function applyConferenciaStyles(numCols) {
     const rows = document.querySelectorAll('#conferencia-content .mock-table tbody tr');
 
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
-        if (cells.length < 7) return; // ✅ AGORA 7 COLUNAS
+        if (cells.length < 7) return;
 
         const diferencaCell = cells[4]; // 5ª coluna (Diferença)
-        const ajustarCell = cells[5];   // 6ª coluna (Ajustar) - NOVA
         const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito)
         
         // ✅ REMOVER TODAS AS CLASSES DE COR ANTERIORES
-        row.classList.remove('bg-fee2e2', 'bg-green-100');
         diferencaCell.classList.remove('bg-fee2e2', 'text-b91c1c', 'bg-green-100', 'text-green-700');
-        danosDefeitoCell.classList.remove('bg-red-100');
+        danosDefeitoCell.classList.remove('bg-red-100', 'bg-fee2e2', 'text-b91c1c');
 
-        // ✅ 1. VERIFICAR DANOS/DEFEITO (PRIORIDADE MÁXIMA)
-        if (danosDefeitoCell && danosDefeitoCell.textContent.trim() !== '') {
-            danosDefeitoCell.classList.add('bg-red-100');
-        }
-
-        // ✅ 2. VERIFICAR DIFERENÇA (SE NÃO HOUVER DANOS/DEFEITO)
-        if (diferencaCell && danosDefeitoCell.textContent.trim() === '') {
+        // ✅ 1. VERIFICAR DIFERENÇA NEGATIVA (PRIORIDADE ALTA)
+        if (diferencaCell) {
             let value = parseFloat(diferencaCell.textContent.replace(',', '.').trim());
             
-            if (isNaN(value) || value === 0) {
-                // Nada a fazer - sem formatação
-            } else if (value < 0) {
-                // Diferença negativa - Vermelho
-                diferencaCell.classList.add('bg-fee2e2', 'text-b91c1c');
-            } else if (value > 0) {
-                // Diferença positiva - Verde
-                diferencaCell.classList.add('bg-green-100', 'text-green-700');
+            if (!isNaN(value)) {
+                if (value < 0) {
+                    // ✅ DIFERENÇA NEGATIVA: VERMELHO EM AMBAS AS COLUNAS
+                    diferencaCell.classList.add('bg-fee2e2', 'text-b91c1c');
+                    danosDefeitoCell.classList.add('bg-fee2e2', 'text-b91c1c');
+                } else if (value > 0) {
+                    // ✅ DIFERENÇA POSITIVA: VERDE APENAS NA DIFERENÇA
+                    diferencaCell.classList.add('bg-green-100', 'text-green-700');
+                }
+            }
+        }
+
+        // ✅ 2. VERIFICAR DANOS/DEFEITO (SOBRESCREVE APENAS SE NÃO HOUVER DIFERENÇA NEGATIVA)
+        if (danosDefeitoCell && danosDefeitoCell.textContent.trim() !== '') {
+            // Se não tem diferença negativa, aplica vermelho suave apenas na coluna Danos/Defeito
+            if (!diferencaCell.classList.contains('bg-fee2e2')) {
+                danosDefeitoCell.classList.add('bg-red-100');
             }
         }
     });
@@ -3563,6 +3564,19 @@ function loadConferenceAdjustments() {
         console.error('Erro ao carregar cache de ajustes:', error);
         return {};
     }
+}
+
+		/**
+ * ✅ MANIPULA EDIÇÃO NA COLUNA DANOS/DEFEITO E MANTÉM FORMATAÇÃO
+ */
+function handleDanosDefeitoEdit(element, sheetRange, sheetName) {
+    // Primeiro executa a edição normal
+    handleCellEdit(element, sheetRange, sheetName);
+    
+    // ✅ DEPOIS REAPLICA OS ESTILOS PARA MANTER AS CORES
+    setTimeout(() => {
+        applyConferenciaStyles(7);
+    }, 100);
 }
 		
     </script>
