@@ -2443,108 +2443,112 @@ function applyConferenciaStyles(numCols) {
         }
 
         async function importXMLData(xmlContent) {
-            if (!xmlContent || xmlContent.trim().length < 100) {
-                showNotification("Conteúdo XML vazio ou inválido para importação.", 'warning');
-                return;
-            }
+    if (!xmlContent || xmlContent.trim().length < 100) {
+        showNotification("Conteúdo XML vazio ou inválido para importação.", 'warning');
+        return;
+    }
 
-            showNotification("Enviando XML para o backend...", 'loading');
+    showNotification("Enviando XML para o backend...", 'loading');
 
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/import-xml-data`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ xml_content: xmlContent, user_id: USER_ID })
-                });
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/import-xml-data`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ xml_content: xmlContent, user_id: USER_ID })
+        });
 
-                const result = await response.json();
-                hideNotification();
+        const result = await response.json();
+        hideNotification();
 
-                if (!response.ok || result.error) {
-                    showNotification(`Falha na Importação: ${result.error || 'Erro desconhecido do servidor.'}`, 'error');
-                } else {
-                    showNotification(result.message, 'success');
-                    switchTab("NOTA FISCAL");
-                }
-
-            } catch (error) {
-                hideNotification();
-                console.error("Erro de Rede:", error);
-                showNotification("Erro de Rede ao tentar conectar com o servidor.", 'error');
-            }
+        if (!response.ok || result.error) {
+            showNotification(`Falha na Importação: ${result.error || 'Erro desconhecido do servidor.'}`, 'error');
+        } else {
+            // ✅ LIMPAR CACHE DOS AJUSTES AO IMPORTAR NOVA NOTA
+            localStorage.removeItem(CONFERENCE_ADJUSTMENTS_KEY);
+            showNotification(result.message, 'success');
+            switchTab("NOTA FISCAL");
         }
+
+    } catch (error) {
+        hideNotification();
+        console.error("Erro de Rede:", error);
+        showNotification("Erro de Rede ao tentar conectar com o servidor.", 'error');
+    }
+}
 
         /**
          * ✅ FUNÇÃO CORRIGIDA: Importa XML por chave ignorando espaços E EXIBE INFORMAÇÕES
          */
         async function importarXMLPorChave() {
-            const chaveInput = document.getElementById("chave-acesso-input");
-            if (!chaveInput) {
-                showNotification("Campo de chave não encontrado.", "error");
-                return;
-            }
-            
-            let chaveAcesso = chaveInput.value.replace(/\s+/g, '');
-            
-            if (!chaveAcesso || chaveAcesso.length !== 44) {
-                showNotification(`Chave de acesso inválida. Deve conter 44 dígitos. (Atual: ${chaveAcesso.length} dígitos)`, "warning");
-                return;
-            }
+    const chaveInput = document.getElementById("chave-acesso-input");
+    if (!chaveInput) {
+        showNotification("Campo de chave não encontrado.", "error");
+        return;
+    }
+    
+    let chaveAcesso = chaveInput.value.replace(/\s+/g, '');
+    
+    if (!chaveAcesso || chaveAcesso.length !== 44) {
+        showNotification(`Chave de acesso inválida. Deve conter 44 dígitos. (Atual: ${chaveAcesso.length} dígitos)`, "warning");
+        return;
+    }
 
-            // ✅ VERIFICAÇÃO DE DUPLICIDADE - Busca na planilha atual
-            const currentData = await fetchSheetData("NOTA FISCAL");
-            const chaveExists = checkIfChaveExists(currentData, chaveAcesso);
-            
-            if (chaveExists) {
-                showNotification("Esta nota fiscal já foi importada anteriormente!", "error");
-                return;
-            }
+    // ✅ VERIFICAÇÃO DE DUPLICIDADE - Busca na planilha atual
+    const currentData = await fetchSheetData("NOTA FISCAL");
+    const chaveExists = checkIfChaveExists(currentData, chaveAcesso);
+    
+    if (chaveExists) {
+        showNotification("Esta nota fiscal já foi importada anteriormente!", "error");
+        return;
+    }
 
-            showNotification("Importando XML pela chave de acesso...", "loading");
+    showNotification("Importando XML pela chave de acesso...", "loading");
 
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/importar-xml-chave`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: 'include',
-                    body: JSON.stringify({ chaveAcesso })
-                });
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/importar-xml-chave`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: 'include',
+            body: JSON.stringify({ chaveAcesso })
+        });
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${errorText}`);
-                }
-
-                const result = await response.json();
-                
-                if (result.error) {
-                    hideNotification();
-                    showNotification(`Erro: ${result.error}`, "error");
-                    return;
-                }
-
-                hideNotification();
-                showNotification(result.message, "success", 5000);
-
-                chaveInput.value = '';
-                hidePasteModal();
-                
-                setTimeout(() => {
-                    switchTab("NOTA FISCAL");
-                }, 1000);
-
-            } catch (error) {
-                hideNotification();
-                console.error("Erro ao importar XML por chave:", error);
-                
-                if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
-                    showNotification("Erro de conexão com o servidor. Verifique sua internet.", "error");
-                } else {
-                    showNotification(`Erro: ${error.message}`, "error");
-                }
-            }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
+
+        const result = await response.json();
+        
+        if (result.error) {
+            hideNotification();
+            showNotification(`Erro: ${result.error}`, "error");
+            return;
+        }
+
+        hideNotification();
+        // ✅ LIMPAR CACHE DOS AJUSTES AO IMPORTAR NOVA NOTA
+        localStorage.removeItem(CONFERENCE_ADJUSTMENTS_KEY);
+        showNotification(result.message, "success", 5000);
+
+        chaveInput.value = '';
+        hidePasteModal();
+        
+        setTimeout(() => {
+            switchTab("NOTA FISCAL");
+        }, 1000);
+
+    } catch (error) {
+        hideNotification();
+        console.error("Erro ao importar XML por chave:", error);
+        
+        if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+            showNotification("Erro de conexão com o servidor. Verifique sua internet.", "error");
+        } else {
+            showNotification(`Erro: ${error.message}`, "error");
+        }
+    }
+}
 
         /**
          * ✅ FUNÇÃO AUXILIAR: Verifica se a chave já existe nos dados atuais
@@ -2632,48 +2636,51 @@ function applyConferenciaStyles(numCols) {
         }
 
         async function clearMultipleSheets() {
-            showNotification(`Iniciando limpeza completa...`, 'loading', 30000);
+    showNotification(`Iniciando limpeza completa...`, 'loading', 30000);
 
-            let successCount = 0;
-            let errorCount = 0;
+    let successCount = 0;
+    let errorCount = 0;
 
-            for (const config of sheetsConfig) {
-                const result = await clearSheetData(config.name, config.range, false); 
-                if (result.success) {
-                    successCount++;
-                } else {
-                    errorCount++;
-                    showNotification(`Erro ao limpar a aba '${config.name}' (Range: ${config.range}).`, 'error', 4000);
-                }
-            }
-
-            const contadores = ['CONTAGEM LOJA', 'CONTADOR 2', 'CONTADOR 3', 'CONTADOR 4', 'CONTADOR 5'];
-            contadores.forEach(contador => {
-                const cacheKey = `${CACHE_KEY}_${contador}`;
-                localStorage.removeItem(cacheKey);
-            });
-
-            pendingUpdates.clear();
-            editCount = 0;
-            updatePendingCount();
-
-            lastCacheCount = 0;
-
-            hideNotification();
-
-            if (errorCount === 0) {
-                showNotification(`Limpeza completa concluída! ${successCount} ações realizadas. Caches locais limpos.`, 'success', 5000);
-            } else {
-                 showNotification(`Limpeza concluída com ${errorCount} erro(s). Caches locais foram limpos.`, 'warning', 8000);
-            }
-
-            const activeTab = document.querySelector('.tab-button.border-indigo-600').dataset.tab;
-            if (activeTab === "CONTAGEM LOJA") {
-                switchContador(currentContador);
-            } else {
-                switchTab(activeTab);
-            }
+    for (const config of sheetsConfig) {
+        const result = await clearSheetData(config.name, config.range, false); 
+        if (result.success) {
+            successCount++;
+        } else {
+            errorCount++;
+            showNotification(`Erro ao limpar a aba '${config.name}' (Range: ${config.range}).`, 'error', 4000);
         }
+    }
+
+    const contadores = ['CONTAGEM LOJA', 'CONTADOR 2', 'CONTADOR 3', 'CONTADOR 4', 'CONTADOR 5'];
+    contadores.forEach(contador => {
+        const cacheKey = `${CACHE_KEY}_${contador}`;
+        localStorage.removeItem(cacheKey);
+    });
+
+    // ✅ ADICIONE ESTA LINHA PARA LIMPAR CACHE DOS AJUSTES
+    localStorage.removeItem(CONFERENCE_ADJUSTMENTS_KEY);
+
+    pendingUpdates.clear();
+    editCount = 0;
+    updatePendingCount();
+
+    lastCacheCount = 0;
+
+    hideNotification();
+
+    if (errorCount === 0) {
+        showNotification(`Limpeza completa concluída! ${successCount} ações realizadas. Caches locais limpos.`, 'success', 5000);
+    } else {
+         showNotification(`Limpeza concluída com ${errorCount} erro(s). Caches locais foram limpos.`, 'warning', 8000);
+    }
+
+    const activeTab = document.querySelector('.tab-button.border-indigo-600').dataset.tab;
+    if (activeTab === "CONTAGEM LOJA") {
+        switchContador(currentContador);
+    } else {
+        switchTab(activeTab);
+    }
+}
 
         async function clearSheetData(sheetName, range, showNotificationOnSuccess = true) {
             if (showNotificationOnSuccess) {
@@ -3532,6 +3539,29 @@ function abrirIntegracaoNota() {
     const url = 'https://linx.microvix.com.br/v4/home/index.asp';
     window.open(url, '_blank');
     showNotification('Abrindo sistema de integração...', 'info', 2000);
+}
+
+		/**
+ * ✅ CARREGAR AJUSTES DO CACHE LOCAL
+ */
+function loadConferenceAdjustments() {
+    try {
+        const cached = localStorage.getItem(CONFERENCE_ADJUSTMENTS_KEY);
+        if (!cached) return {};
+        
+        const cacheData = JSON.parse(cached);
+        
+        // ✅ MUDAR PARA 1 HORA (ou menos) EM VEZ DE 24 HORAS
+        if (Date.now() - cacheData.timestamp > (1 * 60 * 60 * 1000)) {
+            localStorage.removeItem(CONFERENCE_ADJUSTMENTS_KEY);
+            return {};
+        }
+        
+        return cacheData.data || {};
+    } catch (error) {
+        console.error('Erro ao carregar cache de ajustes:', error);
+        return {};
+    }
 }
 		
     </script>
