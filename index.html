@@ -1625,46 +1625,25 @@ function realizarMudancaParaConferencia(sheetName) {
         }
 
     } else if (sheetName === "CONFERENCIA") {
-    headers = ["Código de Barras", "Descrição do Produto", "Quantidade NF", "Contagem Loja", "Diferença", "Danos/Defeito"]; 
-    targetElementId = 'dynamic-table-content-conferencia';
-    
-    const targetElement = document.getElementById(targetElementId);
-    if (targetElement) {
-        const notasFiscaisInfo = await getNotasFiscaisInfo();
-        const notasInfoHtml = renderNotasFiscaisInfo(notasFiscaisInfo);
-        targetElement.innerHTML = notasInfoHtml + renderTable(sheetName, data, headers);
+        headers = ["Código de Barras", "Descrição do Produto", "Quantidade NF", "Contagem Loja", "Diferença", "Danos/Defeito"]; 
+        targetElementId = 'dynamic-table-content-conferencia';
         
-        // ✅ ADICIONA OS PRODUTOS NÃO ENCONTRADOS AUTOMATICAMENTE
-        setTimeout(async () => {
-            const produtosNaoEncontrados = await adicionarProdutosNaoEncontradosAutomatico();
+        const targetElement = document.getElementById(targetElementId);
+        if (targetElement) {
+            // ✅ BUSCA AS INFORMAÇÕES DAS NOTAS FISCAIS (MESMO MÉTODO DO INDEX ORIGINAL)
+            const notasFiscaisInfo = await getNotasFiscaisInfo();
             
-            if (Object.keys(produtosNaoEncontrados).length > 0) {
-                // Recarrega a tabela para mostrar os novos produtos
-                const dataAtualizada = await fetchSheetData("CONFERENCIA");
-                targetElement.innerHTML = notasInfoHtml + renderTable(sheetName, dataAtualizada, headers);
-                
-                // Aplica os estilos novamente
+            // ✅ RENDERIZA APENAS AS INFORMAÇÕES DAS NOTAS FISCAIS ACIMA DA TABELA
+            const notasInfoHtml = renderNotasFiscaisInfo(notasFiscaisInfo);
+            targetElement.innerHTML = notasInfoHtml + renderTable(sheetName, data, headers);
+            
+            setTimeout(() => {
                 applyConferenciaStyles(headers.length);
-                
-                // Mostra notificação informativa
-                showNotification(`${Object.keys(produtosNaoEncontrados).length} produtos não encontrados adicionados automaticamente`, 'info', 4000);
-            }
-            
-            // Aplica os estilos da conferência
-            applyConferenciaStyles(headers.length);
-        }, 1000);
-        
-        setTimeout(() => {
-            applyConferenciaStyles(headers.length);
-        }, 0);
+            }, 0);
+        }
     }
 }
-}
 
-
-
-
-		
 /**
  * ✅ FUNÇÃO: Busca informações das notas fiscais da aba NOTA FISCAL
  */
@@ -3408,150 +3387,6 @@ function abrirIntegracaoNota() {
     const url = 'https://linx.microvix.com.br/v4/home/index.asp';
     window.open(url, '_blank');
     showNotification('Abrindo sistema de integração...', 'info', 2000);
-}
-
-	
-/**
- * ✅ EXTRAI PRODUTOS VERMELHOS (código sem descrição) dos dados da Contagem
- */
-function extrairProdutosVermelhos(data) {
-    const produtos = {};
-    
-    if (!data || !Array.isArray(data)) return produtos;
-    
-    // Pula o cabeçalho se existir
-    const dataRows = (data.length > 0 && String(data[0][0]) === "Código de Barras") ? data.slice(1) : data;
-    
-    dataRows.forEach(row => {
-        if (row && row.length >= 2) {
-            const codigoBarras = String(row[0] || '').trim();
-            const descricao = String(row[2] || '').trim(); // Coluna C (índice 2)
-            
-            // Verifica se é uma linha vermelha (código preenchido mas sem descrição)
-            const isLinhaVermelha = codigoBarras !== '' && descricao === '';
-            
-            // Verifica se tem 13 dígitos (apenas numérico)
-            const is13Digitos = /^\d{13}$/.test(codigoBarras);
-            
-            if (isLinhaVermelha && is13Digitos) {
-                if (produtos[codigoBarras]) {
-                    produtos[codigoBarras]++;
-                } else {
-                    produtos[codigoBarras] = 1;
-                }
-            }
-        }
-    });
-    
-    return produtos;
-}
-
-/**
- * ✅ ADICIONA PRODUTOS NA CONFERÊNCIA
- */
-async function adicionarProdutosNaConferencia(produtosNaoEncontrados) {
-    try {
-        // Busca a última linha preenchida na Conferência
-        const conferenciaData = await fetchSheetData("CONFERENCIA");
-        let ultimaLinha = 2; // Começa na linha 2 (após cabeçalho)
-        
-        if (conferenciaData && conferenciaData.length > 0) {
-            // Encontra a última linha com dados
-            for (let i = conferenciaData.length - 1; i >= 0; i--) {
-                if (conferenciaData[i] && conferenciaData[i].length > 0 && 
-                    conferenciaData[i][0] && String(conferenciaData[i][0]).trim() !== '') {
-                    ultimaLinha = i + 2; // +2 porque a planilha começa na linha 1 e pulamos cabeçalho
-                    break;
-                }
-            }
-        }
-        
-        // Prepara as atualizações
-        const updates = [];
-        let linhaAtual = ultimaLinha + 1; // Começa após a última linha
-        
-        for (const [codigoBarras, quantidade] of Object.entries(produtosNaoEncontrados)) {
-            const descricao = "Produto bipado nao consta na Nota Fiscal";
-            const quantidadeNF = 0;
-            const diferenca = quantidade;
-            
-            // Adiciona nas colunas A, B, C, D, E (F fica vazia para Danos/Defeito)
-            updates.push(
-                { range: `A${linhaAtual}`, value: codigoBarras },
-                { range: `B${linhaAtual}`, value: descricao },
-                { range: `C${linhaAtual}`, value: quantidadeNF },
-                { range: `D${linhaAtual}`, value: quantidade },
-                { range: `E${linhaAtual}`, value: diferenca }
-            );
-            
-            linhaAtual++;
-        }
-        
-        // Envia as atualizações para o Google Sheets
-        if (updates.length > 0) {
-            const response = await fetch(`${BACKEND_URL}/api/batch-update-sheet`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ 
-                    sheet_name: "CONFERENCIA",
-                    updates: updates 
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (!response.ok || result.error) {
-                throw new Error(result.error || 'Erro ao atualizar conferência');
-            }
-            
-            return result;
-        }
-        
-    } catch (error) {
-        console.error('Erro ao adicionar produtos na conferência:', error);
-        throw error;
-    }
-}
-
-
-		/**
- * ✅ DETECTA PRODUTOS BIPADOS NÃO CONSTAM NA NOTA FISCAL (AUTOMÁTICO)
- * Busca na Contagem Loja por linhas vermelhas com códigos de 13 dígitos
- * e adiciona automaticamente na Conferência como produtos não encontrados
- */
-async function adicionarProdutosNaoEncontradosAutomatico() {
-    try {
-        // Busca dados de todas as abas de contagem
-        const contadores = ['CONTAGEM LOJA', 'CONTADOR 2', 'CONTADOR 3', 'CONTADOR 4', 'CONTADOR 5'];
-        let produtosNaoEncontrados = {};
-        
-        for (const contador of contadores) {
-            const data = await fetchSheetData(contador);
-            const produtosContador = extrairProdutosVermelhos(data);
-            
-            // Agrega os produtos por código de barras
-            Object.keys(produtosContador).forEach(codigo => {
-                if (produtosNaoEncontrados[codigo]) {
-                    produtosNaoEncontrados[codigo] += produtosContador[codigo];
-                } else {
-                    produtosNaoEncontrados[codigo] = produtosContador[codigo];
-                }
-            });
-        }
-        
-        // Adiciona os produtos na Conferência se encontrar algum
-        if (Object.keys(produtosNaoEncontrados).length > 0) {
-            await adicionarProdutosNaConferencia(produtosNaoEncontrados);
-            console.log(`${Object.keys(produtosNaoEncontrados).length} produtos não encontrados adicionados automaticamente na conferência`);
-        }
-        
-        return produtosNaoEncontrados;
-        
-    } catch (error) {
-        console.error('Erro ao detectar produtos não encontrados automaticamente:', error);
-        return {};
-    }
 }
 		
     </script>
