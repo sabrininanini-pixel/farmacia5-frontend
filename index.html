@@ -3388,6 +3388,148 @@ function abrirIntegracaoNota() {
     window.open(url, '_blank');
     showNotification('Abrindo sistema de integração...', 'info', 2000);
 }
+
+		/**
+ * ✅ DETECTA PRODUTOS BIPADOS NÃO CONSTAM NA NOTA FISCAL
+ * Busca na Contagem Loja por linhas vermelhas com códigos de 13 dígitos
+ * e adiciona na Conferência como produtos não encontrados
+ */
+async function detectarProdutosNaoEncontrados() {
+    try {
+        // Busca dados de todas as abas de contagem
+        const contadores = ['CONTAGEM LOJA', 'CONTADOR 2', 'CONTADOR 3', 'CONTADOR 4', 'CONTADOR 5'];
+        let produtosNaoEncontrados = {};
+        
+        for (const contador of contadores) {
+            const data = await fetchSheetData(contador);
+            const produtosContador = extrairProdutosVermelhos(data);
+            
+            // Agrega os produtos por código de barras
+            Object.keys(produtosContador).forEach(codigo => {
+                if (produtosNaoEncontrados[codigo]) {
+                    produtosNaoEncontrados[codigo] += produtosContador[codigo];
+                } else {
+                    produtosNaoEncontrados[codigo] = produtosContador[codigo];
+                }
+            });
+        }
+        
+        // Adiciona os produtos na Conferência
+        if (Object.keys(produtosNaoEncontrados).length > 0) {
+            await adicionarProdutosNaConferencia(produtosNaoEncontrados);
+            showNotification(`${Object.keys(produtosNaoEncontrados).length} produtos não encontrados adicionados na conferência`, 'success');
+        } else {
+            showNotification('Nenhum produto não encontrado detectado', 'info');
+        }
+        
+    } catch (error) {
+        console.error('Erro ao detectar produtos não encontrados:', error);
+        showNotification('Erro ao detectar produtos não encontrados', 'error');
+    }
+}
+
+/**
+ * ✅ EXTRAI PRODUTOS VERMELHOS (código sem descrição) dos dados da Contagem
+ */
+function extrairProdutosVermelhos(data) {
+    const produtos = {};
+    
+    if (!data || !Array.isArray(data)) return produtos;
+    
+    // Pula o cabeçalho se existir
+    const dataRows = (data.length > 0 && String(data[0][0]) === "Código de Barras") ? data.slice(1) : data;
+    
+    dataRows.forEach(row => {
+        if (row && row.length >= 2) {
+            const codigoBarras = String(row[0] || '').trim();
+            const descricao = String(row[2] || '').trim(); // Coluna C (índice 2)
+            
+            // Verifica se é uma linha vermelha (código preenchido mas sem descrição)
+            const isLinhaVermelha = codigoBarras !== '' && descricao === '';
+            
+            // Verifica se tem 13 dígitos (apenas numérico)
+            const is13Digitos = /^\d{13}$/.test(codigoBarras);
+            
+            if (isLinhaVermelha && is13Digitos) {
+                if (produtos[codigoBarras]) {
+                    produtos[codigoBarras]++;
+                } else {
+                    produtos[codigoBarras] = 1;
+                }
+            }
+        }
+    });
+    
+    return produtos;
+}
+
+/**
+ * ✅ ADICIONA PRODUTOS NA CONFERÊNCIA
+ */
+async function adicionarProdutosNaConferencia(produtosNaoEncontrados) {
+    try {
+        // Busca a última linha preenchida na Conferência
+        const conferenciaData = await fetchSheetData("CONFERENCIA");
+        let ultimaLinha = 2; // Começa na linha 2 (após cabeçalho)
+        
+        if (conferenciaData && conferenciaData.length > 0) {
+            // Encontra a última linha com dados
+            for (let i = conferenciaData.length - 1; i >= 0; i--) {
+                if (conferenciaData[i] && conferenciaData[i].length > 0 && 
+                    conferenciaData[i][0] && String(conferenciaData[i][0]).trim() !== '') {
+                    ultimaLinha = i + 2; // +2 porque a planilha começa na linha 1 e pulamos cabeçalho
+                    break;
+                }
+            }
+        }
+        
+        // Prepara as atualizações
+        const updates = [];
+        let linhaAtual = ultimaLinha + 1; // Começa após a última linha
+        
+        for (const [codigoBarras, quantidade] of Object.entries(produtosNaoEncontrados)) {
+            const descricao = "Produto bipado nao consta na Nota Fiscal";
+            const quantidadeNF = 0;
+            const diferenca = quantidade;
+            
+            // Adiciona nas colunas A, B, C, D, E (F fica vazia para Danos/Defeito)
+            updates.push(
+                { range: `A${linhaAtual}`, value: codigoBarras },
+                { range: `B${linhaAtual}`, value: descricao },
+                { range: `C${linhaAtual}`, value: quantidadeNF },
+                { range: `D${linhaAtual}`, value: quantidade },
+                { range: `E${linhaAtual}`, value: diferenca }
+            );
+            
+            linhaAtual++;
+        }
+        
+        // Envia as atualizações para o Google Sheets
+        if (updates.length > 0) {
+            const response = await fetch(`${BACKEND_URL}/api/batch-update-sheet`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ 
+                    sheet_name: "CONFERENCIA",
+                    updates: updates 
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok || result.error) {
+                throw new Error(result.error || 'Erro ao atualizar conferência');
+            }
+            
+            return result;
+        }
+        
+    } catch (error) {
+        console.error('Erro ao adicionar produtos na conferência:', error);
+        throw error;
+    }
+}
 		
     </script>
 </body>
