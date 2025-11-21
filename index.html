@@ -1038,6 +1038,10 @@ body {
         const tabButtons = document.querySelectorAll('.tab-button');
         const contentStack = document.getElementById('content-stack');
 
+        // --- Cache para ajustes da Conferência ---
+        const CONFERENCE_ADJUSTMENTS_KEY = 'conference_adjustments_cache';
+        let conferenceAdjustments = {};
+
         tabButtons.forEach(button => {
             button.addEventListener('click', () => switchTab(button.dataset.tab));
         });
@@ -1373,7 +1377,7 @@ function realizarMudancaParaConferencia(sheetName) {
                     <span>Imprimir ou salvar em PDF</span>
                 </button>
                 
-                <!-- ✅ NOVO BOTÃO EXPORTAR EXCEL -->
+                <!-- ✅ BOTÃO EXPORTAR EXCEL -->
                 <button onclick="exportarParaExcel()" class="flex items-center space-x-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg shadow-sm hover:bg-green-200 transition duration-150 text-sm font-medium border border-green-300">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -1381,7 +1385,7 @@ function realizarMudancaParaConferencia(sheetName) {
                     <span>Exportar Excel</span>
                 </button>
                 
-                <!-- ✅ NOVO BOTÃO 1: MOSTRAR APENAS DIVERGÊNCIAS -->
+                <!-- ✅ BOTÃO 1: MOSTRAR APENAS DIVERGÊNCIAS -->
                 <button onclick="filtrarDivergencias()" id="divergencias-button" class="flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg shadow-sm hover:bg-red-200 transition duration-150 text-sm font-medium border border-red-300">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -1389,7 +1393,7 @@ function realizarMudancaParaConferencia(sheetName) {
                     <span>Mostrar apenas divergências</span>
                 </button>
                 
-                <!-- ✅ NOVO BOTÃO 2: INTEGRAR NOTA -->
+                <!-- ✅ BOTÃO 2: INTEGRAR NOTA -->
                 <button onclick="abrirIntegracaoNota()" class="flex items-center space-x-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg shadow-sm hover:bg-blue-200 transition duration-150 text-sm font-medium border border-blue-300">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -1532,10 +1536,24 @@ function renderTable(sheetName, data, headers) {
         
         const rowClass = isInfoRow ? 'bg-blue-200' : '';
         
+        // ✅ APLICA AJUSTES DO CACHE SE EXISTIREM
+        const adjustments = loadConferenceAdjustments();
+        const adjustedRow = [...row]; // Cria uma cópia da linha
+        
+        // Aplica ajustes da coluna D (Contagem Loja)
+        if (adjustments[`D${sheetRowIndex}`] !== undefined) {
+            adjustedRow[3] = adjustments[`D${sheetRowIndex}`]; // Coluna D é índice 3
+        }
+        
+        // Aplica ajustes da coluna E (Diferença)
+        if (adjustments[`E${sheetRowIndex}`] !== undefined) {
+            adjustedRow[4] = adjustments[`E${sheetRowIndex}`]; // Coluna E é índice 4
+        }
+        
         html += `<tr data-row-index="${sheetRowIndex}" class="${rowClass}">`;
                     
         for (let i = 0; i < headers.length; i++) {
-            const cellValue = row[i] !== undefined ? row[i] : '';
+            const cellValue = adjustedRow[i] !== undefined ? adjustedRow[i] : ''; // ✅ USA adjustedRow
             
             const sheetCol = String.fromCharCode(65 + i);
             const sheetRange = `${sheetCol}${sheetRowIndex}`;
@@ -1567,8 +1585,8 @@ function renderTable(sheetName, data, headers) {
 
             // ✅ ADICIONAR BOTÃO ✓ NA COLUNA "AJUSTAR" (índice 5)
             if (isConferencia && i === 5) { // Coluna "Ajustar"
-                const diferencaValue = row[4] !== undefined ? parseFloat(String(row[4]).replace(',', '.')) : 0;
-                const quantidadeNF = row[2] !== undefined ? parseFloat(String(row[2]).replace(',', '.')) : 0;
+                const diferencaValue = adjustedRow[4] !== undefined ? parseFloat(String(adjustedRow[4]).replace(',', '.')) : 0;
+                const quantidadeNF = adjustedRow[2] !== undefined ? parseFloat(String(adjustedRow[2]).replace(',', '.')) : 0;
                 
                 if (!isNaN(diferencaValue) && diferencaValue !== 0 && !isNaN(quantidadeNF)) {
                    html += `<td class="text-center">
@@ -2948,6 +2966,105 @@ function applyConferenciaStyles(numCols) {
                 console.log("✅ Impressão Android configurada com sucesso!");
             }
         }
+
+        // --- FUNÇÕES PARA CACHE DE AJUSTES DA CONFERÊNCIA ---
+
+        /**
+         * ✅ CARREGAR AJUSTES DO CACHE LOCAL
+         */
+        function loadConferenceAdjustments() {
+            try {
+                const cached = localStorage.getItem(CONFERENCE_ADJUSTMENTS_KEY);
+                if (!cached) return {};
+                
+                const cacheData = JSON.parse(cached);
+                
+                // Cache válido por 24 horas
+                if (Date.now() - cacheData.timestamp > (24 * 60 * 60 * 1000)) {
+                    localStorage.removeItem(CONFERENCE_ADJUSTMENTS_KEY);
+                    return {};
+                }
+                
+                return cacheData.data || {};
+            } catch (error) {
+                console.error('Erro ao carregar cache de ajustes:', error);
+                return {};
+            }
+        }
+
+        /**
+         * ✅ SALVAR AJUSTES NO CACHE LOCAL
+         */
+        function saveConferenceAdjustments(data) {
+            try {
+                const cacheData = {
+                    data: data,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(CONFERENCE_ADJUSTMENTS_KEY, JSON.stringify(cacheData));
+                conferenceAdjustments = data; // Atualiza a variável global
+            } catch (error) {
+                console.error('Erro ao salvar cache de ajustes:', error);
+            }
+        }
+
+        /**
+         * ✅ IGUALAR CONTAGEM - VERSÃO FRONTEND (SEM SOBRESCREVER FÓRMULAS)
+         */
+        async function igualarContagem(rowIndex, quantidadeNF) {
+            try {
+                showNotification(`Ajustando contagem localmente...`, 'loading');
+                
+                // ✅ SALVA NO CACHE LOCAL (não envia para o Sheets)
+                const adjustments = loadConferenceAdjustments();
+                
+                // Salva os ajustes para esta linha
+                adjustments[`D${rowIndex}`] = quantidadeNF.toString();
+                adjustments[`E${rowIndex}`] = "0";
+                
+                saveConferenceAdjustments(adjustments);
+                
+                // ✅ ATUALIZA APENAS A VISUALIZAÇÃO NO FRONTEND
+                updateFrontendDisplay(rowIndex, quantidadeNF, 0);
+                
+                hideNotification();
+                showNotification('Contagem ajustada localmente!', 'success', 3000);
+                
+            } catch (error) {
+                hideNotification();
+                console.error('Erro ao ajustar contagem:', error);
+                showNotification('Erro ao ajustar contagem: ' + error.message, 'error');
+            }
+        }
+
+        /**
+         * ✅ ATUALIZA A VISUALIZAÇÃO NO FRONTEND
+         */
+        function updateFrontendDisplay(rowIndex, contagemLoja, diferenca) {
+            const table = document.getElementById('conferencia-table');
+            if (!table) return;
+            
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                if (row.getAttribute('data-row-index') === rowIndex.toString()) {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 7) {
+                        // Atualiza coluna "Contagem Loja" (índice 3)
+                        if (cells[3]) {
+                            cells[3].textContent = contagemLoja;
+                        }
+                        
+                        // Atualiza coluna "Diferença" (índice 4)
+                        if (cells[4]) {
+                            cells[4].textContent = diferenca;
+                            // Reaplica os estilos
+                            applyConferenciaStyles(7);
+                        }
+                    }
+                }
+            });
+        }
+
 /**
  * ✅ EXPORTAR EXCEL CORRIGIDO - Inclui informações das notas e exporta apenas o visível
  */
@@ -2973,9 +3090,8 @@ function exportarCSVNoNavegador() {
         }
         
         let csv = [];
-        
-        // ✅ ADICIONA BOM (Byte Order Mark) para UTF-8
         const BOM = "\uFEFF";
+        const adjustments = loadConferenceAdjustments();
         
         // ✅ 1. INCLUIR INFORMAÇÕES DAS NOTAS FISCAIS
         const notasInfoElements = document.querySelectorAll('#dynamic-table-content-conferencia .mb-4 > div');
@@ -3002,7 +3118,7 @@ function exportarCSVNoNavegador() {
             });
         csv.push(cabecalhos.join(';'));
         
-        // ✅ 3. DADOS DA TABELA - APENAS LINHAS VISÍVEIS
+        // ✅ 3. DADOS DA TABELA - APENAS LINHAS VISÍVEIS E COM AJUSTES APLICADOS
         const linhas = tabela.querySelectorAll('tbody tr');
         let linhasExportadas = 0;
         
@@ -3013,24 +3129,34 @@ function exportarCSVNoNavegador() {
                 return; // Pula linhas ocultas
             }
             
-            const celulas = Array.from(linha.querySelectorAll('td'))
-                .map((td, index) => {
-                    let texto = td.textContent.trim();
-                    
-                    // ✅ CORREÇÃO: Para a primeira coluna (Código de Barras), formata como texto
-                    if (index === 0 && texto) {
-                        // Força o Excel a tratar como texto adicionando tab no início
-                        texto = "\t" + texto;
-                    }
-                    
-                    texto = texto.replace(/"/g, '""');
-                    texto = texto.replace(/\n/g, ' ');
-                    texto = texto.replace(/\r/g, ' ');
-                    return `"${texto}"`;
-                });
+            const rowIndex = linha.getAttribute('data-row-index');
+            const celulas = Array.from(linha.querySelectorAll('td'));
             
-            if (celulas.length > 0 && celulas.some(cell => cell !== '""')) {
-                csv.push(celulas.join(';'));
+            const celulasExport = celulas.map((td, index) => {
+                let texto = td.textContent.trim();
+                
+                // ✅ APLICA AJUSTES DO CACHE PARA EXPORTAÇÃO
+                if (rowIndex && adjustments) {
+                    if (index === 3 && adjustments[`D${rowIndex}`] !== undefined) {
+                        texto = adjustments[`D${rowIndex}`];
+                    } else if (index === 4 && adjustments[`E${rowIndex}`] !== undefined) {
+                        texto = adjustments[`E${rowIndex}`];
+                    }
+                }
+                
+                // Formatação para Excel
+                if (index === 0 && texto) {
+                    texto = "\t" + texto;
+                }
+                
+                texto = texto.replace(/"/g, '""');
+                texto = texto.replace(/\n/g, ' ');
+                texto = texto.replace(/\r/g, ' ');
+                return `"${texto}"`;
+            });
+            
+            if (celulasExport.length > 0 && celulasExport.some(cell => cell !== '""')) {
+                csv.push(celulasExport.join(';'));
                 linhasExportadas++;
             }
         });
@@ -3406,64 +3532,6 @@ function abrirIntegracaoNota() {
     const url = 'https://linx.microvix.com.br/v4/home/index.asp';
     window.open(url, '_blank');
     showNotification('Abrindo sistema de integração...', 'info', 2000);
-}
-
-
-	/**
- * ✅ IGUALAR CONTAGEM - VERSÃO ALTERNATIVA
- */
-async function igualarContagem(rowIndex, quantidadeNF) {
-    try {
-        const rangeD = `D${rowIndex}`;
-        const rangeE = `E${rowIndex}`;
-        
-        showNotification(`Igualando contagem...`, 'loading');
-        
-        // ✅ VERSÃO ALTERNATIVA: Valores explícitos
-        const updates = [
-            { 
-                range: rangeD, 
-                value: quantidadeNF.toString() 
-            }, 
-            { 
-                range: rangeE, 
-                value: "0" 
-            }
-        ];
-        
-        console.log('DEBUG - Updates:', JSON.stringify({
-            sheet_name: "CONFERENCIA",
-            updates: updates
-        }, null, 2));
-        
-        const response = await fetch(`${BACKEND_URL}/api/batch-update-sheet`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ 
-                sheet_name: "CONFERENCIA",
-                updates: updates
-            })
-        });
-
-        const result = await response.json();
-        hideNotification();
-
-        if (!response.ok || result.error) {
-            throw new Error(result.error || `HTTP ${response.status}`);
-        }
-
-        showNotification('Contagem igualada com sucesso!', 'success', 3000);
-        
-        setTimeout(() => {
-            loadTabContent("CONFERENCIA");
-        }, 1000);
-        
-    } catch (error) {
-        hideNotification();
-        console.error('Erro ao igualar contagem:', error);
-        showNotification('Erro ao igualar contagem: ' + error.message, 'error');
-    }
 }
 		
     </script>
