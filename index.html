@@ -1774,35 +1774,46 @@ function renderNotasFiscaisInfo(notasFiscaisInfo) {
         }
 
         /**
-         * Manipula o input em tempo real nas células da Contagem Loja
-         */
-        function handleContagemCellInput(element) {
-            const codigoBarras = element.textContent.trim();
-            lastInputTime = Date.now();
-            
-            if (codigoBarras && codigoBarras.length > 5) {
-                const descricao = buscarDescricaoPorCodigo(codigoBarras);
-                const row = element.closest('tr');
-                const descCell = row.querySelector('.descricao-cell');
+ * Manipula o input em tempo real nas células da Contagem Loja
+ */
+function handleContagemCellInput(element) {
+    const codigoBarras = element.textContent.trim();
+    lastInputTime = Date.now();
+    
+    if (codigoBarras && codigoBarras.length > 5) {
+        const descricao = buscarDescricaoPorCodigo(codigoBarras);
+        const row = element.closest('tr');
+        const descCell = row.querySelector('.descricao-cell');
+        
+        if (descricao) {
+            if (descCell && descCell.textContent.trim() !== descricao) {
+                descCell.textContent = descricao;
+                row.classList.remove('bg-red-50');
                 
-                if (descricao) {
-                    if (descCell && descCell.textContent.trim() !== descricao) {
-                        descCell.textContent = descricao;
-                        row.classList.remove('bg-red-50');
-                        
-                        const cacheKey = `${CACHE_KEY}_${currentContador}`;
-                        const cachedData = loadFromCache(cacheKey);
-                        const sheetRangeC = descCell.getAttribute('data-sheet-range');
-                        cachedData[sheetRangeC] = descricao;
-                        saveToCache(cachedData, cacheKey);
-                    }
-                } else {
-                    if (descCell) {
-                        descCell.textContent = '';
-                    }
+                const cacheKey = `${CACHE_KEY}_${currentContador}`;
+                const cachedData = loadFromCache(cacheKey);
+                const sheetRangeC = descCell.getAttribute('data-sheet-range');
+                cachedData[sheetRangeC] = descricao;
+                saveToCache(cachedData, cacheKey);
+            }
+        } else {
+            // ✅ NOVA LÓGICA: Se tem 13 dígitos e não está na nota fiscal
+            if (codigoBarras.length === 13 && /^\d+$/.test(codigoBarras)) {
+                if (descCell) {
+                    descCell.textContent = "Produto Bipado não consta na Nota Fiscal";
+                    const sheetRangeC = descCell.getAttribute('data-sheet-range');
+                    cachedData[sheetRangeC] = "Produto Bipado não consta na Nota Fiscal";
+                }
+            } else {
+                // Comportamento original para outros casos
+                if (descCell) {
+                    descCell.textContent = '';
                 }
             }
+            row.classList.add('bg-red-50');
         }
+    }
+}
 
         /**
          * Alterna entre os contadores dentro da aba Contagem Loja
@@ -1970,70 +1981,80 @@ function renderNotasFiscaisInfo(notasFiscaisInfo) {
         }
 
         /**
-         * Manipula a edição de células na Contagem Loja (com cache)
-         */
-        function handleContagemCellEdit(element, sheetRange, sheetName) {
-            const newValue = element.textContent.trim();
-            const originalValue = element.dataset.originalValue || '';
+ * Manipula a edição de células na Contagem Loja (com cache)
+ */
+function handleContagemCellEdit(element, sheetRange, sheetName) {
+    const newValue = element.textContent.trim();
+    const originalValue = element.dataset.originalValue || '';
 
-            if (newValue === originalValue) {
-                return;
+    if (newValue === originalValue) {
+        return;
+    }
+
+    const cacheKey = `${CACHE_KEY}_${currentContador}`;
+    const cachedData = loadFromCache(cacheKey);
+    
+    if (newValue === '') {
+        delete cachedData[sheetRange];
+        const rowIndex = sheetRange.slice(1);
+        const sheetRangeC = `C${rowIndex}`;
+        delete cachedData[sheetRangeC];
+    } else {
+        cachedData[sheetRange] = newValue;
+        
+        const descricao = buscarDescricaoPorCodigo(newValue);
+        const row = element.closest('tr');
+        const descCell = row.querySelector('.descricao-cell');
+        
+        if (descricao) {
+            if (descCell) {
+                descCell.textContent = descricao;
+                const sheetRangeC = descCell.getAttribute('data-sheet-range');
+                cachedData[sheetRangeC] = descricao;
             }
-
-            const cacheKey = `${CACHE_KEY}_${currentContador}`;
-            const cachedData = loadFromCache(cacheKey);
-            
-            if (newValue === '') {
-                delete cachedData[sheetRange];
-                const rowIndex = sheetRange.slice(1);
-                const sheetRangeC = `C${rowIndex}`;
-                delete cachedData[sheetRangeC];
+            row.classList.remove('bg-red-50');
+        } else {
+            // ✅ NOVA LÓGICA: Se tem 13 dígitos e não está na nota fiscal
+            if (newValue.length === 13 && /^\d+$/.test(newValue)) {
+                if (descCell) {
+                    descCell.textContent = "Produto Bipado não consta na Nota Fiscal";
+                    const sheetRangeC = descCell.getAttribute('data-sheet-range');
+                    cachedData[sheetRangeC] = "Produto Bipado não consta na Nota Fiscal";
+                }
             } else {
-                cachedData[sheetRange] = newValue;
-                
-                const descricao = buscarDescricaoPorCodigo(newValue);
-                const row = element.closest('tr');
-                const descCell = row.querySelector('.descricao-cell');
-                
-                if (descricao) {
-                    if (descCell) {
-                        descCell.textContent = descricao;
-                        const sheetRangeC = descCell.getAttribute('data-sheet-range');
-                        cachedData[sheetRangeC] = descricao;
-                    }
-                    row.classList.remove('bg-red-50');
-                } else {
-                    if (descCell) {
-                        descCell.textContent = '';
-                        const sheetRangeC = descCell.getAttribute('data-sheet-range');
-                        delete cachedData[sheetRangeC];
-                    }
-                    row.classList.add('bg-red-50');
-                    
-                    const timeSinceInput = Date.now() - lastInputTime;
-                    if (timeSinceInput > INPUT_DEBOUNCE) {
-                        playErrorSoundIfAllowed();
-                    }
+                // Comportamento original para outros casos
+                if (descCell) {
+                    descCell.textContent = '';
+                    const sheetRangeC = descCell.getAttribute('data-sheet-range');
+                    delete cachedData[sheetRangeC];
                 }
             }
+            row.classList.add('bg-red-50');
             
-            saveToCache(cachedData, cacheKey);
-
-            element.dataset.originalValue = newValue;
-
-            if (newValue !== '') {
-                pendingUpdates.set(sheetRange, newValue);
-                editCount++;
-            } else {
-                pendingUpdates.delete(sheetRange);
-            }
-
-            updatePendingCount();
-
-            if (newValue !== '' && editCount >= BATCH_SIZE) {
-                processBatchUpdate();
+            const timeSinceInput = Date.now() - lastInputTime;
+            if (timeSinceInput > INPUT_DEBOUNCE) {
+                playErrorSoundIfAllowed();
             }
         }
+    }
+    
+    saveToCache(cachedData, cacheKey);
+
+    element.dataset.originalValue = newValue;
+
+    if (newValue !== '') {
+        pendingUpdates.set(sheetRange, newValue);
+        editCount++;
+    } else {
+        pendingUpdates.delete(sheetRange);
+    }
+
+    updatePendingCount();
+
+    if (newValue !== '' && editCount >= BATCH_SIZE) {
+        processBatchUpdate();
+    }
+}
 
         /**
          * ⚡⚡⚡ FUNÇÃO CORRIGIDA: Processa atualização em lote - AGORA COM SUPORTE A MÚLTIPLOS CONTADORES
@@ -2147,51 +2168,64 @@ function renderNotasFiscaisInfo(notasFiscaisInfo) {
             }
         }
 
-        /**
-         * GERENCIA O COMPORTAMENTO DO ENTER NA CONTAGEM LOJA.
-         */
-        function handleContagemKeyPress(event, sheetRange, sheetName) {
-            if (event.keyCode === 13) {
-                event.preventDefault();
-                
-                const element = event.target;
-                const codigoBarras = element.textContent.trim();
-                
-                if (codigoBarras && codigoBarras.length > 5) {
-                    const descricao = buscarDescricaoPorCodigo(codigoBarras);
-                    const row = element.closest('tr');
-                    const descCell = row.querySelector('.descricao-cell');
-                    
-                    if (descricao) {
-                        if (descCell) {
-                            descCell.textContent = descricao;
-                        }
-                        row.classList.remove('bg-red-50');
-                    } else {
-                        if (descCell) {
-                            descCell.textContent = '';
-                        }
-                        row.classList.add('bg-red-50');
-                        playErrorSoundIfAllowed();
+       /**
+ * GERENCIA O COMPORTAMENTO DO ENTER NA CONTAGEM LOJA.
+ */
+function handleContagemKeyPress(event, sheetRange, sheetName) {
+    if (event.keyCode === 13) {
+        event.preventDefault();
+        
+        const element = event.target;
+        const codigoBarras = element.textContent.trim();
+        
+        if (codigoBarras && codigoBarras.length > 5) {
+            const descricao = buscarDescricaoPorCodigo(codigoBarras);
+            const row = element.closest('tr');
+            const descCell = row.querySelector('.descricao-cell');
+            
+            if (descricao) {
+                if (descCell) {
+                    descCell.textContent = descricao;
+                }
+                row.classList.remove('bg-red-50');
+            } else {
+                // ✅ NOVA LÓGICA: Se tem 13 dígitos e não está na nota fiscal
+                if (codigoBarras.length === 13 && /^\d+$/.test(codigoBarras)) {
+                    if (descCell) {
+                        descCell.textContent = "Produto Bipado não consta na Nota Fiscal";
+                        const cacheKey = `${CACHE_KEY}_${currentContador}`;
+                        const cachedData = loadFromCache(cacheKey);
+                        const sheetRangeC = descCell.getAttribute('data-sheet-range');
+                        cachedData[sheetRangeC] = "Produto Bipado não consta na Nota Fiscal";
+                        saveToCache(cachedData, cacheKey);
+                    }
+                } else {
+                    // Comportamento original para outros casos
+                    if (descCell) {
+                        descCell.textContent = '';
                     }
                 }
-                
-                handleContagemCellEdit(element, sheetRange, sheetName);
-
-                const currentRow = parseInt(sheetRange.slice(1));
-                const nextRow = currentRow + 1;
-                const nextRange = `A${nextRow}`;
-                const nextCell = document.querySelector(`td[data-sheet-range="${nextRange}"]`);
-                
-                if (nextCell) {
-                    nextCell.focus();
-                    moveCursorToEnd(nextCell); 
-                    nextCell.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                } else {
-                    showNotification("Fim da lista pré-renderizada. Pressione F5 para recarregar a página e continuar a contagem.", 'warning', 5000);
-                }
+                row.classList.add('bg-red-50');
+                playErrorSoundIfAllowed();
             }
         }
+        
+        handleContagemCellEdit(element, sheetRange, sheetName);
+
+        const currentRow = parseInt(sheetRange.slice(1));
+        const nextRow = currentRow + 1;
+        const nextRange = `A${nextRow}`;
+        const nextCell = document.querySelector(`td[data-sheet-range="${nextRange}"]`);
+        
+        if (nextCell) {
+            nextCell.focus();
+            moveCursorToEnd(nextCell); 
+            nextCell.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            showNotification("Fim da lista pré-renderizada. Pressione F5 para recarregar a página e continuar a contagem.", 'warning', 5000);
+        }
+    }
+}
 
         /**
          * Manipula o evento keydown nas células da Contagem Loja
