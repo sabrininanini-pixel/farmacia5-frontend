@@ -3318,10 +3318,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 		/**
- * ✅ FILTRAR APENAS DIVERGÊNCIAS
+ * ✅ FILTRAR APENAS DIVERGÊNCIAS - VERSÃO CORRIGIDA
  * Mostra apenas linhas onde:
  * - Coluna "Diferença" (5ª coluna) ≠ 0
- * - OU Coluna "OBS" (6ª coluna) tem conteúdo
+ * - OU Coluna "Danos/Defeito" tem conteúdo
  */
 function filtrarDivergencias() {
     const table = document.getElementById('conferencia-table');
@@ -3340,6 +3340,7 @@ function filtrarDivergencias() {
     let divergenciasCount = 0;
     let totalRows = 0;
 
+    // ✅ PRIMEIRO: APLICAR O FILTRO NAS LINHAS EXISTENTES
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
         
@@ -3366,7 +3367,7 @@ function filtrarDivergencias() {
             }
         }
         
-        // Verifica se tem OBS preenchida
+        // Verifica se tem Danos/Defeito preenchido
         if (obsCell && obsCell.textContent.trim() !== '') {
             isDivergencia = true;
         }
@@ -3393,7 +3394,7 @@ function filtrarDivergencias() {
         }
     });
     
-    // Alterna o texto do botão
+    // ✅ SÓ DEPOIS DE FILTRAR: RECARREGAR A TABELA PARA MUDAR OS HEADERS
     if (isFilterActive) {
         button.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -3405,11 +3406,6 @@ function filtrarDivergencias() {
         button.classList.add('bg-red-100', 'text-red-700', 'border-red-300', 'hover:bg-red-200');
         showNotification(`Mostrando todas as ${totalRows} linhas`, 'info', 3000);
         
-        // ✅ RECARREGAR A TABELA PARA REMOVER COLUNA "AJUSTAR"
-        setTimeout(() => {
-            loadTabContent("CONFERENCIA");
-        }, 500);
-        
     } else {
         button.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -3420,12 +3416,12 @@ function filtrarDivergencias() {
         button.classList.remove('bg-red-100', 'text-red-700', 'border-red-300', 'hover:bg-red-200');
         button.classList.add('bg-green-100', 'text-green-700', 'border-green-300', 'hover:bg-green-200');
         showNotification(`Filtro aplicado: ${divergenciasCount} divergências de ${totalRows} linhas totais`, 'success', 4000);
-        
-        // ✅ RECARREGAR A TABELA PARA ADICIONAR COLUNA "AJUSTAR"
-        setTimeout(() => {
-            loadTabContent("CONFERENCIA");
-        }, 500);
     }
+    
+    // ✅ AGORA RECARREGAR A TABELA PARA MUDAR OS HEADERS/COLUNAS
+    setTimeout(() => {
+        loadTabContent("CONFERENCIA");
+    }, 300);
 }
 
 /**
