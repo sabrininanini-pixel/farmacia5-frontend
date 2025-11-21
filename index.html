@@ -3409,32 +3409,33 @@ function abrirIntegracaoNota() {
 }
 
 
-		/**
- * ✅ IGUALAR CONTAGEM - Atualiza contagem loja para valor da NF
+	/**
+ * ✅ IGUALAR CONTAGEM - VERSÃO ALTERNATIVA
  */
 async function igualarContagem(rowIndex, quantidadeNF) {
     try {
-        // Encontrar a linha na planilha Conferência
-        const rangeD = `D${rowIndex}`; // Coluna D = Contagem Loja
-        const rangeE = `E${rowIndex}`; // Coluna E = Diferença
+        const rangeD = `D${rowIndex}`;
+        const rangeE = `E${rowIndex}`;
         
-        showNotification(`Igualando contagem para ${quantidadeNF}...`, 'loading');
+        showNotification(`Igualando contagem...`, 'loading');
         
-        // ✅ CORREÇÃO: Converter números para strings
+        // ✅ VERSÃO ALTERNATIVA: Valores explícitos
         const updates = [
             { 
                 range: rangeD, 
-                value: String(quantidadeNF) // Converter para string
+                value: quantidadeNF.toString() 
             }, 
             { 
                 range: rangeE, 
-                value: "0" // Converter para string
+                value: "0" 
             }
         ];
         
-        console.log('Enviando atualizações:', updates);
+        console.log('DEBUG - Updates:', JSON.stringify({
+            sheet_name: "CONFERENCIA",
+            updates: updates
+        }, null, 2));
         
-        // Fazer as atualizações no Google Sheets
         const response = await fetch(`${BACKEND_URL}/api/batch-update-sheet`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -3445,21 +3446,15 @@ async function igualarContagem(rowIndex, quantidadeNF) {
             })
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-
         const result = await response.json();
         hideNotification();
 
-        if (result.error) {
-            throw new Error(result.error);
+        if (!response.ok || result.error) {
+            throw new Error(result.error || `HTTP ${response.status}`);
         }
 
         showNotification('Contagem igualada com sucesso!', 'success', 3000);
         
-        // Recarregar a tabela para refletir as mudanças
         setTimeout(() => {
             loadTabContent("CONFERENCIA");
         }, 1000);
