@@ -3420,6 +3420,20 @@ async function igualarContagem(rowIndex, quantidadeNF) {
         
         showNotification(`Igualando contagem para ${quantidadeNF}...`, 'loading');
         
+        // ✅ CORREÇÃO: Converter números para strings
+        const updates = [
+            { 
+                range: rangeD, 
+                value: String(quantidadeNF) // Converter para string
+            }, 
+            { 
+                range: rangeE, 
+                value: "0" // Converter para string
+            }
+        ];
+        
+        console.log('Enviando atualizações:', updates);
+        
         // Fazer as atualizações no Google Sheets
         const response = await fetch(`${BACKEND_URL}/api/batch-update-sheet`, {
             method: 'POST',
@@ -3427,18 +3441,20 @@ async function igualarContagem(rowIndex, quantidadeNF) {
             credentials: 'include',
             body: JSON.stringify({ 
                 sheet_name: "CONFERENCIA",
-                updates: [
-                    { range: rangeD, value: quantidadeNF }, // Contagem Loja = Quantidade NF
-                    { range: rangeE, value: 0 }             // Diferença = 0
-                ]
+                updates: updates
             })
         });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
 
         const result = await response.json();
         hideNotification();
 
-        if (!response.ok || result.error) {
-            throw new Error(result.error || 'Erro ao atualizar');
+        if (result.error) {
+            throw new Error(result.error);
         }
 
         showNotification('Contagem igualada com sucesso!', 'success', 3000);
