@@ -669,9 +669,6 @@ body {
         // =========================================================================
         const BACKEND_URL = "https://api.gtgo.com.br"; // URL do backend online
         const USER_ID = "web-user-123";
-
-
-		let filtroDivergenciasAtivo = false;
         
         // =========================================================================
         // SISTEMA DE AUTENTICAÇÃO CORRIGIDO
@@ -1483,7 +1480,8 @@ function realizarMudancaParaConferencia(sheetName) {
             return html;
         }
 
-/**
+
+        /**
  * Renderiza os dados do Sheets em uma tabela HTML (usado para NF e Conferencia).
  */
 function renderTable(sheetName, data, headers) {
@@ -1545,9 +1543,7 @@ function renderTable(sheetName, data, headers) {
             let editAttributes = '';
             let cellClasses = '';
 
-            // ✅ AJUSTAR ÍNDICE DA COLUNA EDITÁVEL CONFORME O FILTRO
-            const editableColumnIndex = filtroDivergenciasAtivo ? 6 : 5;
-            const isCellEditable = (isStatusEditable && i === editableColumnIndex);
+            const isCellEditable = (isStatusEditable && i === 6); // Agora coluna 6 (Danos/Defeito)
 
             if (isCellEditable) {
                 editAttributes = `contenteditable="true"
@@ -1560,7 +1556,7 @@ function renderTable(sheetName, data, headers) {
             
             let columnsToExpand = [];
             if (isConferencia) {
-                 columnsToExpand = filtroDivergenciasAtivo ? [1, 2, 3, 4, 5, 6, 7] : [1, 2, 3, 4, 5, 6];
+                 columnsToExpand = [1, 2, 3, 4, 5, 6, 7]; // Agora 7 colunas
             } else if (sheetName === "NOTA FISCAL") {
                  columnsToExpand = [1, 2, 3, 4];
             }
@@ -1569,8 +1565,8 @@ function renderTable(sheetName, data, headers) {
                  cellClasses += ' expand-mode-cell'; 
             }
 
-            // ✅ ADICIONAR BOTÃO ✓ NA COLUNA "AJUSTAR" (índice 5) APENAS COM FILTRO ATIVO
-            if (isConferencia && i === 5 && filtroDivergenciasAtivo) {
+            // ✅ ADICIONAR BOTÃO ✓ NA COLUNA "AJUSTAR" (índice 5)
+            if (isConferencia && i === 5) { // Coluna "Ajustar"
                 const diferencaValue = row[4] !== undefined ? parseFloat(String(row[4]).replace(',', '.')) : 0;
                 const quantidadeNF = row[2] !== undefined ? parseFloat(String(row[2]).replace(',', '.')) : 0;
                 
@@ -1646,27 +1642,23 @@ function renderTable(sheetName, data, headers) {
         }
 
     } else if (sheetName === "CONFERENCIA") {
-    // ✅ HEADERS CONDICIONAIS - COLUNA "AJUSTAR" SÓ APARECE COM FILTRO ATIVO
-    headers = filtroDivergenciasAtivo 
-        ? ["Código de Barras", "Descrição do Produto", "Quantidade NF", "Contagem Loja", "Diferença", "Ajustar", "Danos/Defeito"]
-        : ["Código de Barras", "Descrição do Produto", "Quantidade NF", "Contagem Loja", "Diferença", "Danos/Defeito"];
-    
-    targetElementId = 'dynamic-table-content-conferencia';
-    
-    const targetElement = document.getElementById(targetElementId);
-    if (targetElement) {
-        // ✅ BUSCA AS INFORMAÇÕES DAS NOTAS FISCAIS (MESMO MÉTODO DO INDEX ORIGINAL)
-        const notasFiscaisInfo = await getNotasFiscaisInfo();
+        headers = ["Código de Barras", "Descrição do Produto", "Quantidade NF", "Contagem Loja", "Diferença", "Ajustar", "Danos/Defeito"]; 
+        targetElementId = 'dynamic-table-content-conferencia';
         
-        // ✅ RENDERIZA APENAS AS INFORMAÇÕES DAS NOTAS FISCAIS ACIMA DA TABELA
-        const notasInfoHtml = renderNotasFiscaisInfo(notasFiscaisInfo);
-        targetElement.innerHTML = notasInfoHtml + renderTable(sheetName, data, headers);
-        
-        setTimeout(() => {
-            applyConferenciaStyles(headers.length);
-        }, 0);
+        const targetElement = document.getElementById(targetElementId);
+        if (targetElement) {
+            // ✅ BUSCA AS INFORMAÇÕES DAS NOTAS FISCAIS (MESMO MÉTODO DO INDEX ORIGINAL)
+            const notasFiscaisInfo = await getNotasFiscaisInfo();
+            
+            // ✅ RENDERIZA APENAS AS INFORMAÇÕES DAS NOTAS FISCAIS ACIMA DA TABELA
+            const notasInfoHtml = renderNotasFiscaisInfo(notasFiscaisInfo);
+            targetElement.innerHTML = notasInfoHtml + renderTable(sheetName, data, headers);
+            
+            setTimeout(() => {
+                applyConferenciaStyles(headers.length);
+            }, 0);
+        }
     }
-}
 }
 
 /**
@@ -2360,20 +2352,18 @@ function applyExpandMode(table, columnsToTarget) {
  * - Diferença negativa: Vermelho
  * - Diferença positiva: Verde  
  * - Danos/Defeito preenchido: Vermelho suave
- * - Agora com suporte a 6 ou 7 colunas (com/sem coluna Ajustar)
+ * - Agora com 7 colunas (nova coluna Ajustar)
  */
 function applyConferenciaStyles(numCols) {
     const rows = document.querySelectorAll('#conferencia-content .mock-table tbody tr');
 
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
-        
-        // ✅ VERIFICAR QUANTAS COLUNAS EXISTEM CONFORME O FILTRO
-        const minCols = filtroDivergenciasAtivo ? 7 : 6;
-        if (cells.length < minCols) return;
+        if (cells.length < 7) return; // ✅ AGORA 7 COLUNAS
 
-        const diferencaCell = cells[4]; // 5ª coluna (Diferença) - mesma posição em ambos os casos
-        const danosDefeitoCell = filtroDivergenciasAtivo ? cells[6] : cells[5]; // Ajustar índice conforme coluna Ajustar
+        const diferencaCell = cells[4]; // 5ª coluna (Diferença)
+        const ajustarCell = cells[5];   // 6ª coluna (Ajustar) - NOVA
+        const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito)
         
         // ✅ REMOVER TODAS AS CLASSES DE COR ANTERIORES
         row.classList.remove('bg-fee2e2', 'bg-green-100');
@@ -3318,10 +3308,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 		/**
- * ✅ FILTRAR APENAS DIVERGÊNCIAS - VERSÃO CORRIGIDA
+ * ✅ FILTRAR APENAS DIVERGÊNCIAS
  * Mostra apenas linhas onde:
  * - Coluna "Diferença" (5ª coluna) ≠ 0
- * - OU Coluna "Danos/Defeito" tem conteúdo
+ * - OU Coluna "OBS" (6ª coluna) tem conteúdo
  */
 function filtrarDivergencias() {
     const table = document.getElementById('conferencia-table');
@@ -3334,67 +3324,57 @@ function filtrarDivergencias() {
     const button = document.getElementById('divergencias-button');
     const isFilterActive = button.textContent.includes('Mostrar todas');
     
-    // ✅ ATUALIZAR ESTADO DO FILTRO GLOBAL
-    filtroDivergenciasAtivo = !isFilterActive;
-    
     let divergenciasCount = 0;
     let totalRows = 0;
 
-    // ✅ PRIMEIRO: APLICAR O FILTRO NAS LINHAS EXISTENTES
     rows.forEach(row => {
         const cells = row.querySelectorAll('td');
-        
-        // ✅ AJUSTAR VERIFICAÇÃO PARA AMBOS OS CASOS (6 ou 7 colunas)
-        const minCols = filtroDivergenciasAtivo ? 7 : 6;
-        if (cells.length < minCols) {
+        if (cells.length >= 7) {
             totalRows++;
-            return;
-        }
-        
-        totalRows++;
-        
-        const diferencaCell = cells[4]; // 5ª coluna (Diferença)
-        const obsCell = filtroDivergenciasAtivo ? cells[6] : cells[5]; // Ajustar índice para Danos/Defeito
-        
-        let isDivergencia = false;
-        
-        // Verifica se é divergência (diferente de 0)
-        if (diferencaCell) {
-            const diferencaText = diferencaCell.textContent.trim();
-            const diferencaValue = parseFloat(diferencaText.replace(',', '.'));
-            if (!isNaN(diferencaValue) && diferencaValue !== 0) {
+            
+            const diferencaCell = cells[4]; // 5ª coluna (Diferença)
+            const obsCell = cells[5];       // 6ª coluna (OBS - agora danos defeito)
+            
+            let isDivergencia = false;
+            
+            // Verifica se é divergência (diferente de 0)
+            if (diferencaCell) {
+                const diferencaText = diferencaCell.textContent.trim();
+                const diferencaValue = parseFloat(diferencaText.replace(',', '.'));
+                if (!isNaN(diferencaValue) && diferencaValue !== 0) {
+                    isDivergencia = true;
+                }
+            }
+            
+            // Verifica se tem OBS preenchida
+            if (obsCell && obsCell.textContent.trim() !== '') {
                 isDivergencia = true;
             }
-        }
-        
-        // Verifica se tem Danos/Defeito preenchido
-        if (obsCell && obsCell.textContent.trim() !== '') {
-            isDivergencia = true;
-        }
-        
-        if (isFilterActive) {
-            // Modo "Mostrar todas" - mostra todas as linhas
-            row.style.display = '';
-            if (isDivergencia) {
-                row.classList.add('bg-yellow-50');
-                divergenciasCount++;
-            } else {
-                row.classList.remove('bg-yellow-50');
-            }
-        } else {
-            // Modo "Mostrar apenas divergências" - filtra
-            if (isDivergencia) {
+            
+            if (isFilterActive) {
+                // Modo "Mostrar todas" - mostra todas as linhas
                 row.style.display = '';
-                row.classList.add('bg-yellow-50');
-                divergenciasCount++;
+                if (isDivergencia) {
+                    row.classList.add('bg-yellow-50');
+                    divergenciasCount++;
+                } else {
+                    row.classList.remove('bg-yellow-50');
+                }
             } else {
-                row.style.display = 'none';
-                row.classList.remove('bg-yellow-50');
+                // Modo "Mostrar apenas divergências" - filtra
+                if (isDivergencia) {
+                    row.style.display = '';
+                    row.classList.add('bg-yellow-50');
+                    divergenciasCount++;
+                } else {
+                    row.style.display = 'none';
+                    row.classList.remove('bg-yellow-50');
+                }
             }
         }
     });
     
-    // ✅ SÓ DEPOIS DE FILTRAR: RECARREGAR A TABELA PARA MUDAR OS HEADERS
+    // Alterna o texto do botão
     if (isFilterActive) {
         button.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -3405,7 +3385,6 @@ function filtrarDivergencias() {
         button.classList.remove('bg-green-100', 'text-green-700', 'border-green-300', 'hover:bg-green-200');
         button.classList.add('bg-red-100', 'text-red-700', 'border-red-300', 'hover:bg-red-200');
         showNotification(`Mostrando todas as ${totalRows} linhas`, 'info', 3000);
-        
     } else {
         button.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -3417,11 +3396,6 @@ function filtrarDivergencias() {
         button.classList.add('bg-green-100', 'text-green-700', 'border-green-300', 'hover:bg-green-200');
         showNotification(`Filtro aplicado: ${divergenciasCount} divergências de ${totalRows} linhas totais`, 'success', 4000);
     }
-    
-    // ✅ AGORA RECARREGAR A TABELA PARA MUDAR OS HEADERS/COLUNAS
-    setTimeout(() => {
-        loadTabContent("CONFERENCIA");
-    }, 300);
 }
 
 /**
