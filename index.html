@@ -676,6 +676,8 @@ body {
 
         let currentUser = null;
 
+		const historicoContagens = new Map(); // { rowIndex: { contagemAnterior, quantidadeNF } }
+
         /**
          * ✅ SISTEMA DE LEMBRAR LOGIN - VERSÃO FORTE
          */
@@ -1571,10 +1573,17 @@ function renderTable(sheetName, data, headers) {
                 const quantidadeNF = row[2] !== undefined ? parseFloat(String(row[2]).replace(',', '.')) : 0;
                 
                 if (!isNaN(diferencaValue) && diferencaValue !== 0 && !isNaN(quantidadeNF)) {
-                   html += `<td class="text-center">
-            <button onclick="igualarContagem('${sheetRowIndex}', ${quantidadeNF})" 
-                    class="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition duration-150 text-sm font-medium border border-blue-200 flex items-center justify-center mx-auto shadow-sm">
-                ↺
+                   const temHistorico = historicoContagens.has(sheetRowIndex.toString());
+const icone = temHistorico ? '↶' : '↺';
+const corBg = temHistorico ? 'bg-orange-50' : 'bg-blue-50';
+const corTexto = temHistorico ? 'text-orange-600' : 'text-blue-600';
+const corBorda = temHistorico ? 'border-orange-200' : 'border-blue-200';
+const corHover = temHistorico ? 'hover:bg-orange-100' : 'hover:bg-blue-100';
+
+html += `<td class="text-center">
+            <button onclick="toggleContagem('${sheetRowIndex}', ${quantidadeNF})" 
+                    class="w-8 h-8 ${corBg} ${corTexto} rounded-lg ${corHover} transition duration-150 text-sm font-medium border ${corBorda} flex items-center justify-center mx-auto shadow-sm">
+                ${icone}
             </button>
          </td>`;
                 } else {
@@ -3463,6 +3472,98 @@ async function igualarContagem(rowIndex, quantidadeNF) {
         hideNotification();
         console.error('Erro ao igualar contagem:', error);
         showNotification('Erro ao igualar contagem: ' + error.message, 'error');
+    }
+}
+
+		/**
+ * ✅ TOGGLE CONTAGEM - Alterna entre igualar e reverter
+ */
+async function toggleContagem(rowIndex, quantidadeNF) {
+    try {
+        const rangeD = `D${rowIndex}`;
+        const rangeE = `E${rowIndex}`;
+        
+        // ✅ VERIFICAR SE JÁ FOI IGUALADO (está no histórico)
+        const temHistorico = historicoContagens.has(rowIndex);
+        
+        let novaContagem, novaDiferenca, mensagem;
+        
+        if (!temHistorico) {
+            // ✅ PRIMEIRO CLIQUE: IGUALAR
+            const contagemAtual = await getValorCelula("CONFERENCIA", rangeD);
+            const contagemAnterior = contagemAtual !== null ? parseFloat(contagemAtual) : 0;
+            
+            // Salvar histórico
+            historicoContagens.set(rowIndex, {
+                contagemAnterior: contagemAnterior,
+                quantidadeNF: quantidadeNF
+            });
+            
+            novaContagem = quantidadeNF;
+            novaDiferenca = 0;
+            mensagem = `Contagem igualada para ${quantidadeNF}`;
+            
+        } else {
+            // ✅ SEGUNDO CLIQUE: REVERTER
+            const historico = historicoContagens.get(rowIndex);
+            novaContagem = historico.contagemAnterior;
+            novaDiferenca = historico.contagemAnterior - quantidadeNF;
+            mensagem = `Contagem revertida para ${historico.contagemAnterior}`;
+            
+            // Remover do histórico
+            historicoContagens.delete(rowIndex);
+        }
+        
+        showNotification(mensagem, 'loading');
+        
+        const updates = [
+            { range: rangeD, value: String(novaContagem) },
+            { range: rangeE, value: String(novaDiferenca) }
+        ];
+        
+        const response = await fetch(`${BACKEND_URL}/api/batch-update-sheet`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ 
+                sheet_name: "CONFERENCIA",
+                updates: updates
+            })
+        });
+
+        const result = await response.json();
+        hideNotification();
+
+        if (!response.ok || result.error) {
+            throw new Error(result.error || `HTTP ${response.status}`);
+        }
+
+        showNotification(mensagem + '!', 'success', 3000);
+        
+        // Recarregar para atualizar botão
+        setTimeout(() => {
+            loadTabContent("CONFERENCIA");
+        }, 1000);
+        
+    } catch (error) {
+        hideNotification();
+        console.error('Erro ao toggle contagem:', error);
+        showNotification('Erro: ' + error.message, 'error');
+    }
+}
+
+/**
+ * ✅ FUNÇÃO AUXILIAR: Buscar valor atual de uma célula
+ */
+async function getValorCelula(sheetName, range) {
+    try {
+        const data = await fetchSheetData(sheetName);
+        // Lógica para extrair valor específico da range
+        // (precisaria adaptar conforme sua estrutura de dados)
+        return null; // Placeholder
+    } catch (error) {
+        console.error('Erro ao buscar valor:', error);
+        return null;
     }
 }
 		
