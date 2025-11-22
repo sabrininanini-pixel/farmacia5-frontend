@@ -3110,34 +3110,74 @@ function applyConferenciaStyles(numCols) {
             }
         }
 
-        /**
-         * ✅ IGUALAR CONTAGEM - VERSÃO FRONTEND (SEM SOBRESCREVER FÓRMULAS)
-         */
-        async function igualarContagem(rowIndex, quantidadeNF) {
-            try {
-                showNotification(`Ajustando contagem localmente...`, 'loading');
-                
-                // ✅ SALVA NO CACHE LOCAL (não envia para o Sheets)
-                const adjustments = loadConferenceAdjustments();
-                
-                // Salva os ajustes para esta linha
-                adjustments[`D${rowIndex}`] = quantidadeNF.toString();
-                adjustments[`E${rowIndex}`] = "0";
-                
-                saveConferenceAdjustments(adjustments);
-                
-                // ✅ ATUALIZA APENAS A VISUALIZAÇÃO NO FRONTEND
-                updateFrontendDisplay(rowIndex, quantidadeNF, 0);
-                
-                hideNotification();
-                showNotification('Contagem ajustada localmente!', 'success', 3000);
-                
-            } catch (error) {
-                hideNotification();
-                console.error('Erro ao ajustar contagem:', error);
-                showNotification('Erro ao ajustar contagem: ' + error.message, 'error');
+        // ✅ FUNÇÃO IGUALAR CONTAGEM CORRIGIDA
+async function igualarContagem(rowIndex, quantidadeNF) {
+    try {
+        showNotification(`Ajustando contagem localmente...`, 'loading');
+        
+        // ✅ SALVA NO CACHE LOCAL (não envia para o Sheets)
+        const adjustments = loadConferenceAdjustments();
+        
+        // Salva os ajustes para esta linha
+        adjustments[`D${rowIndex}`] = quantidadeNF.toString();
+        adjustments[`E${rowIndex}`] = "0";
+        
+        saveConferenceAdjustments(adjustments);
+        
+        // ✅ ATUALIZA APENAS A VISUALIZAÇÃO NO FRONTEND
+        updateFrontendDisplay(rowIndex, quantidadeNF, 0);
+        
+        hideNotification();
+        showNotification('Contagem ajustada localmente!', 'success', 3000);
+        
+        // ✅ NÃO CHAMA aplicarConferenciaStyles() AQUI - isso causa o problema
+        // Em vez disso, atualiza apenas as células específicas
+        setTimeout(() => {
+            updateSingleRowStyles(rowIndex);
+        }, 100);
+        
+    } catch (error) {
+        hideNotification();
+        console.error('Erro ao ajustar contagem:', error);
+        showNotification('Erro ao ajustar contagem: ' + error.message, 'error');
+    }
+}
+
+// ✅ FUNÇÃO PARA ATUALIZAR ESTILOS APENAS DA LINHA ESPECÍFICA
+function updateSingleRowStyles(rowIndex) {
+    const table = document.getElementById('conferencia-table');
+    if (!table) return;
+    
+    const row = table.querySelector(`tr[data-row-index="${rowIndex}"]`);
+    if (!row) return;
+    
+    const cells = row.querySelectorAll('td');
+    if (cells.length >= 7) {
+        const diferencaCell = cells[4]; // 5ª coluna (Diferença)
+        const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito)
+        
+        // ✅ LIMPAR ESTILOS ANTERIORES
+        diferencaCell.classList.remove('bg-fee2e2', 'text-b91c1c', 'bg-green-100', 'text-green-700');
+        danosDefeitoCell.classList.remove('bg-red-100', 'bg-fee2e2', 'text-b91c1c');
+        
+        // ✅ APLICAR ESTILOS CORRETOS APENAS PARA DIFERENÇA
+        if (diferencaCell) {
+            const diferencaText = diferencaCell.textContent.trim();
+            const diferencaValue = parseFloat(diferencaText.replace(',', '.'));
+            
+            if (!isNaN(diferencaValue)) {
+                if (diferencaValue < 0) {
+                    diferencaCell.classList.add('bg-fee2e2', 'text-b91c1c');
+                } else if (diferencaValue > 0) {
+                    diferencaCell.classList.add('bg-green-100', 'text-green-700');
+                }
             }
         }
+        
+        // ✅ NÃO APLICAR VERMELHO NA COLUNA DANOS automaticamente
+        // Deixa a função aplicarConferenciaStyles() cuidar disso depois
+    }
+}
 
         /**
          * ✅ ATUALIZA A VISUALIZAÇÃO NO FRONTEND
