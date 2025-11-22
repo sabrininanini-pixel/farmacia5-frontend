@@ -1633,7 +1633,7 @@ function realizarMudancaParaConferencia(sheetName) {
             let editAttributes = '';
             let cellClasses = '';
 
-            const isCellEditable = (isStatusEditable && i === 6); // Agora coluna 6 (Danos/Defeito e Obs)
+            const isCellEditable = (isStatusEditable && i === 6); // Agora coluna 6 (Danos/Defeito)
 
             if (isCellEditable) {
                 editAttributes = `contenteditable="true"
@@ -1657,7 +1657,7 @@ function realizarMudancaParaConferencia(sheetName) {
             }
 
             // ✅ ADICIONAR BOTÃO ✓ NA COLUNA "AJUSTAR" (índice 5)
-            if (isConferencia && i === 5) { // Coluna "Corrigir"
+            if (isConferencia && i === 5) { // Coluna "Ajustar"
                 const diferencaValue = adjustedRow[4] !== undefined ? parseFloat(String(adjustedRow[4]).replace(',', '.')) : 0;
                 const quantidadeNF = adjustedRow[2] !== undefined ? parseFloat(String(adjustedRow[2]).replace(',', '.')) : 0;
                 
@@ -1673,7 +1673,7 @@ function realizarMudancaParaConferencia(sheetName) {
                 }
             } 
             // ✅ COLUNA DANOS/DEFEITO - SEM BORDAS
-           else if (isConferencia && i === 6) { // Coluna "Danos/Defeito e Obs"
+           else if (isConferencia && i === 6) { // Coluna "Danos/Defeito"
     html += `
         <td class="relative">
             <div class="flex items-center gap-1">
@@ -1751,7 +1751,7 @@ function realizarMudancaParaConferencia(sheetName) {
         }
 
     } else if (sheetName === "CONFERENCIA") {
-    headers = ["Código de Barras", "Descrição do Produto", "Quantidade NF", "Contagem Loja", "Diferença", "Corrigir", "Danos/Defeito e Obs"]; 
+    headers = ["Código de Barras", "Descrição do Produto", "Quantidade NF", "Contagem Loja", "Diferença", "Ajustar", "Danos/Defeito"]; 
     targetElementId = 'dynamic-table-content-conferencia';
     
     const targetElement = document.getElementById(targetElementId);
@@ -2471,7 +2471,7 @@ function applyConferenciaStyles(numCols) {
         if (cells.length < 7) return;
 
         const diferencaCell = cells[4]; // 5ª coluna (Diferença)
-        const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito e Obs)
+        const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito)
         
         // ✅ REMOVER TODAS AS CLASSES DE COR ANTERIORES
         diferencaCell.classList.remove('bg-fee2e2', 'text-b91c1c', 'bg-green-100', 'text-green-700');
@@ -3110,74 +3110,34 @@ function applyConferenciaStyles(numCols) {
             }
         }
 
-        // ✅ FUNÇÃO IGUALAR CONTAGEM CORRIGIDA
-async function igualarContagem(rowIndex, quantidadeNF) {
-    try {
-        showNotification(`Ajustando contagem localmente...`, 'loading');
-        
-        // ✅ SALVA NO CACHE LOCAL (não envia para o Sheets)
-        const adjustments = loadConferenceAdjustments();
-        
-        // Salva os ajustes para esta linha
-        adjustments[`D${rowIndex}`] = quantidadeNF.toString();
-        adjustments[`E${rowIndex}`] = "0";
-        
-        saveConferenceAdjustments(adjustments);
-        
-        // ✅ ATUALIZA APENAS A VISUALIZAÇÃO NO FRONTEND
-        updateFrontendDisplay(rowIndex, quantidadeNF, 0);
-        
-        hideNotification();
-        showNotification('Contagem ajustada localmente!', 'success', 3000);
-        
-        // ✅ NÃO CHAMA aplicarConferenciaStyles() AQUI - isso causa o problema
-        // Em vez disso, atualiza apenas as células específicas
-        setTimeout(() => {
-            updateSingleRowStyles(rowIndex);
-        }, 100);
-        
-    } catch (error) {
-        hideNotification();
-        console.error('Erro ao ajustar contagem:', error);
-        showNotification('Erro ao ajustar contagem: ' + error.message, 'error');
-    }
-}
-
-// ✅ FUNÇÃO PARA ATUALIZAR ESTILOS APENAS DA LINHA ESPECÍFICA
-function updateSingleRowStyles(rowIndex) {
-    const table = document.getElementById('conferencia-table');
-    if (!table) return;
-    
-    const row = table.querySelector(`tr[data-row-index="${rowIndex}"]`);
-    if (!row) return;
-    
-    const cells = row.querySelectorAll('td');
-    if (cells.length >= 7) {
-        const diferencaCell = cells[4]; // 5ª coluna (Diferença)
-        const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito)
-        
-        // ✅ LIMPAR ESTILOS ANTERIORES
-        diferencaCell.classList.remove('bg-fee2e2', 'text-b91c1c', 'bg-green-100', 'text-green-700');
-        danosDefeitoCell.classList.remove('bg-red-100', 'bg-fee2e2', 'text-b91c1c');
-        
-        // ✅ APLICAR ESTILOS CORRETOS APENAS PARA DIFERENÇA
-        if (diferencaCell) {
-            const diferencaText = diferencaCell.textContent.trim();
-            const diferencaValue = parseFloat(diferencaText.replace(',', '.'));
-            
-            if (!isNaN(diferencaValue)) {
-                if (diferencaValue < 0) {
-                    diferencaCell.classList.add('bg-fee2e2', 'text-b91c1c');
-                } else if (diferencaValue > 0) {
-                    diferencaCell.classList.add('bg-green-100', 'text-green-700');
-                }
+        /**
+         * ✅ IGUALAR CONTAGEM - VERSÃO FRONTEND (SEM SOBRESCREVER FÓRMULAS)
+         */
+        async function igualarContagem(rowIndex, quantidadeNF) {
+            try {
+                showNotification(`Ajustando contagem localmente...`, 'loading');
+                
+                // ✅ SALVA NO CACHE LOCAL (não envia para o Sheets)
+                const adjustments = loadConferenceAdjustments();
+                
+                // Salva os ajustes para esta linha
+                adjustments[`D${rowIndex}`] = quantidadeNF.toString();
+                adjustments[`E${rowIndex}`] = "0";
+                
+                saveConferenceAdjustments(adjustments);
+                
+                // ✅ ATUALIZA APENAS A VISUALIZAÇÃO NO FRONTEND
+                updateFrontendDisplay(rowIndex, quantidadeNF, 0);
+                
+                hideNotification();
+                showNotification('Contagem ajustada localmente!', 'success', 3000);
+                
+            } catch (error) {
+                hideNotification();
+                console.error('Erro ao ajustar contagem:', error);
+                showNotification('Erro ao ajustar contagem: ' + error.message, 'error');
             }
         }
-        
-        // ✅ NÃO APLICAR VERMELHO NA COLUNA DANOS automaticamente
-        // Deixa a função aplicarConferenciaStyles() cuidar disso depois
-    }
-}
 
         /**
          * ✅ ATUALIZA A VISUALIZAÇÃO NO FRONTEND
@@ -3601,7 +3561,7 @@ function filtrarDivergencias() {
             totalRows++;
             
             const diferencaCell = cells[4]; // 5ª coluna (Diferença)
-            const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito e Obs)
+            const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito)
             
             let isDivergencia = false;
             
@@ -4164,7 +4124,7 @@ function aplicarConferenciaStyles(numCols) {
         if (cells.length < 7) return;
 
         const diferencaCell = cells[4]; // 5ª coluna (Diferença)
-        const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito e Obs)
+        const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito)
         
         // ✅ 1. LIMPAR TODAS AS CLASSES DE COR ANTERIORES
         if (diferencaCell) {
