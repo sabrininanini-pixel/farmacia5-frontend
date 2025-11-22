@@ -3751,8 +3751,8 @@ function abrirGmail() {
     const notas = extrairNumerosNotasFiscais();
     const notasFormatadas = formatarNotasFiscais(notas);
     
-    const assunto = `Divergência em Relatório de Conferência na NFe da (${nomeLoja}) - ${new Date().toLocaleDateString('pt-BR')}`;
-    const corpo = `Prezado(a),\n\nSegue em anexo a divergência encontrada no relatório de conferência da nota fiscal ${notasFormatadas} da (${nomeLoja}).\n\nAtenciosamente,\n`;
+    const assunto = `Divergência na NFe da (${nomeLoja}) - ${new Date().toLocaleDateString('pt-BR')}`;
+    const corpo = `Prezado(a),\n\nSegue em anexo a divergência encontrada na nota fiscal ${notasFormatadas} da (${nomeLoja}).\n\nAtenciosamente,\n`;
     
     const url = `https://mail.google.com/mail/?view=cm&fs=1&to=&su=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
     window.open(url, '_blank');
@@ -3767,8 +3767,8 @@ function abrirOutlook() {
     const notas = extrairNumerosNotasFiscais();
     const notasFormatadas = formatarNotasFiscais(notas);
     
-    const assunto = `Divergência em Relatório de Conferência na NFe da (${nomeLoja}) - ${new Date().toLocaleDateString('pt-BR')}`;
-    const corpo = `Prezado(a),%0D%0A%0D%0ASegue em anexo a divergência encontrada no relatório de conferência da nota fiscal ${notasFormatadas} da (${nomeLoja}).%0D%0A%0D%0AAtenciosamente,%0D%0A`;
+    const assunto = `Divergência na NFe da (${nomeLoja}) - ${new Date().toLocaleDateString('pt-BR')}`;
+    const corpo = `Prezado(a),%0D%0A%0D%0ASegue em anexo a divergência encontrada na nota fiscal ${notasFormatadas} da (${nomeLoja}).%0D%0A%0D%0AAtenciosamente,%0D%0A`;
     
     const url = `https://outlook.live.com/mail/0/deeplink/compose?to=&subject=${encodeURIComponent(assunto)}&body=${corpo}`;
     window.open(url, '_blank');
