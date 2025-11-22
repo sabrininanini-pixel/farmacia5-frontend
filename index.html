@@ -4177,7 +4177,7 @@ const rect = botao.getBoundingClientRect();
 const menuWidth = 280; // ✅ Aumentado para os controles
 
 // ✅ ABRE O MENU À ESQUERDA DO BOTÃO (não sobreposto)
-let leftPosition = rect.left + window.scrollX - menuWidth - 150; // ✅ 20px de overlap
+let leftPosition = rect.left + window.scrollX - menuWidth - 100; // ✅ 20px de overlap
 
 // ✅ Se não couber na esquerda, abre à direita
 if (leftPosition < 10) {
@@ -4193,8 +4193,8 @@ if (leftPosition > maxLeft) {
 let topPosition = rect.bottom + window.scrollY + 5;
 
 // ✅ Se não couber embaixo, abre em cima
-if (topPosition + 150 > window.innerHeight + window.scrollY) {
-    topPosition = rect.top + window.scrollY - 150 - 5;
+if (topPosition + 200 > window.innerHeight + window.scrollY) {
+    topPosition = rect.top + window.scrollY - 200 - 5;
 }
 
 menu.style.top = `${topPosition}px`;
