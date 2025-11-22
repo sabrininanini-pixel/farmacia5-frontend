@@ -560,7 +560,7 @@ body {
     transform: scale(1.1);
 }
 
-/* 🔧 MODO DESKTOP PARA MOBILE - CSS COMPLETO */
+/* 🔧 MODO DESKTOP PARA MOBILE - CSS CORRIGIDO */
 .modo-desktop-ativo body {
     min-width: 1024px;
     overflow-x: auto;
@@ -573,15 +573,7 @@ body {
     width: 100% !important;
 }
 
-.modo-desktop-ativo .container {
-    min-width: 1024px;
-}
-
-.modo-desktop-ativo .mock-table {
-    min-width: 1000px;
-}
-
-/* 🔧 BOTÃO MODO DESKTOP NA BARRA DE BOTÕES */
+/* 🔧 BOTÃO MODO DESKTOP - SEMPRE VISÍVEL QUANDO NO MODO DESKTOP */
 .btn-desktop-mode {
     display: flex;
     align-items: center;
@@ -602,45 +594,43 @@ body {
     background: #a7f3d0;
 }
 
+/* IMPORTANTE: Botão visível apenas no mobile E no modo desktop */
 .btn-desktop-mode.mobile-only {
     display: none;
 }
 
-/* Mostrar apenas no mobile */
+/* Mostrar no mobile normal */
 @media (max-width: 767px) {
     .btn-desktop-mode.mobile-only {
         display: flex;
     }
 }
 
-/* IMPORTANTE: Manter botão visível no modo desktop */
+/* 🔧 🔧 🔧 MAIS IMPORTANTE: SEMPRE mostrar no modo desktop, independente do tamanho da tela */
 .modo-desktop-ativo .btn-desktop-mode.mobile-only {
     display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* Estado ativo do botão */
 .modo-desktop-ativo .btn-desktop-mode {
-    background: #10b981;
-    color: white;
-    border-color: #059669;
+    background: #10b981 !important;
+    color: white !important;
+    border-color: #059669 !important;
 }
 
-/* Ajustes específicos para o modo desktop */
-.modo-desktop-ativo .overflow-x-auto {
-    overflow-x: auto !important;
+/* Ajustes para o modo desktop */
+.modo-desktop-ativo .container {
+    min-width: 1024px;
 }
 
-.modo-desktop-ativo .flex.flex-wrap {
-    flex-wrap: nowrap !important;
+.modo-desktop-ativo .mock-table {
     min-width: 1000px;
 }
 
-/* 🔧 GARANTIR QUE O BOTÃO NÃO DESAPAREÇA */
-.modo-desktop-ativo #desktop-mode-button,
-.modo-desktop-ativo #desktop-mode-button-conferencia {
-    display: flex !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+.modo-desktop-ativo .overflow-x-auto {
+    overflow-x: auto !important;
 }
 
 		   
