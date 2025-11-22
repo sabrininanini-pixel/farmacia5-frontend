@@ -3909,9 +3909,29 @@ function abrirOutlook() {
     fecharModalEmail();
 }
 
-// ✅ NOVO: FUNÇÕES COM BACKEND
+
+
+
+
+
+// ✅ MANTENHA AS OUTRAS FUNÇÕES IGUAIS:
+// - mostrarOpcoesDanos()
+// - adicionarOpcaoDano()
+// - fecharMenuDanos()
+// (elas já estão boas, só usam as novas funções acima)
+
+
+
+
+
+
+// ✅ VARIÁVEL GLOBAL SIMPLES
+let opcoesDanosDefeito = [];
+
+// ✅ CARREGAR OPÇÕES APENAS DO BACKEND (Google Sheets)
 async function carregarOpcoesDanosDefeito() {
     try {
+        console.log('📡 Carregando opções do Google Sheets...');
         const response = await fetch(`${BACKEND_URL}/api/opcoes-danos-defeito`, {
             method: 'GET',
             credentials: 'include'
@@ -3919,24 +3939,32 @@ async function carregarOpcoesDanosDefeito() {
         
         if (response.ok) {
             const result = await response.json();
-            return result.opcoes || [];
+            if (result.success && Array.isArray(result.opcoes)) {
+                console.log('✅ Opções carregadas do Google Sheets:', result.opcoes);
+                return result.opcoes;
+            }
         }
+        
+        // Se não encontrou nada, retorna array vazio
+        console.log('ℹ️ Nenhuma opção encontrada no Google Sheets');
+        return [];
+        
     } catch (error) {
-        console.error('Erro ao carregar opções:', error);
+        console.error('❌ Erro ao carregar do Google Sheets:', error);
+        showNotification('Erro ao carregar frases', 'error', 3000);
+        return [];
     }
-    
-    // Fallback para opções padrão
-    return [
-        "Caixa amassada",
-        "Tampa com defeito", 
-        "Veio porém com outro código",
-        "Embalagem violada",
-        "Produto avariado",
-        "Falta componente"
-    ];
 }
 
+// ✅ SALVAR OPÇÕES APENAS NO BACKEND (Google Sheets)
 async function salvarOpcoesDanosDefeito(opcoes) {
+    if (!Array.isArray(opcoes)) {
+        console.error('❌ Tentativa de salvar opções inválidas:', opcoes);
+        return false;
+    }
+    
+    console.log('💾 Salvando opções no Google Sheets:', opcoes);
+    
     try {
         const response = await fetch(`${BACKEND_URL}/api/opcoes-danos-defeito`, {
             method: 'POST',
@@ -3945,21 +3973,77 @@ async function salvarOpcoesDanosDefeito(opcoes) {
             body: JSON.stringify({ opcoes })
         });
         
-        if (!response.ok) {
-            throw new Error('Erro ao salvar opções');
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log('✅ Opções salvas no Google Sheets com sucesso!');
+            showNotification('Frases salvas!', 'success', 2000);
+            return true;
+        } else {
+            throw new Error(result.error || 'Erro desconhecido');
         }
         
-        return true;
     } catch (error) {
-        console.error('Erro ao salvar opções:', error);
-        // Fallback: salva localmente
-        localStorage.setItem('opcoes_danos_defeito', JSON.stringify(opcoes));
+        console.error('❌ Erro ao salvar no Google Sheets:', error);
+        showNotification('Erro ao salvar frases: ' + error.message, 'error', 3000);
         return false;
     }
 }
 
-// Array global - AGORA É UMA VARIÁVEL
-let opcoesDanosDefeito = [];
+// ✅ FUNÇÃO ADICIONAR NOVA FRASE
+async function adicionarNovoDefeitoLista(sheetRange) {
+    const menu = document.querySelector('.menu-danos-defeito');
+    const input = menu.querySelector('#input-dano-customizado');
+    const textoCustomizado = input.value.trim();
+    
+    if (!textoCustomizado) {
+        showNotification('Digite um texto para adicionar', 'warning');
+        return;
+    }
+    
+    // ✅ CARREGA OPÇÕES ATUAIS DO GOOGLE SHEETS
+    opcoesDanosDefeito = await carregarOpcoesDanosDefeito();
+    
+    // Verifica se já existe
+    if (opcoesDanosDefeito.includes(textoCustomizado)) {
+        showNotification('Esta frase já existe na lista', 'info');
+        return;
+    }
+    
+    // Adiciona à lista
+    opcoesDanosDefeito.push(textoCustomizado);
+    
+    // ✅ SALVA NO GOOGLE SHEETS
+    const salvou = await salvarOpcoesDanosDefeito(opcoesDanosDefeito);
+    
+    if (salvou) {
+        // Adiciona ao texto atual da célula
+        const celula = document.querySelector(`td [data-sheet-range="${sheetRange}"]`);
+        if (celula) {
+            const textoAtual = celula.textContent.trim();
+            const novoTexto = textoAtual ? `${textoAtual}, ${textoCustomizado}` : textoCustomizado;
+            
+            celula.textContent = novoTexto;
+            
+            // Salva automaticamente
+            const event = new Event('blur');
+            celula.dispatchEvent(event);
+        }
+        
+        // Limpa e atualiza
+        input.value = '';
+        fecharMenuDanos();
+        
+        // Reabre menu para mostrar nova opção
+        setTimeout(() => {
+            const botao = document.querySelector('.opcao-danos-btn');
+            if (botao) {
+                mostrarOpcoesDanos(botao, sheetRange);
+            }
+        }, 100);
+    }
+}
+
 
 /**
  * Mostra o menu de opções de danos/defeitos - ATUALIZADA
@@ -4200,85 +4284,24 @@ function aplicarConferenciaStyles(numCols) {
     });
 }
 
-async function adicionarNovoDefeitoLista(sheetRange) {
-    const menu = document.querySelector('.menu-danos-defeito');
-    const input = menu.querySelector('#input-dano-customizado');
-    const textoCustomizado = input.value.trim();
-    
-    if (textoCustomizado) {
-        // ✅ GARANTE QUE AS OPÇÕES ESTÃO CARREGADAS
-        if (opcoesDanosDefeito.length === 0) {
-            opcoesDanosDefeito = await carregarOpcoesDanosDefeito();
-        }
-        
-        // 1. Adiciona à lista de opções se não existir
-        if (!opcoesDanosDefeito.includes(textoCustomizado)) {
-            opcoesDanosDefeito.push(textoCustomizado);
-            
-            // ✅ SALVA NO BACKEND (todas as máquinas veem)
-            const salvou = await salvarOpcoesDanosDefeito(opcoesDanosDefeito);
-            
-            if (salvou) {
-                showNotification('Defeito adicionado à lista global', 'success', 2000);
-            }
-        }
-        
-        // 2. Adiciona ao texto atual da célula
-        const celula = document.querySelector(`td [data-sheet-range="${sheetRange}"]`);
-        if (celula) {
-            const textoAtual = celula.textContent.trim();
-            const novoTexto = textoAtual ? `${textoAtual}, ${textoCustomizado}` : textoCustomizado;
-            
-            celula.textContent = novoTexto;
-            
-            // Dispara o evento blur para salvar automaticamente
-            const event = new Event('blur');
-            celula.dispatchEvent(event);
-        }
-        
-        // 3. Limpa o input
-        input.value = '';
-        input.focus();
-        
-        // 4. Fecha e reabre o menu para mostrar a nova opção com botão -
-        fecharMenuDanos();
-        setTimeout(() => {
-            const botao = document.querySelector('.opcao-danos-btn');
-            if (botao) {
-                mostrarOpcoesDanos(botao, sheetRange);
-            }
-        }, 100);
-    }
-}
 
-		/**
- * ✅ FUNÇÃO EXTRA: Limpa todas as opções customizadas
- * (útil para testes ou se quiser voltar ao padrão)
- */
-function resetarOpcoesDanosDefeito() {
-    if (confirm('Deseja resetar todas as opções de danos/defeito para as opções padrão?')) {
-        localStorage.removeItem('opcoes_danos_defeito');
-        opcoesDanosDefeito = carregarOpcoesDanosDefeito();
-        showNotification('Opções resetadas para padrão', 'success');
-    }
-}
 
-	// ✅ FUNÇÃO PARA REMOVER OPÇÃO DA LISTA
+	// ✅ FUNÇÃO PARA REMOVER OPÇÃO
 async function removerOpcaoDano(opcao, event) {
-    event.stopPropagation(); // Evita fechar o menu
+    event.stopPropagation();
     
     if (confirm(`Deseja remover "${opcao}" da lista?`)) {
         try {
             // Remove da lista local
             opcoesDanosDefeito = opcoesDanosDefeito.filter(item => item !== opcao);
             
-            // Salva no backend
+            // Salva no Google Sheets
             const salvou = await salvarOpcoesDanosDefeito(opcoesDanosDefeito);
             
             if (salvou) {
                 showNotification(`"${opcao}" removido da lista`, 'success', 2000);
                 
-                // Fecha e reabre o menu para atualizar a lista
+                // Fecha e reabre o menu para atualizar
                 fecharMenuDanos();
                 setTimeout(() => {
                     const botao = document.querySelector('.opcao-danos-btn');
