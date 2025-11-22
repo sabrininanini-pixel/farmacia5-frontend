@@ -523,52 +523,25 @@ body {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-/* ✅ REMOVER TODOS OS ESTILOS DE FOCO - MESMO COM TEXTO */
-.descricao-danos[contenteditable="true"] {
+/* ✅ VERSÃO SIMPLES E EFETIVA */
+.descricao-danos {
     outline: none !important;
     border: none !important;
     box-shadow: none !important;
     background-color: transparent !important;
-    min-height: 20px; /* ✅ REDUZIDO - 1 linha apenas */
-    height: auto; /* ✅ ALTURA AUTOMÁTICA */
-    line-height: 1.2; /* ✅ ALTURA DA LINHA NORMAL */
-    word-wrap: break-word;
-    padding: 1px 2px; /* ✅ REDUZIDO O PADDING */
+    padding: 1px 2px !important;
     width: 100%;
     cursor: text;
-    /* ✅ REMOVER QUALQUER ESTILO DO NAVEGADOR */
-    -webkit-tap-highlight-color: transparent;
-    -webkit-user-modify: read-write-plaintext-only;
-    display: block; /* ✅ GARANTIR COMPORTAMENTO DE BLOCO */
-    overflow: hidden; /* ✅ EVITAR CRESCIMENTO EXCESSIVO */
+    min-height: auto !important;
+    height: auto !important;
+    line-height: 1.2 !important;
 }
 
-/* ✅ REMOVER FOCO EM TODOS OS ESTADOS */
-.descricao-danos[contenteditable="true"]:focus {
+.descricao-danos:focus {
     outline: none !important;
     border: none !important;
     box-shadow: none !important;
     background-color: transparent !important;
-}
-
-.descricao-danos[contenteditable="true"]:focus-visible {
-    outline: none !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-.descricao-danos[contenteditable="true"]:focus-within {
-    outline: none !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-/* ✅ REMOVER ESTILOS DO TAILWIND QUE PODEM INTERFERIR */
-.descricao-danos {
-    /* ✅ FORÇAR REMOÇÃO DE TODAS AS CLASSES DE FOCO DO TAILWIND */
-    --tw-ring-color: transparent !important;
-    --tw-ring-offset-shadow: none !important;
-    --tw-ring-shadow: none !important;
 }
 .opcao-danos-btn {
     transition: all 0.2s ease;
