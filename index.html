@@ -1633,7 +1633,7 @@ function realizarMudancaParaConferencia(sheetName) {
             let editAttributes = '';
             let cellClasses = '';
 
-            const isCellEditable = (isStatusEditable && i === 6); // Agora coluna 6 (Danos/Defeito)
+            const isCellEditable = (isStatusEditable && i === 6); // Agora coluna 6 (Danos/Defeito e Obs)
 
             if (isCellEditable) {
                 editAttributes = `contenteditable="true"
@@ -1657,7 +1657,7 @@ function realizarMudancaParaConferencia(sheetName) {
             }
 
             // ✅ ADICIONAR BOTÃO ✓ NA COLUNA "AJUSTAR" (índice 5)
-            if (isConferencia && i === 5) { // Coluna "Ajustar"
+            if (isConferencia && i === 5) { // Coluna "Corrigir"
                 const diferencaValue = adjustedRow[4] !== undefined ? parseFloat(String(adjustedRow[4]).replace(',', '.')) : 0;
                 const quantidadeNF = adjustedRow[2] !== undefined ? parseFloat(String(adjustedRow[2]).replace(',', '.')) : 0;
                 
@@ -1673,7 +1673,7 @@ function realizarMudancaParaConferencia(sheetName) {
                 }
             } 
             // ✅ COLUNA DANOS/DEFEITO - SEM BORDAS
-           else if (isConferencia && i === 6) { // Coluna "Danos/Defeito"
+           else if (isConferencia && i === 6) { // Coluna "Danos/Defeito e Obs"
     html += `
         <td class="relative">
             <div class="flex items-center gap-1">
@@ -1751,7 +1751,7 @@ function realizarMudancaParaConferencia(sheetName) {
         }
 
     } else if (sheetName === "CONFERENCIA") {
-    headers = ["Código de Barras", "Descrição do Produto", "Quantidade NF", "Contagem Loja", "Diferença", "Ajustar", "Danos/Defeito"]; 
+    headers = ["Código de Barras", "Descrição do Produto", "Quantidade NF", "Contagem Loja", "Diferença", "Corrigir", "Danos/Defeito e Obs"]; 
     targetElementId = 'dynamic-table-content-conferencia';
     
     const targetElement = document.getElementById(targetElementId);
@@ -2471,7 +2471,7 @@ function applyConferenciaStyles(numCols) {
         if (cells.length < 7) return;
 
         const diferencaCell = cells[4]; // 5ª coluna (Diferença)
-        const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito)
+        const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito e Obs)
         
         // ✅ REMOVER TODAS AS CLASSES DE COR ANTERIORES
         diferencaCell.classList.remove('bg-fee2e2', 'text-b91c1c', 'bg-green-100', 'text-green-700');
@@ -3561,7 +3561,7 @@ function filtrarDivergencias() {
             totalRows++;
             
             const diferencaCell = cells[4]; // 5ª coluna (Diferença)
-            const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito)
+            const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito e Obs)
             
             let isDivergencia = false;
             
@@ -4124,7 +4124,7 @@ function aplicarConferenciaStyles(numCols) {
         if (cells.length < 7) return;
 
         const diferencaCell = cells[4]; // 5ª coluna (Diferença)
-        const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito)
+        const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito e Obs)
         
         // ✅ 1. LIMPAR TODAS AS CLASSES DE COR ANTERIORES
         if (diferencaCell) {
