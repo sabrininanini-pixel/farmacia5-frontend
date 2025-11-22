@@ -4172,23 +4172,36 @@ opcoesDanosDefeito.forEach((opcao, index) => {
     
     menu.innerHTML = html;
     
-// ✅ POSICIONAMENTO ULTRA-SIMPLES - ABRE NA ESQUERDA
+// ✅ POSICIONAMENTO CORRIGIDO - MENU NA ESQUERDA
 const rect = botao.getBoundingClientRect();
-const menuWidth = 280;
+const menuWidth = 280; // ✅ Aumentado para os controles
 
-// ✅ ABRE 150px PARA ESQUERDA do botão (ajuste este número)
-let leftPosition = rect.left + window.scrollX - 150;
+// ✅ ABRE O MENU À ESQUERDA DO BOTÃO (não sobreposto)
+let leftPosition = rect.left + window.scrollX - menuWidth + 20; // ✅ 20px de overlap
 
-// ✅ Garante mínimo
-if (leftPosition < 10) leftPosition = 10;
+// ✅ Se não couber na esquerda, abre à direita
+if (leftPosition < 10) {
+    leftPosition = rect.right + window.scrollX + 10;
+}
 
-// ✅ POSIÇÃO VERTICAL - abaixo do botão
+// ✅ Garante que não sai da tela pela direita
+const maxLeft = window.innerWidth - menuWidth - 10;
+if (leftPosition > maxLeft) {
+    leftPosition = maxLeft;
+}
+
+// ✅ POSICIONAMENTO VERTICAL - abaixo do botão (consistente)
 let topPosition = rect.bottom + window.scrollY + 5;
 
-// Aplica
+// ✅ Se não couber embaixo, abre em cima
+if (topPosition + 350 > window.innerHeight + window.scrollY) {
+    topPosition = rect.top + window.scrollY - 350 - 5;
+}
+
 menu.style.top = `${topPosition}px`;
 menu.style.left = `${leftPosition}px`;
-console.log('🎯 Menu posicionado em:', leftPosition, topPosition);
+
+console.log('🎯 Menu posicionado - Left:', leftPosition, 'Top:', topPosition);
 	
 
     
