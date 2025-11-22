@@ -1391,18 +1391,20 @@ function realizarMudancaParaConferencia(sheetName) {
     return `
         <div id="conferencia-content">
             <div class="flex flex-wrap gap-3 pb-4 mb-4 border-b border-gray-200 print-hidden">
-                <button onclick="printConferencia()" class="flex items-center space-x-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg shadow-sm hover:bg-blue-200 transition duration-150 text-sm font-medium border border-blue-300">
-                    <span class="text-blue-600">${printerIcon}</span>
-                    <span>Imprimir ou salvar em PDF</span>
-                </button>
-                
-                <!-- ✅ BOTÃO EXPORTAR EXCEL -->
-                <button onclick="exportarParaExcel()" class="flex items-center space-x-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg shadow-sm hover:bg-green-200 transition duration-150 text-sm font-medium border border-green-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span>Exportar Excel</span>
-                </button>
+                <button onclick="printConferencia()" class="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg shadow-sm hover:bg-gray-200 transition duration-150 text-sm font-medium border border-gray-300">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m-1-5a1 1 0 100-2 1 1 0 000 2zm10 0a1 1 0 100-2 1 1 0 000 2zm-4 4h4v2a2 2 0 01-2 2h-4a2 2 0 01-2-2v-2h4z" />
+    </svg>
+    <span>Imprimir ou salvar em PDF</span>
+</button>
+
+<!-- ✅ BOTÃO EXPORTAR EXCEL -->
+<button onclick="exportarParaExcel()" class="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg shadow-sm hover:bg-gray-200 transition duration-150 text-sm font-medium border border-gray-300">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    <span>Exportar Excel</span>
+</button>
                 
                 <!-- ✅ BOTÃO 1: MOSTRAR APENAS DIVERGÊNCIAS -->
                 <button onclick="filtrarDivergencias()" id="divergencias-button" class="flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg shadow-sm hover:bg-red-200 transition duration-150 text-sm font-medium border border-red-300">
@@ -3804,8 +3806,8 @@ function abrirOutlook() {
     const notas = extrairNumerosNotasFiscais();
     const notasFormatadas = formatarNotasFiscais(notas);
     
-    const assunto = `Divergência em Relatório de Conferência na NFe da (${nomeLoja}) - ${new Date().toLocaleDateString('pt-BR')}`;
-    const corpo = `Prezado(a),%0D%0A%0D%0ASegue em anexo o relatório de conferência da nota fiscal ${notasFormatadas} da (${nomeLoja}).%0D%0A%0D%0AAtenciosamente,%0D%0A`;
+    const assunto = `Divergência na NFe da (${nomeLoja}) - ${new Date().toLocaleDateString('pt-BR')}`;
+    const corpo = `Prezado(a),%0D%0A%0D%0ASegue em anexo a divergência encontrada na nota fiscal ${notasFormatadas} da (${nomeLoja}).%0D%0A%0D%0AAtenciosamente,%0D%0A`;
     
     const url = `https://outlook.live.com/mail/0/deeplink/compose?to=&subject=${encodeURIComponent(assunto)}&body=${corpo}`;
     window.open(url, '_blank');
