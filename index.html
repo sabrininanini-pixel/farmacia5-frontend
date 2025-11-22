@@ -3925,10 +3925,26 @@ function abrirOutlook() {
 
 
 
-// ✅ VARIÁVEL GLOBAL SIMPLES
-let opcoesDanosDefeito = [];
+/ ✅ VARIÁVEL GLOBAL COM QUANTIDADE
+let opcoesDanosDefeito = []; // Agora será array de objetos
 
-// ✅ CARREGAR OPÇÕES APENAS DO BACKEND (Google Sheets)
+// ✅ CONVERTER array antigo para novo formato (se necessário)
+function converterParaNovoFormato(opcoesAntigas) {
+    if (!opcoesAntigas || opcoesAntigas.length === 0) return [];
+    
+    // Se já é array de objetos, retorna como está
+    if (typeof opcoesAntigas[0] === 'object') {
+        return opcoesAntigas;
+    }
+    
+    // Se é array de strings, converte para objetos
+    return opcoesAntigas.map(frase => ({
+        texto: frase,
+        quantidade: 1
+    }));
+}
+
+// ✅ CARREGAR OPÇÕES (com conversão)
 async function carregarOpcoesDanosDefeito() {
     try {
         console.log('📡 Carregando opções do Google Sheets...');
@@ -3940,30 +3956,30 @@ async function carregarOpcoesDanosDefeito() {
         if (response.ok) {
             const result = await response.json();
             if (result.success && Array.isArray(result.opcoes)) {
-                console.log('✅ Opções carregadas do Google Sheets:', result.opcoes);
-                return result.opcoes;
+                // ✅ CONVERTE para novo formato se necessário
+                const opcoesConvertidas = converterParaNovoFormato(result.opcoes);
+                console.log('✅ Opções carregadas:', opcoesConvertidas);
+                return opcoesConvertidas;
             }
         }
         
-        // Se não encontrou nada, retorna array vazio
-        console.log('ℹ️ Nenhuma opção encontrada no Google Sheets');
         return [];
         
     } catch (error) {
-        console.error('❌ Erro ao carregar do Google Sheets:', error);
+        console.error('❌ Erro ao carregar:', error);
         showNotification('Erro ao carregar frases', 'error', 3000);
         return [];
     }
 }
 
-// ✅ SALVAR OPÇÕES APENAS NO BACKEND (Google Sheets)
+// ✅ SALVAR OPÇÕES (mantém formato objeto)
 async function salvarOpcoesDanosDefeito(opcoes) {
     if (!Array.isArray(opcoes)) {
         console.error('❌ Tentativa de salvar opções inválidas:', opcoes);
         return false;
     }
     
-    console.log('💾 Salvando opções no Google Sheets:', opcoes);
+    console.log('💾 Salvando opções:', opcoes);
     
     try {
         const response = await fetch(`${BACKEND_URL}/api/opcoes-danos-defeito`, {
@@ -3976,7 +3992,7 @@ async function salvarOpcoesDanosDefeito(opcoes) {
         const result = await response.json();
         
         if (result.success) {
-            console.log('✅ Opções salvas no Google Sheets com sucesso!');
+            console.log('✅ Opções salvas com sucesso!');
             showNotification('Frases salvas!', 'success', 2000);
             return true;
         } else {
@@ -3984,13 +4000,13 @@ async function salvarOpcoesDanosDefeito(opcoes) {
         }
         
     } catch (error) {
-        console.error('❌ Erro ao salvar no Google Sheets:', error);
+        console.error('❌ Erro ao salvar:', error);
         showNotification('Erro ao salvar frases: ' + error.message, 'error', 3000);
         return false;
     }
 }
 
-// ✅ FUNÇÃO ADICIONAR NOVA FRASE
+// ✅ ATUALIZE a função adicionarNovoDefeitoLista
 async function adicionarNovoDefeitoLista(sheetRange) {
     const menu = document.querySelector('.menu-danos-defeito');
     const input = menu.querySelector('#input-dano-customizado');
@@ -4001,46 +4017,44 @@ async function adicionarNovoDefeitoLista(sheetRange) {
         return;
     }
     
-    // ✅ CARREGA OPÇÕES ATUAIS DO GOOGLE SHEETS
     opcoesDanosDefeito = await carregarOpcoesDanosDefeito();
     
-    // Verifica se já existe
-    if (opcoesDanosDefeito.includes(textoCustomizado)) {
-        showNotification('Esta frase já existe na lista', 'info');
-        return;
-    }
+    // Verifica se já existe (agora por texto)
+    const jaExiste = opcoesDanosDefeito.some(opcao => 
+        (opcao.texto || opcao) === textoCustomizado
+    );
     
-    // Adiciona à lista
-    opcoesDanosDefeito.push(textoCustomizado);
-    
-    // ✅ SALVA NO GOOGLE SHEETS
-    const salvou = await salvarOpcoesDanosDefeito(opcoesDanosDefeito);
-    
-    if (salvou) {
-        // Adiciona ao texto atual da célula
-        const celula = document.querySelector(`td [data-sheet-range="${sheetRange}"]`);
-        if (celula) {
-            const textoAtual = celula.textContent.trim();
-            const novoTexto = textoAtual ? `${textoAtual}, ${textoCustomizado}` : textoCustomizado;
-            
-            celula.textContent = novoTexto;
-            
-            // Salva automaticamente
-            const event = new Event('blur');
-            celula.dispatchEvent(event);
-        }
+    if (!jaExiste) {
+        // ✅ ADICIONA COMO OBJETO COM QUANTIDADE
+        opcoesDanosDefeito.push({
+            texto: textoCustomizado,
+            quantidade: 1
+        });
         
-        // Limpa e atualiza
-        input.value = '';
-        fecharMenuDanos();
+        const salvou = await salvarOpcoesDanosDefeito(opcoesDanosDefeito);
         
-        // Reabre menu para mostrar nova opção
-        setTimeout(() => {
-            const botao = document.querySelector('.opcao-danos-btn');
-            if (botao) {
-                mostrarOpcoesDanos(botao, sheetRange);
+        if (salvou) {
+            // Adiciona diretamente à célula também
+            const celula = document.querySelector(`td [data-sheet-range="${sheetRange}"]`);
+            if (celula) {
+                const textoAtual = celula.textContent.trim();
+                const novoTexto = textoAtual ? `${textoAtual}, ${textoCustomizado}` : textoCustomizado;
+                
+                celula.textContent = novoTexto;
+                const event = new Event('blur');
+                celula.dispatchEvent(event);
             }
-        }, 100);
+            
+            input.value = '';
+            fecharMenuDanos();
+            
+            setTimeout(() => {
+                const botao = document.querySelector('.opcao-danos-btn');
+                if (botao) mostrarOpcoesDanos(botao, sheetRange);
+            }, 100);
+        }
+    } else {
+        showNotification('Esta frase já existe na lista', 'info');
     }
 }
 
@@ -4083,24 +4097,49 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
         <div class="text-sm font-medium text-gray-700 mb-2">Adicionar defeito:</div>
         <div class="space-y-1 max-h-40 overflow-y-auto" id="lista-opcoes-danos">`;
     
-    // ✅ BOTÃO - FIXO E SEMPRE VISÍVEL
-    opcoesDanosDefeito.forEach(opcao => {
-        html += `
-            <div class="flex items-center justify-between hover:bg-blue-50 rounded px-2 py-1">
-                <button onclick="adicionarOpcaoDano('${opcao.replace(/'/g, "\\'")}', '${sheetRange}')"
-                        class="flex-1 text-left text-sm pr-2">
-                    ${opcao}
-                </button>
-                <button onclick="removerOpcaoDano('${opcao.replace(/'/g, "\\'")}', event)"
-                        class="text-red-500 text-xs px-2 py-1 rounded hover:bg-red-100 border border-red-300"
-                        title="Remover opção">
+ 
+    // ✅ BOTÕES COM QUANTIDADE - NOVO FORMATO
+opcoesDanosDefeito.forEach((opcao, index) => {
+    const texto = opcao.texto || opcao; // Compatibilidade com dados antigos
+    const quantidade = opcao.quantidade || 1;
+    
+    html += `
+        <div class="flex items-center justify-between hover:bg-blue-50 rounded px-2 py-1">
+            <!-- ✅ CONTROLE DE QUANTIDADE -->
+            <div class="flex items-center gap-1 mr-2">
+                <!-- Botão - -->
+                <button onclick="alterarQuantidadeDano(${index}, -1, event)"
+                        class="w-5 h-5 flex items-center justify-center bg-gray-200 rounded text-xs hover:bg-gray-300">
                     −
                 </button>
+                
+                <!-- Número -->
+                <div class="w-6 h-5 flex items-center justify-center bg-white border border-gray-300 rounded text-xs font-medium">
+                    ${quantidade}
+                </div>
+                
+                <!-- Botão + -->
+                <button onclick="alterarQuantidadeDano(${index}, 1, event)"
+                        class="w-5 h-5 flex items-center justify-center bg-gray-200 rounded text-xs hover:bg-gray-300">
+                    +
+                </button>
             </div>
-        `;
-    });
-    
-    html += `</div>`;
+            
+            <!-- ✅ TEXTO DA OPÇÃO -->
+            <button onclick="adicionarOpcaoDanoComQuantidade(${index}, '${sheetRange}')"
+                    class="flex-1 text-left text-sm pr-2 truncate">
+                ${texto}
+            </button>
+            
+            <!-- ✅ BOTÃO REMOVER -->
+            <button onclick="removerOpcaoDano('${texto.replace(/'/g, "\\'")}', event)"
+                    class="text-red-500 text-xs px-2 py-1 rounded hover:bg-red-100 border border-red-300 ml-1"
+                    title="Remover opção">
+                ×
+            </button>
+        </div>
+    `;
+});
     
     // Campo para texto customizado COM BOTÃO +
     html += `
@@ -4149,40 +4188,44 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
     }, 100);
 }
 
-/**
- * Adiciona uma opção pré-definida ao texto
- */
-function adicionarOpcaoDano(opcao, sheetRange) {
-    const celula = document.querySelector(`td [data-sheet-range="${sheetRange}"]`);
+
+// ✅ FUNÇÃO PARA ALTERAR QUANTIDADE
+function alterarQuantidadeDano(index, mudanca, event) {
+    event.stopPropagation();
     
-    if (celula) {
-        const textoAtual = celula.textContent.trim();
-        const novoTexto = textoAtual ? `${textoAtual}, ${opcao}` : opcao;
+    if (opcoesDanosDefeito[index]) {
+        let novaQuantidade = (opcoesDanosDefeito[index].quantidade || 1) + mudanca;
         
-        celula.textContent = novoTexto;
+        // Limita entre 1 e 100
+        novaQuantidade = Math.max(1, Math.min(100, novaQuantidade));
         
-        // Dispara o evento blur para salvar automaticamente
-        const event = new Event('blur');
-        celula.dispatchEvent(event);
+        opcoesDanosDefeito[index].quantidade = novaQuantidade;
         
-        fecharMenuDanos();
+        // Atualiza visualmente (sem fechar o menu)
+        const elementoQuantidade = event.target.closest('.flex.items-center').querySelector('div:nth-child(2)');
+        if (elementoQuantidade) {
+            elementoQuantidade.textContent = novaQuantidade;
+        }
+        
+        // Salva automaticamente a nova quantidade
+        setTimeout(() => salvarOpcoesDanosDefeito(opcoesDanosDefeito), 500);
     }
 }
 
-/**
- * Adiciona texto customizado
- */
-function adicionarDanoCustomizado(sheetRange) {
-    const menu = document.querySelector('.menu-danos-defeito');
-    const input = menu.querySelector('#input-dano-customizado');
-    const textoCustomizado = input.value.trim();
-    
-    if (textoCustomizado) {
+// ✅ FUNÇÃO PARA ADICIONAR COM QUANTIDADE
+function adicionarOpcaoDanoComQuantidade(index, sheetRange) {
+    if (opcoesDanosDefeito[index]) {
+        const opcao = opcoesDanosDefeito[index];
+        const texto = opcao.texto || opcao;
+        const quantidade = opcao.quantidade || 1;
+        
+        const textoComQuantidade = quantidade > 1 ? `${quantidade} ${texto}` : texto;
+        
         const celula = document.querySelector(`td [data-sheet-range="${sheetRange}"]`);
         
         if (celula) {
             const textoAtual = celula.textContent.trim();
-            const novoTexto = textoAtual ? `${textoAtual}, ${textoCustomizado}` : textoCustomizado;
+            const novoTexto = textoAtual ? `${textoAtual}, ${textoComQuantidade}` : textoComQuantidade;
             
             celula.textContent = novoTexto;
             
@@ -4190,15 +4233,31 @@ function adicionarDanoCustomizado(sheetRange) {
             const event = new Event('blur');
             celula.dispatchEvent(event);
             
-            // Adiciona à lista de opções se não existir
-            if (!opcoesDanosDefeito.includes(textoCustomizado)) {
-                opcoesDanosDefeito.push(textoCustomizado);
-            }
-            
-            // Limpa o input
-            input.value = '';
-            input.focus();
+            fecharMenuDanos();
         }
+    }
+}
+		
+// ✅ ATUALIZE a função antiga para compatibilidade
+function adicionarOpcaoDano(opcao, sheetRange) {
+    // Para compatibilidade com dados antigos
+    const texto = typeof opcao === 'string' ? opcao : (opcao.texto || opcao);
+    const quantidade = opcao.quantidade || 1;
+    
+    const textoComQuantidade = quantidade > 1 ? `${quantidade} ${texto}` : texto;
+    
+    const celula = document.querySelector(`td [data-sheet-range="${sheetRange}"]`);
+    
+    if (celula) {
+        const textoAtual = celula.textContent.trim();
+        const novoTexto = textoAtual ? `${textoAtual}, ${textoComQuantidade}` : textoComQuantidade;
+        
+        celula.textContent = novoTexto;
+        
+        const event = new Event('blur');
+        celula.dispatchEvent(event);
+        
+        fecharMenuDanos();
     }
 }
 
@@ -4286,20 +4345,23 @@ function aplicarConferenciaStyles(numCols) {
 
 
 
-	// ✅ FUNÇÃO PARA REMOVER OPÇÃO
-async function removerOpcaoDano(opcao, event) {
+	// ✅ FUNÇÃO PARA REMOVER OPÇÃO (CORRIGIDA)
+async function removerOpcaoDano(textoOpcao, event) {
     event.stopPropagation();
     
-    if (confirm(`Deseja remover "${opcao}" da lista?`)) {
+    if (confirm(`Deseja remover "${textoOpcao}" da lista?`)) {
         try {
-            // Remove da lista local
-            opcoesDanosDefeito = opcoesDanosDefeito.filter(item => item !== opcao);
+            // ✅ CORREÇÃO: Remove por texto, não por objeto completo
+            opcoesDanosDefeito = opcoesDanosDefeito.filter(item => {
+                const textoItem = item.texto || item;
+                return textoItem !== textoOpcao;
+            });
             
             // Salva no Google Sheets
             const salvou = await salvarOpcoesDanosDefeito(opcoesDanosDefeito);
             
             if (salvou) {
-                showNotification(`"${opcao}" removido da lista`, 'success', 2000);
+                showNotification(`"${textoOpcao}" removido da lista`, 'success', 2000);
                 
                 // Fecha e reabre o menu para atualizar
                 fecharMenuDanos();
