@@ -1673,22 +1673,23 @@ function realizarMudancaParaConferencia(sheetName) {
                 }
             } 
             // ✅ COLUNA DANOS/DEFEITO - SEM BORDAS
-            else if (isConferencia && i === 6) { // Coluna "Danos/Defeito"
-                html += `
-                    <td class="relative">
-                        <div class="flex items-center gap-1">
-                            <div ${editAttributes} 
-                                 class="flex-1 min-h-[24px] descricao-danos">
-                                ${cellValue}
-                            </div>
-                            <button onclick="mostrarOpcoesDanos(this, '${sheetRange}')" 
-                                    class="opcao-danos-btn px-1 py-0 text-gray-500 hover:text-gray-700 transition text-lg font-normal">
-                                +
-                            </button>
-                        </div>
-                    </td>
-                `;
-            }
+           else if (isConferencia && i === 6) { // Coluna "Danos/Defeito"
+    html += `
+        <td class="relative">
+            <div class="flex items-center gap-1">
+                <div ${editAttributes} 
+                     onkeydown="handleDanosEnterKey(event)"
+                     class="flex-1 min-h-[24px] descricao-danos">
+                    ${cellValue}
+                </div>
+                <button onclick="mostrarOpcoesDanos(this, '${sheetRange}')" 
+                        class="opcao-danos-btn px-1 py-0 text-gray-500 hover:text-gray-700 transition text-lg font-normal">
+                    +
+                </button>
+            </div>
+        </td>
+    `;
+}
             else {
                 html += `<td ${editAttributes} class="${cellClasses}">${cellValue}</td>`;
             }
@@ -4267,6 +4268,21 @@ async function removerOpcaoDano(opcao, event) {
             console.error('Erro ao remover opção:', error);
             showNotification('Erro ao remover opção', 'error');
         }
+    }
+}
+
+
+		// ✅ FUNÇÃO MELHORADA PARA CAPTURAR ENTER
+function handleDanosEnterKey(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Impede a quebra de linha
+        
+        // Dispara o evento blur para salvar imediatamente
+        const blurEvent = new Event('blur');
+        event.target.dispatchEvent(blurEvent);
+        
+        // Remove o foco
+        event.target.blur();
     }
 }
 		
