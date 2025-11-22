@@ -559,6 +559,98 @@ body {
     color: #374151 !important;
     transform: scale(1.1);
 }
+
+		   /* 🔧 MODO COMPACTO PARA MOBILE */
+.modo-compacto-ativo body {
+    font-size: 14px;
+}
+
+.modo-compacto-ativo #main-system,
+.modo-compacto-ativo #login-screen {
+    transform: scale(0.85);
+    transform-origin: top left;
+    width: 117.65%; /* Compensa o scale(0.85) - 100/0.85 */
+    min-height: 117.65%;
+}
+
+.modo-compacto-ativo .mock-table {
+    font-size: 12px !important;
+}
+
+.modo-compacto-ativo .mock-table th,
+.modo-compacto-ativo .mock-table td {
+    padding: 8px 10px !important;
+}
+
+.modo-compacto-ativo .container,
+.modo-compacto-ativo .bg-white {
+    padding: 12px !important;
+}
+
+/* Botão de compactação */
+.btn-compactacao {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid #6366f1;
+    color: #6366f1;
+    font-size: 20px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+}
+
+.btn-compactacao:hover {
+    background: #6366f1;
+    color: white;
+}
+
+.btn-compactacao:active {
+    transform: scale(0.95);
+}
+
+/* Esconder no desktop */
+@media (min-width: 768px) {
+    .btn-compactacao {
+        display: none !important;
+    }
+}
+
+/* Estado compacto do botão */
+.modo-compacto-ativo .btn-compactacao {
+    background: #6366f1;
+    color: white;
+    border-color: #4f46e5;
+}
+
+/* Ajustes específicos para tabelas no modo compacto */
+.modo-compacto-ativo #conferencia-table th,
+.modo-compacto-ativo #conferencia-table td {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+}
+
+.modo-compacto-ativo #contagem-table th,
+.modo-compacto-ativo #contagem-table td {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+}
+
+.modo-compacto-ativo #notafiscal-table th,
+.modo-compacto-ativo #notafiscal-table td {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+}
 		   
 </style>
 </head>
@@ -1038,34 +1130,49 @@ body {
         /**
          * ✅ INICIALIZAÇÃO CORRIGIDA
          */
-        async function initializeApp() {
-            console.log("🚀 INICIALIZANDO APLICATIVO...");
-            
-            try {
-                // ✅ CONFIGURA LEMBRAR LOGIN
-                setTimeout(() => {
-                    setupLoginRemember();
-                }, 800);
-                
-                // ✅ VERIFICA AUTENTICAÇÃO EXISTENTE
-                const isAuthenticated = await checkAuth();
-                
-                if (isAuthenticated) {
-                    console.log("✅ Usuário já autenticado, mostrando sistema...");
-                    showMainSystem();
-                    showNotification(`Bem-vindo de volta, ${currentUser}!`, 'success');
-                } else {
-                    console.log("🔐 Usuário não autenticado, mostrando tela de login");
-                    document.getElementById('login-screen').classList.remove('hidden');
-                    document.getElementById('main-system').classList.add('hidden');
-                }
-                
-            } catch (error) {
-                console.error('💥 Erro crítico na inicialização:', error);
-                document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('main-system').classList.add('hidden');
-            }
+        // ✅ INICIALIZAÇÃO COMPLETA DO APP
+async function initializeApp() {
+    console.log("🚀 INICIALIZANDO APLICATIVO...");
+    
+    try {
+        // ✅ CONFIGURA LEMBRAR LOGIN
+        setTimeout(() => {
+            setupLoginRemember();
+        }, 800);
+        
+        // ✅ CARREGAR MODO COMPACTO SALVO
+        carregarEstadoCompacto();
+        
+        // ✅ VERIFICA AUTENTICAÇÃO EXISTENTE
+        const isAuthenticated = await checkAuth();
+        
+        if (isAuthenticated) {
+            console.log("✅ Usuário já autenticado, mostrando sistema...");
+            showMainSystem();
+            showNotification(`Bem-vindo de volta, ${currentUser}!`, 'success');
+        } else {
+            console.log("🔐 Usuário não autenticado, mostrando tela de login");
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('main-system').classles.add('hidden');
         }
+        
+        // ✅ INICIALIZAR BOTÃO DE COMPACTAÇÃO
+        setTimeout(() => {
+            inicializarBotaoCompactacao();
+        }, 1500);
+        
+    } catch (error) {
+        console.error('💥 Erro crítico na inicialização:', error);
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('main-system').classList.add('hidden');
+    }
+}
+
+// ✅ OUVIR REDIMENSIONAMENTO DA TELA
+window.addEventListener('resize', handleResizeCompactacao);
+
+// ✅ SALVAR ESTADO AO SAIR
+window.addEventListener('beforeunload', salvarEstadoCompacto);
 
         // =========================================================================
         // FIM DO SISTEMA DE AUTENTICAÇÃO
@@ -4469,6 +4576,90 @@ function debugMenu() {
     });
     
     console.log('=== FIM DEBUG ===');
+}
+
+
+
+					// 🔧 SISTEMA DE COMPACTAÇÃO PARA MOBILE
+let modoCompactoAtivo = false;
+
+/**
+ * ✅ INICIALIZAR BOTÃO DE COMPACTAÇÃO
+ */
+function inicializarBotaoCompactacao() {
+    // Remove botão existente
+    const botaoExistente = document.querySelector('.btn-compactacao');
+    if (botaoExistente) {
+        botaoExistente.remove();
+    }
+    
+    // Só adiciona no mobile
+    if (window.innerWidth < 768) {
+        const botaoCompactacao = document.createElement('button');
+        botaoCompactacao.className = 'btn-compactacao print-hidden';
+        botaoCompactacao.innerHTML = '−'; // Sinal de menos
+        botaoCompactacao.title = 'Compactar visualização';
+        botaoCompactacao.setAttribute('onclick', 'alternarModoCompacto()');
+        
+        document.body.appendChild(botaoCompactacao);
+        console.log('🔧 Botão de compactação inicializado no mobile');
+    }
+}
+
+/**
+ * ✅ ALTERNAR MODO COMPACTO
+ */
+function alternarModoCompacto() {
+    modoCompactoAtivo = !modoCompactoAtivo;
+    
+    if (modoCompactoAtivo) {
+        // Ativar modo compacto
+        document.documentElement.classList.add('modo-compacto-ativo');
+        document.querySelector('.btn-compactacao').innerHTML = '+';
+        document.querySelector('.btn-compactacao').title = 'Voltar ao normal';
+        showNotification('Modo compacto ativado', 'success', 2000);
+    } else {
+        // Desativar modo compacto
+        document.documentElement.classList.remove('modo-compacto-ativo');
+        document.querySelector('.btn-compactacao').innerHTML = '−';
+        document.querySelector('.btn-compactacao').title = 'Compactar visualização';
+        showNotification('Visualização normal', 'info', 2000);
+    }
+    
+    // Forçar redesenho da tela
+    setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+    }, 100);
+}
+
+/**
+ * ✅ SALVAR ESTADO DO MODO COMPACTO
+ */
+function salvarEstadoCompacto() {
+    localStorage.setItem('modoCompactoMobile', modoCompactoAtivo.toString());
+}
+
+/**
+ * ✅ CARREGAR ESTADO DO MODO COMPACTO
+ */
+function carregarEstadoCompacto() {
+    const estadoSalvo = localStorage.getItem('modoCompactoMobile');
+    if (estadoSalvo === 'true') {
+        modoCompactoAtivo = true;
+        document.documentElement.classList.add('modo-compacto-ativo');
+    }
+}
+
+/**
+ * ✅ REINICIALIZAR AO REDIMENSIONAR
+ */
+function handleResizeCompactacao() {
+    inicializarBotaoCompactacao();
+    
+    // Se redimensionou para desktop, remove modo compacto
+    if (window.innerWidth >= 768 && modoCompactoAtivo) {
+        alternarModoCompacto(); // Desativa o modo compacto
+    }
 }
 		
     </script>
