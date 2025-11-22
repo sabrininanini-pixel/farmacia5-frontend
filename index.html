@@ -4639,6 +4639,7 @@ function alternarModoDesktop() {
 /**
  * ✅ ATUALIZAR TODOS OS BOTÕES DESKTOP
  */
+
 function atualizarBotoesDesktop() {
     const botoes = document.querySelectorAll('.btn-desktop-mode');
     const textos = document.querySelectorAll('[id^="desktop-mode-text"]');
@@ -4646,8 +4647,9 @@ function atualizarBotoesDesktop() {
     if (modoDesktopAtivo) {
         // Modo Desktop ativo
         botoes.forEach(botao => {
-            botao.classList.remove('bg-green-50', 'text-green-700', 'border-green-300');
-            botao.classList.add('bg-green-600', 'text-white', 'border-green-700');
+            botao.style.background = '#10b981';
+            botao.style.color = 'white';
+            botao.style.borderColor = '#059669';
         });
         textos.forEach(texto => {
             texto.textContent = 'Modo Mobile';
@@ -4655,8 +4657,9 @@ function atualizarBotoesDesktop() {
     } else {
         // Modo Mobile ativo
         botoes.forEach(botao => {
-            botao.classList.remove('bg-green-600', 'text-white', 'border-green-700');
-            botao.classList.add('bg-green-50', 'text-green-700', 'border-green-300');
+            botao.style.background = '';
+            botao.style.color = '';
+            botao.style.borderColor = '';
         });
         textos.forEach(texto => {
             texto.textContent = 'Modo Desktop';
