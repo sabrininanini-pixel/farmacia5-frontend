@@ -4172,35 +4172,23 @@ opcoesDanosDefeito.forEach((opcao, index) => {
     
     menu.innerHTML = html;
     
-  // ✅ POSICIONAMENTO CORRIGIDO - 100px MAIS PARA ESQUERDA
+// ✅ POSICIONAMENTO ULTRA-SIMPLES - ABRE NA ESQUERDA
 const rect = botao.getBoundingClientRect();
-const menuWidth = 250; // ✅ Aumentado para caber os controles
+const menuWidth = 280;
 
-// ✅ POSICIONAMENTO MELHOR - 100px mais para esquerda
-let leftPosition = rect.left + window.scrollX - 100;
+// ✅ ABRE 150px PARA ESQUERDA do botão (ajuste este número)
+let leftPosition = rect.left + window.scrollX - 150;
 
-// ✅ Garante que não sai da tela pela esquerda
-if (leftPosition < 10) {
-    leftPosition = 10;
-}
+// ✅ Garante mínimo
+if (leftPosition < 10) leftPosition = 10;
 
-// ✅ Garante que não sai da tela pela direita
-const maxLeft = window.innerWidth - menuWidth - 10;
-if (leftPosition > maxLeft) {
-    leftPosition = maxLeft;
-}
-
-// ✅ POSICIONAMENTO VERTICAL - começa pelo topo
+// ✅ POSIÇÃO VERTICAL - abaixo do botão
 let topPosition = rect.bottom + window.scrollY + 5;
 
-// ✅ Se o menu vai sair da tela por baixo, abre para cima
-const menuHeight = 350; // ✅ Aumentado para caber o botão de adicionar
-if (topPosition + menuHeight > window.innerHeight + window.scrollY) {
-    topPosition = rect.top + window.scrollY - menuHeight - 5;
-}
-
+// Aplica
 menu.style.top = `${topPosition}px`;
 menu.style.left = `${leftPosition}px`;
+console.log('🎯 Menu posicionado em:', leftPosition, topPosition);
 	
 
     
