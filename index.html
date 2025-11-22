@@ -3660,11 +3660,9 @@ function abrirOpcoesEmail() {
                     </button>
                     
                     <button onclick="abrirOutlook()" class="w-full flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition duration-150 text-sm font-medium border border-blue-200">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24">
-                            <path fill="#0078D4" d="M12 12L2.53 4.66A10 10 0 0112 2zm0 0l9.47-7.34A10 10 0 0012 2zm0 0V2A10 10 0 1022 12z"/>
-                        </svg>
-                        <span>Abrir Outlook</span>
-                    </button>
+   
+    <span>Abrir Outlook</span>
+</button>
                     
                     <button onclick="fecharModalEmail()" class="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition duration-150">
                         Cancelar
@@ -3781,35 +3779,40 @@ function formatarNotasFiscais(notas) {
 
 
 		/**
- * ✅ ABRIR GMAIL
+ * ✅ ABRIR GMAIL NA INTERFACE NORMAL
  */
 function abrirGmail() {
     const nomeLoja = extrairNomeDaLoja();
     const notas = extrairNumerosNotasFiscais();
     const notasFormatadas = formatarNotasFiscais(notas);
     
-    const assunto = `Divergência na NFe da (${nomeLoja}) - ${new Date().toLocaleDateString('pt-BR')}`;
-    const corpo = `Prezado(a),\n\nSegue em anexo a divergência encontrada na nota fiscal ${notasFormatadas} da (${nomeLoja}).\n\nAtenciosamente\n`;
+    const assunto = `Divergência em Relatório de Conferência na NFe da (${nomeLoja}) - ${new Date().toLocaleDateString('pt-BR')}`;
+    const corpo = `Prezado(a),\n\nSegue em anexo o relatório de conferência da nota fiscal ${notasFormatadas} da (${nomeLoja}).\n\nAtenciosamente,\n`;
     
-    const url = `https://mail.google.com/mail/?view=cm&fs=1&to=&su=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+    // ✅ URL que abre na interface normal do Gmail
+    const url = `https://mail.google.com/mail/u/0/#inbox?compose=new&subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
     window.open(url, '_blank');
     fecharModalEmail();
 }
 
 /**
- * ✅ ABRIR OUTLOOK
+ * ✅ ABRIR OUTLOOK NA INTERFACE NORMAL  
  */
 function abrirOutlook() {
     const nomeLoja = extrairNomeDaLoja();
     const notas = extrairNumerosNotasFiscais();
     const notasFormatadas = formatarNotasFiscais(notas);
     
-    const assunto = `Divergência na NFe da (${nomeLoja}) - ${new Date().toLocaleDateString('pt-BR')}`;
-    const corpo = `Prezado(a),%0D%0A%0D%0ASegue em anexo a divergência encontrada na nota fiscal ${notasFormatadas} da (${nomeLoja}).%0D%0A%0D%0AAtenciosamente%0D%0A`;
+    const assunto = `Divergência em Relatório de Conferência na NFe da (${nomeLoja}) - ${new Date().toLocaleDateString('pt-BR')}`;
+    const corpo = `Prezado(a),%0D%0A%0D%0ASegue em anexo o relatório de conferência da nota fiscal ${notasFormatadas} da (${nomeLoja}).%0D%0A%0D%0AAtenciosamente,%0D%0A`;
     
-    const url = `https://outlook.live.com/mail/0/deeplink/compose?to=&subject=${encodeURIComponent(assunto)}&body=${corpo}`;
+    // ✅ URL que abre na interface normal do Outlook
+    const url = `https://outlook.live.com/mail/0/`;
     window.open(url, '_blank');
     fecharModalEmail();
+    
+    // Instrução para o usuário
+    showNotification('No Outlook, clique em "Novo" para criar email', 'info', 4000);
 }
 
 
