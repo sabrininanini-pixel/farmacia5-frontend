@@ -4009,6 +4009,73 @@ document.addEventListener('click', function(e) {
         fecharMenuDanos();
     }
 });
+
+		/**
+ * ✅ NOVA FUNÇÃO: APLICA FORMATAÇÃO CONDICIONAL NA ABA CONFERENCIA
+ * - Diferença negativa: Vermelho apenas na coluna Diferença
+ * - Diferença positiva: Verde apenas na coluna Diferença  
+ * - Danos/Defeito preenchido: Vermelho suave apenas na coluna Danos/Defeito (texto preto)
+ */
+function aplicarConferenciaStyles(numCols) {
+    const table = document.getElementById('conferencia-table');
+    if (!table) return;
+
+    const rows = table.querySelectorAll('tbody tr');
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 7) return;
+
+        const diferencaCell = cells[4]; // 5ª coluna (Diferença)
+        const danosDefeitoCell = cells[6]; // 7ª coluna (Danos/Defeito)
+        
+        // ✅ 1. LIMPAR TODAS AS CLASSES DE COR ANTERIORES
+        if (diferencaCell) {
+            diferencaCell.classList.remove('bg-fee2e2', 'text-b91c1c', 'bg-green-100', 'text-green-700');
+        }
+        
+        // ✅ 2. VERIFICAR DIFERENÇA 
+        if (diferencaCell) {
+            const diferencaText = diferencaCell.textContent.trim();
+            const diferencaValue = parseFloat(diferencaText.replace(',', '.'));
+            
+            if (!isNaN(diferencaValue)) {
+                if (diferencaValue < 0) {
+                    // ✅ DIFERENÇA NEGATIVA: VERMELHO APENAS NA COLUNA DIFERENÇA
+                    diferencaCell.classList.add('bg-fee2e2', 'text-b91c1c');
+                } else if (diferencaValue > 0) {
+                    // ✅ DIFERENÇA POSITIVA: VERDE APENAS NA COLUNA DIFERENÇA
+                    diferencaCell.classList.add('bg-green-100', 'text-green-700');
+                }
+            }
+        }
+
+        // ✅ 3. VERIFICAR DANOS/DEFEITO PREENCHIDO - VERMELHO SUAVE COM TEXTO PRETO
+        if (danosDefeitoCell) {
+            // ✅ CORREÇÃO: VERIFICA APENAS O TEXTO REAL (não o botão +)
+            const elementoEditavel = danosDefeitoCell.querySelector('[contenteditable="true"]');
+            const textoReal = elementoEditavel ? elementoEditavel.textContent.trim() : '';
+            
+            // Remove classes anteriores
+            danosDefeitoCell.classList.remove('bg-red-100', 'bg-fee2e2', 'text-b91c1c');
+            
+            if (textoReal !== '') {
+                // ✅ SÓ APLICA VERMELHO SE HOUVER TEXTO REAL DIGITADO
+                danosDefeitoCell.classList.add('bg-red-100');
+                
+                // ✅ GARANTIR QUE O TEXTO FIQUE PRETO (não vermelho)
+                if (elementoEditavel) {
+                    elementoEditavel.style.color = '#374151'; // Cor cinza escuro (texto normal)
+                }
+            } else {
+                // ✅ SE ESTIVER VAZIA, GARANTIR COR NORMAL
+                if (elementoEditavel) {
+                    elementoEditavel.style.color = ''; // Volta para cor padrão
+                }
+            }
+        }
+    });
+}
 		
     </script>
 </body>
