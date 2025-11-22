@@ -3969,16 +3969,16 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
         <div class="text-sm font-medium text-gray-700 mb-2">Adicionar defeito:</div>
         <div class="space-y-1 max-h-40 overflow-y-auto" id="lista-opcoes-danos">`;
     
-    // ✅ AGORA COM BOTÃO DE REMOVER (-)
+    // ✅ BOTÃO - FIXO E SEMPRE VISÍVEL
     opcoesDanosDefeito.forEach(opcao => {
         html += `
-            <div class="flex items-center justify-between group hover:bg-blue-50 rounded px-2 py-1">
+            <div class="flex items-center justify-between hover:bg-blue-50 rounded px-2 py-1">
                 <button onclick="adicionarOpcaoDano('${opcao.replace(/'/g, "\\'")}', '${sheetRange}')"
-                        class="flex-1 text-left text-sm">
+                        class="flex-1 text-left text-sm pr-2">
                     ${opcao}
                 </button>
                 <button onclick="removerOpcaoDano('${opcao.replace(/'/g, "\\'")}', event)"
-                        class="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity text-xs px-1 py-0.5 rounded hover:bg-red-100"
+                        class="text-red-500 text-xs px-2 py-1 rounded hover:bg-red-100 border border-red-300"
                         title="Remover opção">
                     −
                 </button>
@@ -4233,7 +4233,7 @@ function resetarOpcoesDanosDefeito() {
     }
 }
 
-		// ✅ FUNÇÃO PARA REMOVER OPÇÃO DA LISTA
+	// ✅ FUNÇÃO PARA REMOVER OPÇÃO DA LISTA
 async function removerOpcaoDano(opcao, event) {
     event.stopPropagation(); // Evita fechar o menu
     
