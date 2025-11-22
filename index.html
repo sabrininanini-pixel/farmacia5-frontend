@@ -3879,18 +3879,32 @@ function abrirOutlook() {
     fecharModalEmail();
 }
 
-// ✅ SISTEMA DE DANOS/DEFEITO - OPÇÕES PRÉ-DEFINIDAS
-const opcoesDanosDefeito = [
-    "Caixa amassada",
-    "Tampa com defeito", 
-    "Veio porém com outro código",
-    "Embalagem violada",
-    "Produto avariado",
-    "Falta componente"
-];
+// ✅ NOVO (com localStorage):
+function carregarOpcoesDanosDefeito() {
+    const opcoesSalvas = localStorage.getItem('opcoes_danos_defeito');
+    if (opcoesSalvas) {
+        return JSON.parse(opcoesSalvas);
+    }
+    // Opções padrão
+    return [
+        "Caixa amassada",
+        "Tampa com defeito", 
+        "Veio porém com outro código",
+        "Embalagem violada",
+        "Produto avariado",
+        "Falta componente"
+    ];
+}
+
+function salvarOpcoesDanosDefeito(opcoes) {
+    localStorage.setItem('opcoes_danos_defeito', JSON.stringify(opcoes));
+}
+
+// Array global que sempre usa as opções salvas
+let opcoesDanosDefeito = carregarOpcoesDanosDefeito();
 
 /**
- * Mostra o menu de opções de danos/defeitos - MELHORADA
+ * Mostra o menu de opções de danos/defeitos - ATUALIZADA
  */
 function mostrarOpcoesDanos(botao, sheetRange) {
     const celula = botao.closest('td');
@@ -3901,6 +3915,9 @@ function mostrarOpcoesDanos(botao, sheetRange) {
     const menuAnterior = document.querySelector('.menu-danos-defeito');
     if (menuAnterior) menuAnterior.remove();
     
+    // ✅ GARANTE QUE USA AS OPÇÕES MAIS RECENTES
+    opcoesDanosDefeito = carregarOpcoesDanosDefeito();
+    
     // Cria novo menu
     const menu = document.createElement('div');
     menu.className = 'menu-danos-defeito absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-2 min-w-48';
@@ -3909,7 +3926,7 @@ function mostrarOpcoesDanos(botao, sheetRange) {
         <div class="text-sm font-medium text-gray-700 mb-2">Adicionar defeito:</div>
         <div class="space-y-1 max-h-40 overflow-y-auto" id="lista-opcoes-danos">`;
     
-    // Opções pré-definidas
+    // ✅ SEMPRE USA AS OPÇÕES ATUALIZADAS
     opcoesDanosDefeito.forEach(opcao => {
         html += `
             <button onclick="adicionarOpcaoDano('${opcao.replace(/'/g, "\\'")}', '${sheetRange}')"
@@ -3947,14 +3964,11 @@ function mostrarOpcoesDanos(botao, sheetRange) {
     
     menu.innerHTML = html;
     
-    // ✅ CORREÇÃO: POSICIONA PARA ESQUERDA E BAIXO
+    // Posiciona para esquerda e baixo
     const rect = botao.getBoundingClientRect();
-    const menuWidth = 192; // min-w-48 = 192px
+    const menuWidth = 192;
     
-    // Calcula posição para abrir à esquerda
     let leftPosition = rect.left + window.scrollX - menuWidth + 30;
-    
-    // Se não couber à esquerda, abre à direita
     if (leftPosition < 10) {
         leftPosition = rect.left + window.scrollX;
     }
@@ -4107,7 +4121,7 @@ function aplicarConferenciaStyles(numCols) {
 }
 
 /**
- * ✅ NOVA FUNÇÃO: Adiciona novo defeito à lista e ao texto
+ * ✅ FUNÇÃO CORRIGIDA: Adiciona novo defeito à lista PERMANENTEMENTE
  */
 function adicionarNovoDefeitoLista(sheetRange) {
     const menu = document.querySelector('.menu-danos-defeito');
@@ -4118,6 +4132,9 @@ function adicionarNovoDefeitoLista(sheetRange) {
         // 1. Adiciona à lista de opções se não existir
         if (!opcoesDanosDefeito.includes(textoCustomizado)) {
             opcoesDanosDefeito.push(textoCustomizado);
+            
+            // ✅ SALVA NO LOCALSTORAGE PERMANENTEMENTE
+            salvarOpcoesDanosDefeito(opcoesDanosDefeito);
             
             // 2. Atualiza a lista no menu
             const listaOpcoes = menu.querySelector('#lista-opcoes-danos');
@@ -4150,7 +4167,17 @@ function adicionarNovoDefeitoLista(sheetRange) {
     }
 }
 
-		
+		/**
+ * ✅ FUNÇÃO EXTRA: Limpa todas as opções customizadas
+ * (útil para testes ou se quiser voltar ao padrão)
+ */
+function resetarOpcoesDanosDefeito() {
+    if (confirm('Deseja resetar todas as opções de danos/defeito para as opções padrão?')) {
+        localStorage.removeItem('opcoes_danos_defeito');
+        opcoesDanosDefeito = carregarOpcoesDanosDefeito();
+        showNotification('Opções resetadas para padrão', 'success');
+    }
+}
 		
     </script>
 </body>
