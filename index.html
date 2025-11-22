@@ -1731,23 +1731,24 @@ else if (isConferencia && i === 6) { // Coluna "Danos/Defeito"
         }
 
     } else if (sheetName === "CONFERENCIA") {
-        headers = ["Código de Barras", "Descrição do Produto", "Quantidade NF", "Contagem Loja", "Diferença", "Ajustar", "Danos/Defeito"]; 
-        targetElementId = 'dynamic-table-content-conferencia';
+    headers = ["Código de Barras", "Descrição do Produto", "Quantidade NF", "Contagem Loja", "Diferença", "Ajustar", "Danos/Defeito"]; 
+    targetElementId = 'dynamic-table-content-conferencia';
+    
+    const targetElement = document.getElementById(targetElementId);
+    if (targetElement) {
+        // ✅ BUSCA AS INFORMAÇÕES DAS NOTAS FISCAIS
+        const notasFiscaisInfo = await getNotasFiscaisInfo();
         
-        const targetElement = document.getElementById(targetElementId);
-        if (targetElement) {
-            // ✅ BUSCA AS INFORMAÇÕES DAS NOTAS FISCAIS (MESMO MÉTODO DO INDEX ORIGINAL)
-            const notasFiscaisInfo = await getNotasFiscaisInfo();
-            
-            // ✅ RENDERIZA APENAS AS INFORMAÇÕES DAS NOTAS FISCAIS ACIMA DA TABELA
-            const notasInfoHtml = renderNotasFiscaisInfo(notasFiscaisInfo);
-            targetElement.innerHTML = notasInfoHtml + renderTable(sheetName, data, headers);
-            
-            setTimeout(() => {
-                applyConferenciaStyles(headers.length);
-            }, 0);
-        }
+        // ✅ RENDERIZA APENAS AS INFORMAÇÕES DAS NOTAS FISCAIS ACIMA DA TABELA
+        const notasInfoHtml = renderNotasFiscaisInfo(notasFiscaisInfo);
+        targetElement.innerHTML = notasInfoHtml + renderTable(sheetName, data, headers);
+        
+        // ✅ ADICIONE ESTA LINHA PARA APLICAR OS ESTILOS:
+        setTimeout(() => {
+            aplicarConferenciaStyles(headers.length);
+        }, 100);
     }
+}
 }
 
 /**
@@ -3650,9 +3651,9 @@ function handleDanosDefeitoEdit(element, sheetRange, sheetName) {
     // Primeiro executa a edição normal
     handleCellEdit(element, sheetRange, sheetName);
     
-    // ✅ DEPOIS REAPLICA OS ESTILOS PARA MANTER AS CORES
+    // ✅ DEPOIS REAPLICA OS ESTILOS PARA ATUALIZAR AS CORES
     setTimeout(() => {
-        applyConferenciaStyles(7);
+        aplicarConferenciaStyles(7);
     }, 100);
 }
 
