@@ -4212,7 +4212,7 @@ menu.style.left = `${leftPosition}px`;
 }
 
 
-// ✅ FUNÇÃO PARA ALTERAR QUANTIDADE (MÉTODO SIMPLES E GARANTIDO)
+// ✅ FUNÇÃO PARA ALTERAR QUANTIDADE (RECRIA O MENU)
 function alterarQuantidadeDano(index, mudanca, event) {
     event.stopPropagation();
     
@@ -4224,11 +4224,17 @@ function alterarQuantidadeDano(index, mudanca, event) {
         
         opcoesDanosDefeito[index].quantidade = novaQuantidade;
         
-        // ✅ MÉTODO GARANTIDO: Atualiza TODOS os elementos de número
-        const todosNumeros = document.querySelectorAll('.quantidade-numero');
-        if (todosNumeros[index]) {
-            todosNumeros[index].textContent = novaQuantidade;
-            console.log('✅ Número atualizado para:', novaQuantidade);
+        // ✅ MÉTODO GARANTIDO: Fecha e reabre o menu para atualizar TUDO
+        const botao = document.querySelector('.opcao-danos-btn');
+        if (botao) {
+            const celula = botao.closest('td');
+            const elementoEditavel = celula.querySelector('[contenteditable="true"]');
+            const sheetRange = elementoEditavel.getAttribute('data-sheet-range');
+            
+            fecharMenuDanos();
+            setTimeout(() => {
+                mostrarOpcoesDanos(botao, sheetRange);
+            }, 50);
         }
     }
 }
