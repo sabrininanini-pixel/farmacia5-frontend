@@ -4212,7 +4212,7 @@ menu.style.left = `${leftPosition}px`;
 }
 
 
-// ✅ FUNÇÃO PARA ALTERAR QUANTIDADE (VERSÃO FINAL)
+// ✅ FUNÇÃO PARA ALTERAR QUANTIDADE (MÉTODO SIMPLES E GARANTIDO)
 function alterarQuantidadeDano(index, mudanca, event) {
     event.stopPropagation();
     
@@ -4224,20 +4224,11 @@ function alterarQuantidadeDano(index, mudanca, event) {
         
         opcoesDanosDefeito[index].quantidade = novaQuantidade;
         
-        // ✅ CORREÇÃO: Seleciona pelo número atual (mais confiável)
-        const container = event.target.closest('.flex.items-center');
-        if (container) {
-            // Procura o elemento que mostra o número
-            const numeroElement = container.querySelector('.quantidade-numero') || 
-                                 container.querySelector('div.w-8') ||
-                                 container.querySelector('div:nth-child(2)');
-            
-            if (numeroElement) {
-                numeroElement.textContent = novaQuantidade;
-                console.log('✅ Quantidade atualizada visualmente para:', novaQuantidade);
-            } else {
-                console.log('❌ Elemento de número não encontrado');
-            }
+        // ✅ MÉTODO GARANTIDO: Atualiza TODOS os elementos de número
+        const todosNumeros = document.querySelectorAll('.quantidade-numero');
+        if (todosNumeros[index]) {
+            todosNumeros[index].textContent = novaQuantidade;
+            console.log('✅ Número atualizado para:', novaQuantidade);
         }
     }
 }
