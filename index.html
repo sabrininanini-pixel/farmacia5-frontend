@@ -4212,39 +4212,42 @@ menu.style.left = `${leftPosition}px`;
 }
 
 
-// ✅ MÉTODO DIRETO - MUDA O HTML NA MÃO
+// ✅ FUNÇÃO CORRIGIDA - USA AS CLASSES REAIS ENCONTRADAS NO DEBUG
 function alterarQuantidadeDano(index, mudanca, event) {
     event.stopPropagation();
+    console.log('🎯 CLICADO: index', index, 'mudança', mudanca);
     
     if (opcoesDanosDefeito[index]) {
+        // Calcula nova quantidade
         let novaQuantidade = (opcoesDanosDefeito[index].quantidade || 1) + mudanca;
         novaQuantidade = Math.max(1, Math.min(100, novaQuantidade));
         
+        console.log('🎯 NOVA QUANTIDADE:', novaQuantidade);
+        
+        // Atualiza na memória
         opcoesDanosDefeito[index].quantidade = novaQuantidade;
         
-        // ✅ ENCONTRA O BOTÃO CLICADO E MUDA O NÚMERO AO LADO
-        const botaoClicado = event.target;
-        const container = botaoClicado.closest('.flex.items-center');
+        // ✅ CORREÇÃO 1: USA AS CLASSES REAIS (w-6 em vez de w-8)
+        const todosOsNumeros = document.querySelectorAll('div.w-6.h-5');
+        console.log('🎯 NÚMEROS ENCONTRADOS:', todosOsNumeros.length);
         
-        if (container) {
-            // Procura a DIV que tem o número (a do meio)
-            const divs = container.querySelectorAll('div');
-            console.log('🔍 DIVs encontradas:', divs.length);
-            
-            // A div do número é geralmente a segunda div
-            if (divs[1]) {
-                divs[1].textContent = novaQuantidade;
-                console.log('✅ Número atualizado para:', novaQuantidade);
-                return; // SAI DA FUNÇÃO SE DEU CERTO
-            }
+        if (todosOsNumeros[index]) {
+            todosOsNumeros[index].textContent = novaQuantidade;
+            console.log('✅ NÚMERO ATUALIZADO VISUALMENTE!');
+            return;
         }
         
-        // ✅ SE NÃO ENCONTROU, TENTA OUTRO MÉTODO
-        const todosDivs = document.querySelectorAll('div.w-8, div.w-6, div');
-        todosDivs.forEach(div => {
-            if (div.textContent && div.textContent.match(/^[0-9]+$/)) {
-                console.log('🔍 Div com número encontrada:', div.textContent);
-                div.textContent = novaQuantidade;
+        // ✅ CORREÇÃO 2: MÉTODO ALTERNATivo se o primeiro não funcionar
+        console.log('🎯 Tentando método alternativo...');
+        const todosDivsComNumeros = document.querySelectorAll('.menu-danos-defeito div');
+        todosDivsComNumeros.forEach((div, i) => {
+            if (div.textContent && div.textContent.trim() === '1') { // Procura por "1"
+                console.log('🎯 Div com número 1 encontrada no índice:', i);
+                // Se for a que corresponde ao index certo, atualiza
+                if (i >= index * 7 && i <= index * 7 + 10) { // Aproximação
+                    div.textContent = novaQuantidade;
+                    console.log('✅ Número atualizado pelo método alternativo!');
+                }
             }
         });
     }
