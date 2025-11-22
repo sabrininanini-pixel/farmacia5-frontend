@@ -524,34 +524,20 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ✅ CÉLULA EDITÁVEL SEM BORDA INTERNA */
 .descricao-danos {
     min-height: 20px;
     word-wrap: break-word;
     padding: 2px 4px;
+    /* ✅ REMOVE BORDA AZUL AO CLICAR */
     outline: none !important;
     border: none !important;
-    background-color: transparent !important;
-    width: 100%;
-    height: 100%;
-    display: block;
-    resize: none;
-    /* ✅ COMPORTAMENTO IGUAL À CONTAGEM LOJA */
-    cursor: text;
 }
 
 .descricao-danos:focus {
+    /* ✅ MANTÉM APENAS O CURSOR, SEM BORDA */
     outline: none !important;
     border: none !important;
     background-color: transparent !important;
-    box-shadow: none !important;
-}
-
-/* ✅ REMOVER ESTILOS DE FOCO DO TAILWIND QUE CRIAM BORDA */
-.descricao-danos:focus-visible {
-    outline: none !important;
-    ring: none !important;
-    box-shadow: none !important;
 }
 
 .opcao-danos-btn {
@@ -3986,27 +3972,20 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
     menu.className = 'menu-danos-defeito absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-2 min-w-48';
     
     let html = `
-    <div class="text-sm font-medium text-gray-700 mb-2">Adicionar defeito:</div>
-    <div class="space-y-1 max-h-40 overflow-y-auto" id="lista-opcoes-danos">`;
-
-// ✅ AGORA COM BOTÃO DE REMOVER
-opcoesDanosDefeito.forEach(opcao => {
-    html += `
-        <div class="flex items-center justify-between group hover:bg-blue-50 rounded px-2 py-1">
+        <div class="text-sm font-medium text-gray-700 mb-2">Adicionar defeito:</div>
+        <div class="space-y-1 max-h-40 overflow-y-auto" id="lista-opcoes-danos">`;
+    
+    // ✅ AGORA opcoesDanosDefeito é garantidamente um array
+    opcoesDanosDefeito.forEach(opcao => {
+        html += `
             <button onclick="adicionarOpcaoDano('${opcao.replace(/'/g, "\\'")}', '${sheetRange}')"
-                    class="flex-1 text-left text-sm">
+                    class="w-full text-left px-2 py-1 rounded hover:bg-blue-50 text-sm">
                 ${opcao}
             </button>
-            <button onclick="removerOpcaoDano('${opcao.replace(/'/g, "\\'")}', event)"
-                    class="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity text-xs px-1 py-0.5 rounded hover:bg-red-100"
-                    title="Remover opção">
-                −
-            </button>
-        </div>
-    `;
-});
-
-html += `</div>`;
+        `;
+    });
+    
+    html += `</div>`;
     
     // ... resto do código da função (igual ao que você já tem)
     html += `
@@ -4036,35 +4015,24 @@ html += `</div>`;
     
     // Posiciona para esquerda e baixo
     const rect = botao.getBoundingClientRect();
-const viewport = {
-    width: window.innerWidth,
-    height: window.innerHeight
-};
-
-// Calcula posição ideal
-let leftPosition = rect.left - 180; // Menu à esquerda do botão
-let topPosition = rect.bottom + 5;
-
-// ✅ CORREÇÃO: Garante que não sai da tela
-if (leftPosition < 10) {
-    leftPosition = rect.right + 5; // Se não cabe à esquerda, coloca à direita
+    const menuWidth = 192;
+    
+    let leftPosition = rect.left + window.scrollX - menuWidth + 30;
+    if (leftPosition < 10) {
+        leftPosition = rect.left + window.scrollX;
+    }
+    
+    menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
+    menu.style.left = `${leftPosition}px`;
+    
+    document.body.appendChild(menu);
+    
+    // Foca no input customizado
+    setTimeout(() => {
+        const input = document.getElementById('input-dano-customizado');
+        if (input) input.focus();
+    }, 100);
 }
-
-if (leftPosition + 250 > viewport.width) {
-    leftPosition = viewport.width - 260; // Ajusta se ultrapassar à direita
-}
-
-if (topPosition + 300 > viewport.height) {
-    topPosition = rect.top - 300; // Se não cabe abaixo, coloca acima
-    if (topPosition < 10) topPosition = 10; // Não deixa sair pelo topo
-}
-
-menu.style.position = 'fixed';
-menu.style.top = `${topPosition}px`;
-menu.style.left = `${leftPosition}px`;
-menu.style.zIndex = '1000';
-menu.style.maxHeight = '300px';
-menu.style.overflowY = 'auto';
 
 /**
  * Adiciona uma opção pré-definida ao texto
@@ -4263,33 +4231,6 @@ function resetarOpcoesDanosDefeito() {
         localStorage.removeItem('opcoes_danos_defeito');
         opcoesDanosDefeito = carregarOpcoesDanosDefeito();
         showNotification('Opções resetadas para padrão', 'success');
-    }
-}
-
-	// ✅ FUNÇÃO PARA REMOVER OPÇÃO DA LISTA
-async function removerOpcaoDano(opcao, event) {
-    event.stopPropagation(); // Evita fechar o menu
-    
-    if (confirm(`Deseja remover "${opcao}" da lista?`)) {
-        // Remove da lista local
-        opcoesDanosDefeito = opcoesDanosDefeito.filter(item => item !== opcao);
-        
-        // Salva no backend
-        const salvou = await salvarOpcoesDanosDefeito(opcoesDanosDefeito);
-        
-        if (salvou) {
-            showNotification(`"${opcao}" removido da lista`, 'success', 2000);
-            
-            // Fecha e reabre o menu para atualizar a lista
-            fecharMenuDanos();
-            setTimeout(() => {
-                const botao = document.querySelector('.opcao-danos-btn');
-                if (botao) {
-                    const sheetRange = botao.closest('td').querySelector('[contenteditable="true"]').getAttribute('data-sheet-range');
-                    mostrarOpcoesDanos(botao, sheetRange);
-                }
-            }, 100);
-        }
     }
 }
 		
