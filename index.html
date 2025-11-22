@@ -4148,7 +4148,7 @@ opcoesDanosDefeito.forEach((opcao, index) => {
     
     // Campo para texto customizado COM BOTÃO +
     html += `
-        <div class="mt-2 pt-2 border-t border-gray-200">
+<div class="space-y-1 max-h-64 overflow-y-auto" id="lista-opcoes-danos" style="scroll-behavior: smooth;">
             <div class="text-xs text-gray-600 mb-1">Adicionar novo defeito:</div>
             <div class="flex gap-1">
                 <input type="text" 
@@ -4177,7 +4177,7 @@ const rect = botao.getBoundingClientRect();
 const menuWidth = 280; // ✅ Aumentado para os controles
 
 // ✅ ABRE O MENU À ESQUERDA DO BOTÃO (não sobreposto)
-let leftPosition = rect.left + window.scrollX - menuWidth - 50; // ✅ 20px de overlap
+let leftPosition = rect.left + window.scrollX - menuWidth - 150; // ✅ 20px de overlap
 
 // ✅ Se não couber na esquerda, abre à direita
 if (leftPosition < 10) {
