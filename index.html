@@ -3972,21 +3972,26 @@ async function carregarOpcoesDanosDefeito() {
     }
 }
 
-// ✅ SALVAR OPÇÕES (mantém formato objeto)
+// ✅ SALVAR OPÇÕES (CORRIGIDA - converte para formato backend)
 async function salvarOpcoesDanosDefeito(opcoes) {
     if (!Array.isArray(opcoes)) {
         console.error('❌ Tentativa de salvar opções inválidas:', opcoes);
         return false;
     }
     
-    console.log('💾 Salvando opções:', opcoes);
+    // ✅ CONVERTE para formato que o backend espera (apenas textos)
+    const opcoesParaBackend = opcoes.map(opcao => {
+        return opcao.texto || opcao; // Pega apenas o texto
+    });
+    
+    console.log('💾 Salvando opções (convertidas):', opcoesParaBackend);
     
     try {
         const response = await fetch(`${BACKEND_URL}/api/opcoes-danos-defeito`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ opcoes })
+            body: JSON.stringify({ opcoes: opcoesParaBackend }) // ✅ Envia array de strings
         });
         
         const result = await response.json();
@@ -4169,13 +4174,20 @@ opcoesDanosDefeito.forEach((opcao, index) => {
     
     // Posicionamento (mantenha o que já estava funcionando)
     const rect = botao.getBoundingClientRect();
-    const menuWidth = 192;
+    const menuWidth = 250;
+
+	let leftPosition = rect.left + window.scrollX - 50;
     
     let leftPosition = rect.left + window.scrollX - menuWidth + 30;
-    if (leftPosition < 10) {
-        leftPosition = rect.left + window.scrollX;
-    }
-    
+	if (leftPosition < 10) {
+    leftPosition = rect.left + window.scrollX + 10;
+}
+
+	// ✅ Garante que não sai da tela pela direita
+const maxLeft = window.innerWidth - menuWidth - 10;
+if (leftPosition > maxLeft) {
+    leftPosition = maxLeft;
+}
     menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
     menu.style.left = `${leftPosition}px`;
     
@@ -4189,7 +4201,7 @@ opcoesDanosDefeito.forEach((opcao, index) => {
 }
 
 
-// ✅ FUNÇÃO PARA ALTERAR QUANTIDADE
+// ✅ FUNÇÃO PARA ALTERAR QUANTIDADE (CORRIGIDA)
 function alterarQuantidadeDano(index, mudanca, event) {
     event.stopPropagation();
     
@@ -4207,8 +4219,8 @@ function alterarQuantidadeDano(index, mudanca, event) {
             elementoQuantidade.textContent = novaQuantidade;
         }
         
-        // Salva automaticamente a nova quantidade
-        setTimeout(() => salvarOpcoesDanosDefeito(opcoesDanosDefeito), 500);
+        // ✅ REMOVIDO: Não salva no backend (quantidades são apenas frontend)
+        // As quantidades ficam apenas na memória durante a sessão
     }
 }
 
