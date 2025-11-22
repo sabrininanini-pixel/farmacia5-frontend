@@ -560,66 +560,22 @@ body {
     transform: scale(1.1);
 }
 
-		   /* 🔧 MODO DESKTOP PARA MOBILE */
-.modo-desktop-ativo body {
-    min-width: 1024px;
-    overflow-x: auto;
-}
-
-.modo-desktop-ativo #main-system,
-.modo-desktop-ativo #login-screen {
-    min-width: 1024px;
-    transform: none !important;
-    width: 100% !important;
-}
-
-.modo-desktop-ativo .container {
-    min-width: 1024px;
-}
-
-.modo-desktop-ativo .mock-table {
-    min-width: 1000px;
-}
-
-/* Botão Modo Desktop */
+/* 🔧 BOTÃO MODO DESKTOP NA BARRA DE BOTÕES */
 .btn-desktop-mode {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.95);
-    border: 2px solid #10b981;
-    color: #10b981;
-    font-size: 12px;
-    font-weight: bold;
     display: flex;
     align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.3s ease;
-    text-align: center;
-    line-height: 1.2;
-    padding: 5px;
+    space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg shadow-sm hover:bg-green-100 transition duration-150 text-sm font-medium border border-green-300;
+    white-space: nowrap;
 }
 
-.btn-desktop-mode:hover {
-    background: #10b981;
-    color: white;
+.btn-desktop-mode.mobile-only {
+    display: none;
 }
 
-.btn-desktop-mode:active {
-    transform: scale(0.95);
-}
-
-/* Esconder no desktop */
-@media (min-width: 768px) {
-    .btn-desktop-mode {
-        display: none !important;
+/* Mostrar apenas no mobile */
+@media (max-width: 767px) {
+    .btn-desktop-mode.mobile-only {
+        display: flex;
     }
 }
 
@@ -630,15 +586,7 @@ body {
     border-color: #059669;
 }
 
-/* Ajustes específicos para o modo desktop */
-.modo-desktop-ativo .overflow-x-auto {
-    overflow-x: auto !important;
-}
-
-.modo-desktop-ativo .flex.flex-wrap {
-    flex-wrap: nowrap !important;
-    min-width: 1000px;
-}
+		   
 		   
 </style>
 </head>
@@ -1118,57 +1066,34 @@ body {
         /**
          * ✅ INICIALIZAÇÃO CORRIGIDA
          */
-       // ✅ INICIALIZAÇÃO COMPLETA DO APP
-async function initializeApp() {
-    console.log("🚀 INICIALIZANDO APLICATIVO...");
-    
-    try {
-        // ✅ CONFIGURA LEMBRAR LOGIN
-        setTimeout(() => {
-            setupLoginRemember();
-        }, 800);
-        
-        // ✅ CARREGAR MODO DESKTOP SALVO
-        carregarEstadoDesktop();
-        
-        // ✅ VERIFICA AUTENTICAÇÃO EXISTENTE
-        const isAuthenticated = await checkAuth();
-        
-        if (isAuthenticated) {
-            console.log("✅ Usuário já autenticado, mostrando sistema...");
-            showMainSystem();
-            showNotification(`Bem-vindo de volta, ${currentUser}!`, 'success');
-        } else {
-            console.log("🔐 Usuário não autenticado, mostrando tela de login");
-            document.getElementById('login-screen').classList.remove('hidden');
-            document.getElementById('main-system').classList.add('hidden');
+        async function initializeApp() {
+            console.log("🚀 INICIALIZANDO APLICATIVO...");
+            
+            try {
+                // ✅ CONFIGURA LEMBRAR LOGIN
+                setTimeout(() => {
+                    setupLoginRemember();
+                }, 800);
+                
+                // ✅ VERIFICA AUTENTICAÇÃO EXISTENTE
+                const isAuthenticated = await checkAuth();
+                
+                if (isAuthenticated) {
+                    console.log("✅ Usuário já autenticado, mostrando sistema...");
+                    showMainSystem();
+                    showNotification(`Bem-vindo de volta, ${currentUser}!`, 'success');
+                } else {
+                    console.log("🔐 Usuário não autenticado, mostrando tela de login");
+                    document.getElementById('login-screen').classList.remove('hidden');
+                    document.getElementById('main-system').classList.add('hidden');
+                }
+                
+            } catch (error) {
+                console.error('💥 Erro crítico na inicialização:', error);
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('main-system').classList.add('hidden');
+            }
         }
-        
-        // ✅ INICIALIZAR BOTÃO MODO DESKTOP
-        setTimeout(() => {
-            inicializarBotaoDesktop();
-        }, 1500);
-        
-    } catch (error) {
-        console.error('💥 Erro crítico na inicialização:', error);
-        document.getElementById('login-screen').classList.remove('hidden');
-        document.getElementById('main-system').classList.add('hidden');
-    }
-}
-
-// ✅ OUVIR REDIMENSIONAMENTO DA TELA
-window.addEventListener('resize', handleResizeDesktop);
-
-// ✅ SALVAR ESTADO AO SAIR
-window.addEventListener('beforeunload', salvarEstadoDesktop);
-
-// ✅ INICIALIZAR TAMBÉM QUANDO A PÁGINA CARREGAR COMPLETAMENTE
-window.addEventListener('load', function() {
-    setTimeout(() => {
-        inicializarBotaoDesktop();
-        carregarEstadoDesktop();
-    }, 1000);
-});
 
         // =========================================================================
         // FIM DO SISTEMA DE AUTENTICAÇÃO
@@ -1381,6 +1306,10 @@ window.addEventListener('load', function() {
                 showNotification('Erro ao salvar dados, carregando conferência...', 'warning', 2000);
                 realizarMudancaParaConferencia(sheetName);
             });
+
+			    setTimeout(() => {
+        verificarModoDesktopAba();
+    }, 300);
             
             return; // ⚠️ IMPORTANTE: para a execução aqui
         }
@@ -1485,6 +1414,14 @@ function realizarMudancaParaConferencia(sheetName) {
                         <span class="text-yellow-600">${documentIcon}</span>
                         <span>Importar por Chave de Acesso</span>
                     </button>
+
+					  <!-- BOTÃO MODO DESKTOP - APENAS MOBILE -->
+                <button onclick="alternarModoDesktop()" id="desktop-mode-button-conferencia" class="btn-desktop-mode mobile-only">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span id="desktop-mode-text-conferencia">Modo Desktop</span>
+                </button>
 					
             <!--
                 <button onclick="toggleScrollMode('CONFERENCIA')" id="scroll-button-conferencia" class="flex md:hidden items-center space-x-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg shadow-sm hover:bg-indigo-200 transition duration-150 text-sm font-medium border border-indigo-300">
@@ -1580,7 +1517,13 @@ function realizarMudancaParaConferencia(sheetName) {
     </svg>
     <span>Enviar por Email</span>
 </button>
-                
+                  <!-- BOTÃO MODO DESKTOP - APENAS MOBILE -->
+                <button onclick="alternarModoDesktop()" id="desktop-mode-button-conferencia" class="btn-desktop-mode mobile-only">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span id="desktop-mode-text-conferencia">Modo Desktop</span>
+                </button>
 
                 <!--
                 <button onclick="toggleScrollMode('CONFERENCIA')" id="scroll-button-conferencia" class="flex md:hidden items-center space-x-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg shadow-sm hover:bg-indigo-200 transition duration-150 text-sm font-medium border border-indigo-300">
@@ -4574,39 +4517,9 @@ function debugMenu() {
     console.log('=== FIM DEBUG ===');
 }
 
-
-		// 🔧 SISTEMA MODO DESKTOP PARA MOBILE
+// 🔧 SISTEMA MODO DESKTOP PARA MOBILE
 let modoDesktopAtivo = false;
 let viewportOriginal = '';
-
-/**
- * ✅ INICIALIZAR BOTÃO MODO DESKTOP
- */
-function inicializarBotaoDesktop() {
-    // Remove botão existente
-    const botaoExistente = document.querySelector('.btn-desktop-mode');
-    if (botaoExistente) {
-        botaoExistente.remove();
-    }
-    
-    // Salva viewport original se ainda não salvou
-    if (!viewportOriginal) {
-        const viewportMeta = document.querySelector('meta[name="viewport"]');
-        viewportOriginal = viewportMeta ? viewportMeta.getAttribute('content') : '';
-    }
-    
-    // Só adiciona no mobile
-    if (window.innerWidth < 768) {
-        const botaoDesktop = document.createElement('button');
-        botaoDesktop.className = 'btn-desktop-mode print-hidden';
-        botaoDesktop.innerHTML = 'DESK';
-        botaoDesktop.title = 'Alternar Modo Desktop';
-        botaoDesktop.setAttribute('onclick', 'alternarModoDesktop()');
-        
-        document.body.appendChild(botoDesktop);
-        console.log('🔧 Botão Modo Desktop inicializado no mobile');
-    }
-}
 
 /**
  * ✅ ALTERNAR MODO DESKTOP
@@ -4618,6 +4531,11 @@ function alternarModoDesktop() {
         // ✅ ATIVAR MODO DESKTOP
         modoDesktopAtivo = true;
         
+        // Salva viewport original se ainda não salvou
+        if (!viewportOriginal && viewportMeta) {
+            viewportOriginal = viewportMeta.getAttribute('content');
+        }
+        
         // Altera a viewport para modo desktop
         if (viewportMeta) {
             viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
@@ -4626,16 +4544,10 @@ function alternarModoDesktop() {
         // Aplica classes CSS
         document.documentElement.classList.add('modo-desktop-ativo');
         
-        // Atualiza botão
-        const botao = document.querySelector('.btn-desktop-mode');
-        if (botao) {
-            botao.style.background = '#10b981';
-            botao.style.color = 'white';
-            botao.innerHTML = 'MOBILE';
-            botao.title = 'Voltar para Modo Mobile';
-        }
+        // Atualiza todos os botões Modo Desktop
+        atualizarBotoesDesktop();
         
-        showNotification('Modo Desktop ativado', 'success', 3000);
+        showNotification('🖥️ Modo Desktop ativado', 'success', 3000);
         
     } else {
         // ✅ DESATIVAR MODO DESKTOP
@@ -4652,31 +4564,47 @@ function alternarModoDesktop() {
         // Remove classes CSS
         document.documentElement.classList.remove('modo-desktop-ativo');
         
-        // Atualiza botão
-        const botao = document.querySelector('.btn-desktop-mode');
-        if (botao) {
-            botao.style.background = '';
-            botao.style.color = '';
-            botao.innerHTML = 'DESK';
-            botao.title = 'Alternar Modo Desktop';
-        }
+        // Atualiza todos os botões Modo Desktop
+        atualizarBotoesDesktop();
         
-        showNotification('Modo Mobile ativado', 'info', 3000);
+        showNotification('📱 Modo Mobile ativado', 'info', 3000);
     }
     
-    // Forçar redesenho e recálculo de layout
+    // Salva estado
+    salvarEstadoDesktop();
+    
+    // Forçar redesenho
     setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
-        if (typeof Android !== 'undefined') {
-            // Força redraw no WebView Android
-            setTimeout(() => {
-                document.body.style.display = 'none';
-                setTimeout(() => {
-                    document.body.style.display = '';
-                }, 50);
-            }, 100);
-        }
     }, 100);
+}
+
+/**
+ * ✅ ATUALIZAR TODOS OS BOTÕES DESKTOP
+ */
+function atualizarBotoesDesktop() {
+    const botoes = document.querySelectorAll('.btn-desktop-mode');
+    const textos = document.querySelectorAll('[id^="desktop-mode-text"]');
+    
+    if (modoDesktopAtivo) {
+        // Modo Desktop ativo
+        botoes.forEach(botao => {
+            botao.classList.remove('bg-green-50', 'text-green-700', 'border-green-300');
+            botao.classList.add('bg-green-600', 'text-white', 'border-green-700');
+        });
+        textos.forEach(texto => {
+            texto.textContent = 'Modo Mobile';
+        });
+    } else {
+        // Modo Mobile ativo
+        botoes.forEach(botao => {
+            botao.classList.remove('bg-green-600', 'text-white', 'border-green-700');
+            botao.classList.add('bg-green-50', 'text-green-700', 'border-green-300');
+        });
+        textos.forEach(texto => {
+            texto.textContent = 'Modo Desktop';
+        });
+    }
 }
 
 /**
@@ -4709,37 +4637,22 @@ function carregarEstadoDesktop() {
                 viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
             }
             document.documentElement.classList.add('modo-desktop-ativo');
-            
-            // Atualiza botão se existir
-            const botao = document.querySelector('.btn-desktop-mode');
-            if (botao) {
-                botao.style.background = '#10b981';
-                botao.style.color = 'white';
-                botao.innerHTML = 'MOBILE';
-                botao.title = 'Voltar para Modo Mobile';
-            }
+            atualizarBotoesDesktop();
         }, 500);
     }
 }
 
 /**
- * ✅ REINICIALIZAR AO REDIMENSIONAR
+ * ✅ VERIFICAR E APLICAR MODO DESKTOP AO MUDAR DE ABA
  */
-function handleResizeDesktop() {
-    inicializarBotaoDesktop();
-    
-    // Se redimensionou para desktop, remove modo desktop
-    if (window.innerWidth >= 768 && modoDesktopAtivo) {
-        alternarModoDesktop(); // Desativa o modo desktop
+function verificarModoDesktopAba() {
+    if (modoDesktopAtivo) {
+        atualizarBotoesDesktop();
     }
 }
 
-/**
- * ✅ DETECTAR SE ESTÁ NO APK ANDROID
- */
-function isAndroidAPK() {
-    return typeof Android !== 'undefined';
-}
+
+		
 		
     </script>
 </body>
