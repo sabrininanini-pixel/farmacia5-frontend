@@ -3935,18 +3935,12 @@ let opcoesDanosDefeito = [];
  * Mostra o menu de opções de danos/defeitos - ATUALIZADA
  */
 async function mostrarOpcoesDanos(botao, sheetRange) {
-    // ✅ CORREÇÃO CRÍTICA: Garantir que é um array
-    if (!Array.isArray(opcoesDanosDefeito)) {
-        console.warn('❌ opcoesDanosDefeito não é array, resetando...', opcoesDanosDefeito);
-        opcoesDanosDefeito = [];
-    }
-    
     // ✅ CARREGA SEMPRE DO BACKEND (opções mais recentes)
     opcoesDanosDefeito = await carregarOpcoesDanosDefeito();
     
-    // ✅ GARANTIR NOVAMENTE que é array após carregar
+    // ✅ GARANTIR que é array
     if (!Array.isArray(opcoesDanosDefeito)) {
-        console.error('❌ Ainda não é array após carregar, usando fallback');
+        console.error('❌ Opções não é array, usando fallback');
         opcoesDanosDefeito = [
             "Caixa amassada",
             "Tampa com defeito", 
@@ -3975,19 +3969,26 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
         <div class="text-sm font-medium text-gray-700 mb-2">Adicionar defeito:</div>
         <div class="space-y-1 max-h-40 overflow-y-auto" id="lista-opcoes-danos">`;
     
-    // ✅ AGORA opcoesDanosDefeito é garantidamente um array
+    // ✅ AGORA COM BOTÃO DE REMOVER (-)
     opcoesDanosDefeito.forEach(opcao => {
         html += `
-            <button onclick="adicionarOpcaoDano('${opcao.replace(/'/g, "\\'")}', '${sheetRange}')"
-                    class="w-full text-left px-2 py-1 rounded hover:bg-blue-50 text-sm">
-                ${opcao}
-            </button>
+            <div class="flex items-center justify-between group hover:bg-blue-50 rounded px-2 py-1">
+                <button onclick="adicionarOpcaoDano('${opcao.replace(/'/g, "\\'")}', '${sheetRange}')"
+                        class="flex-1 text-left text-sm">
+                    ${opcao}
+                </button>
+                <button onclick="removerOpcaoDano('${opcao.replace(/'/g, "\\'")}', event)"
+                        class="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity text-xs px-1 py-0.5 rounded hover:bg-red-100"
+                        title="Remover opção">
+                    −
+                </button>
+            </div>
         `;
     });
     
     html += `</div>`;
     
-    // ... resto do código da função (igual ao que você já tem)
+    // Campo para texto customizado COM BOTÃO +
     html += `
         <div class="mt-2 pt-2 border-t border-gray-200">
             <div class="text-xs text-gray-600 mb-1">Adicionar novo defeito:</div>
@@ -4013,7 +4014,7 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
     
     menu.innerHTML = html;
     
-    // Posiciona para esquerda e baixo
+    // Posicionamento (mantenha o que já estava funcionando)
     const rect = botao.getBoundingClientRect();
     const menuWidth = 192;
     
@@ -4190,20 +4191,9 @@ async function adicionarNovoDefeitoLista(sheetRange) {
             if (salvou) {
                 showNotification('Defeito adicionado à lista global', 'success', 2000);
             }
-            
-            // 2. Atualiza a lista no menu
-            const listaOpcoes = menu.querySelector('#lista-opcoes-danos');
-            const novoBotao = document.createElement('button');
-            novoBotao.className = 'w-full text-left px-2 py-1 rounded hover:bg-blue-50 text-sm';
-            novoBotao.onclick = function() { 
-                adicionarOpcaoDano(textoCustomizado, sheetRange); 
-            };
-            novoBotao.textContent = textoCustomizado;
-            
-            listaOpcoes.appendChild(novoBotao);
         }
         
-        // 3. Adiciona ao texto atual da célula
+        // 2. Adiciona ao texto atual da célula
         const celula = document.querySelector(`td [data-sheet-range="${sheetRange}"]`);
         if (celula) {
             const textoAtual = celula.textContent.trim();
@@ -4216,9 +4206,18 @@ async function adicionarNovoDefeitoLista(sheetRange) {
             celula.dispatchEvent(event);
         }
         
-        // 4. Limpa o input
+        // 3. Limpa o input
         input.value = '';
         input.focus();
+        
+        // 4. Fecha e reabre o menu para mostrar a nova opção com botão -
+        fecharMenuDanos();
+        setTimeout(() => {
+            const botao = document.querySelector('.opcao-danos-btn');
+            if (botao) {
+                mostrarOpcoesDanos(botao, sheetRange);
+            }
+        }, 100);
     }
 }
 
@@ -4231,6 +4230,40 @@ function resetarOpcoesDanosDefeito() {
         localStorage.removeItem('opcoes_danos_defeito');
         opcoesDanosDefeito = carregarOpcoesDanosDefeito();
         showNotification('Opções resetadas para padrão', 'success');
+    }
+}
+
+		// ✅ FUNÇÃO PARA REMOVER OPÇÃO DA LISTA
+async function removerOpcaoDano(opcao, event) {
+    event.stopPropagation(); // Evita fechar o menu
+    
+    if (confirm(`Deseja remover "${opcao}" da lista?`)) {
+        try {
+            // Remove da lista local
+            opcoesDanosDefeito = opcoesDanosDefeito.filter(item => item !== opcao);
+            
+            // Salva no backend
+            const salvou = await salvarOpcoesDanosDefeito(opcoesDanosDefeito);
+            
+            if (salvou) {
+                showNotification(`"${opcao}" removido da lista`, 'success', 2000);
+                
+                // Fecha e reabre o menu para atualizar a lista
+                fecharMenuDanos();
+                setTimeout(() => {
+                    const botao = document.querySelector('.opcao-danos-btn');
+                    if (botao) {
+                        const celula = botao.closest('td');
+                        const elementoEditavel = celula.querySelector('[contenteditable="true"]');
+                        const sheetRange = elementoEditavel.getAttribute('data-sheet-range');
+                        mostrarOpcoesDanos(botao, sheetRange);
+                    }
+                }, 100);
+            }
+        } catch (error) {
+            console.error('Erro ao remover opção:', error);
+            showNotification('Erro ao remover opção', 'error');
+        }
     }
 }
 		
