@@ -4626,13 +4626,25 @@ function alternarModoDesktop() {
     }, 100);
 }
 
-/**
- * ✅ ATUALIZAR TODOS OS BOTÕES DESKTOP
- */
 
+/**
+ * ✅ ATUALIZAR TODOS OS BOTÕES DESKTOP - VERSÃO CORRIGIDA
+ */
 function atualizarBotoesDesktop() {
     const botoes = document.querySelectorAll('.btn-desktop-mode');
     const textos = document.querySelectorAll('[id^="desktop-mode-text"]');
+    
+    console.log('🔄 Atualizando botões desktop. Modo ativo:', modoDesktopAtivo);
+    console.log('🔍 Botões encontrados:', botoes.length);
+    
+    botoes.forEach(botao => {
+        // 🔥 FORÇAR display flex sempre que estiver no modo desktop
+        if (modoDesktopAtivo) {
+            botao.style.display = 'flex !important';
+            botao.style.visibility = 'visible !important';
+            botao.style.opacity = '1 !important';
+        }
+    });
     
     if (modoDesktopAtivo) {
         // Modo Desktop ativo
@@ -4642,21 +4654,20 @@ function atualizarBotoesDesktop() {
             botao.style.borderColor = '#059669';
         });
         textos.forEach(texto => {
-            texto.textContent = 'Modo Mobile';
+            if (texto) texto.textContent = 'Modo Mobile';
         });
     } else {
         // Modo Mobile ativo
         botoes.forEach(botao => {
-            botao.style.background = '';
-            botao.style.color = '';
-            botao.style.borderColor = '';
+            botao.style.background = '#d1fae5';
+            botao.style.color = '#065f46';
+            botao.style.borderColor = '#a7f3d0';
         });
         textos.forEach(texto => {
-            texto.textContent = 'Modo Desktop';
+            if (texto) texto.textContent = 'Modo Desktop';
         });
     }
 }
-
 /**
  * ✅ SALVAR ESTADO DO MODO DESKTOP
  */
