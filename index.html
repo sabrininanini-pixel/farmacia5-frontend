@@ -560,12 +560,46 @@ body {
     transform: scale(1.1);
 }
 
+/* 🔧 MODO DESKTOP PARA MOBILE - CSS COMPLETO */
+.modo-desktop-ativo body {
+    min-width: 1024px;
+    overflow-x: auto;
+}
+
+.modo-desktop-ativo #main-system,
+.modo-desktop-ativo #login-screen {
+    min-width: 1024px;
+    transform: none !important;
+    width: 100% !important;
+}
+
+.modo-desktop-ativo .container {
+    min-width: 1024px;
+}
+
+.modo-desktop-ativo .mock-table {
+    min-width: 1000px;
+}
+
 /* 🔧 BOTÃO MODO DESKTOP NA BARRA DE BOTÕES */
 .btn-desktop-mode {
     display: flex;
     align-items: center;
-    space-x-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg shadow-sm hover:bg-green-100 transition duration-150 text-sm font-medium border border-green-300;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
     white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-desktop-mode:hover {
+    background: #a7f3d0;
 }
 
 .btn-desktop-mode.mobile-only {
@@ -579,11 +613,34 @@ body {
     }
 }
 
+/* IMPORTANTE: Manter botão visível no modo desktop */
+.modo-desktop-ativo .btn-desktop-mode.mobile-only {
+    display: flex !important;
+}
+
 /* Estado ativo do botão */
 .modo-desktop-ativo .btn-desktop-mode {
     background: #10b981;
     color: white;
     border-color: #059669;
+}
+
+/* Ajustes específicos para o modo desktop */
+.modo-desktop-ativo .overflow-x-auto {
+    overflow-x: auto !important;
+}
+
+.modo-desktop-ativo .flex.flex-wrap {
+    flex-wrap: nowrap !important;
+    min-width: 1000px;
+}
+
+/* 🔧 GARANTIR QUE O BOTÃO NÃO DESAPAREÇA */
+.modo-desktop-ativo #desktop-mode-button,
+.modo-desktop-ativo #desktop-mode-button-conferencia {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 		   
