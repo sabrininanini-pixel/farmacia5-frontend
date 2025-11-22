@@ -4190,12 +4190,12 @@ if (leftPosition > maxLeft) {
     leftPosition = maxLeft;
 }
 
-// ✅ POSICIONAMENTO VERTICAL - abaixo do botão (consistente)
-let topPosition = rect.bottom + window.scrollY + 5;
+// ✅ POSICIONAMENTO VERTICAL - BEM MAIS BAIXO
+let topPosition = rect.bottom + window.scrollY + 25; // ✅ 25px abaixo do botão
 
-// ✅ Se não couber embaixo, abre em cima
-if (topPosition + 350 > window.innerHeight + window.scrollY) {
-    topPosition = rect.top + window.scrollY - 350 - 5;
+// ✅ Raramente abre em cima
+if (topPosition + 400 > window.innerHeight + window.scrollY + 100) {
+    topPosition = rect.top + window.scrollY - 400 - 5;
 }
 
 menu.style.top = `${topPosition}px`;
