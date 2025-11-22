@@ -4096,7 +4096,7 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
     
     // Cria novo menu
     const menu = document.createElement('div');
-    menu.className = 'menu-danos-defeito absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-2 min-w-48';
+    menu.className = 'menu-danos-defeito absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-2 min-w-64';
     
     let html = `
         <div class="text-sm font-medium text-gray-700 mb-2">Adicionar defeito:</div>
@@ -4172,22 +4172,35 @@ opcoesDanosDefeito.forEach((opcao, index) => {
     
     menu.innerHTML = html;
     
-    // Posicionamento (mantenha o que já estava funcionando)
-    const rect = botao.getBoundingClientRect();
-    const menuWidth = 250;
+  // ✅ POSICIONAMENTO CORRIGIDO - substitua esta parte no mostrarOpcoesDanos()
+const rect = botao.getBoundingClientRect();
+const menuWidth = 280; // ✅ Aumentado para caber os controles
 
-	let leftPosition = rect.left + window.scrollX - 50;
-	if (leftPosition < 10) {
-    leftPosition = rect.left + window.scrollX + 10;
+// ✅ POSICIONAMENTO MELHOR - começa mais à esquerda
+let leftPosition = rect.left + window.scrollX - menuWidth + 50; // ✅ 50px mais para esquerda
+
+// ✅ Garante que não sai da tela pela esquerda
+if (leftPosition < 10) {
+    leftPosition = 10;
 }
 
-	// ✅ Garante que não sai da tela pela direita
+// ✅ Garante que não sai da tela pela direita
 const maxLeft = window.innerWidth - menuWidth - 10;
 if (leftPosition > maxLeft) {
     leftPosition = maxLeft;
 }
-    menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
-    menu.style.left = `${leftPosition}px`;
+
+// ✅ POSICIONAMENTO VERTICAL - começa pelo topo
+let topPosition = rect.bottom + window.scrollY + 5;
+
+// ✅ Se o menu vai sair da tela por baixo, abre para cima
+const menuHeight = 300; // Altura estimada do menu
+if (topPosition + menuHeight > window.innerHeight + window.scrollY) {
+    topPosition = rect.top + window.scrollY - menuHeight - 5;
+}
+
+menu.style.top = `${topPosition}px`;
+menu.style.left = `${leftPosition}px`;
     
     document.body.appendChild(menu);
     
@@ -4199,7 +4212,7 @@ if (leftPosition > maxLeft) {
 }
 
 
-// ✅ FUNÇÃO PARA ALTERAR QUANTIDADE (CORRIGIDA)
+// ✅ FUNÇÃO PARA ALTERAR QUANTIDADE (VERSÃO FINAL)
 function alterarQuantidadeDano(index, mudanca, event) {
     event.stopPropagation();
     
@@ -4211,14 +4224,21 @@ function alterarQuantidadeDano(index, mudanca, event) {
         
         opcoesDanosDefeito[index].quantidade = novaQuantidade;
         
-        // Atualiza visualmente (sem fechar o menu)
-        const elementoQuantidade = event.target.closest('.flex.items-center').querySelector('div:nth-child(2)');
-        if (elementoQuantidade) {
-            elementoQuantidade.textContent = novaQuantidade;
+        // ✅ CORREÇÃO: Seleciona pelo número atual (mais confiável)
+        const container = event.target.closest('.flex.items-center');
+        if (container) {
+            // Procura o elemento que mostra o número
+            const numeroElement = container.querySelector('.quantidade-numero') || 
+                                 container.querySelector('div.w-8') ||
+                                 container.querySelector('div:nth-child(2)');
+            
+            if (numeroElement) {
+                numeroElement.textContent = novaQuantidade;
+                console.log('✅ Quantidade atualizada visualmente para:', novaQuantidade);
+            } else {
+                console.log('❌ Elemento de número não encontrado');
+            }
         }
-        
-        // ✅ REMOVIDO: Não salva no backend (quantidades são apenas frontend)
-        // As quantidades ficam apenas na memória durante a sessão
     }
 }
 
