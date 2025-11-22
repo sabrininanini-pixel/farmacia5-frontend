@@ -4212,6 +4212,7 @@ menu.style.left = `${leftPosition}px`;
 }
 
 
+// ✅ MÉTODO DIRETO - MUDA O HTML NA MÃO
 function alterarQuantidadeDano(index, mudanca, event) {
     event.stopPropagation();
     
@@ -4221,18 +4222,31 @@ function alterarQuantidadeDano(index, mudanca, event) {
         
         opcoesDanosDefeito[index].quantidade = novaQuantidade;
         
-        // ✅ ATUALIZA VISUALMENTE SEM FECHAR O MENU
-        const container = event.target.closest('.flex.items-center');
+        // ✅ ENCONTRA O BOTÃO CLICADO E MUDA O NÚMERO AO LADO
+        const botaoClicado = event.target;
+        const container = botaoClicado.closest('.flex.items-center');
+        
         if (container) {
-            const numeroElement = container.querySelector('.quantidade-numero');
-            if (numeroElement) {
-                numeroElement.textContent = novaQuantidade;
+            // Procura a DIV que tem o número (a do meio)
+            const divs = container.querySelectorAll('div');
+            console.log('🔍 DIVs encontradas:', divs.length);
+            
+            // A div do número é geralmente a segunda div
+            if (divs[1]) {
+                divs[1].textContent = novaQuantidade;
                 console.log('✅ Número atualizado para:', novaQuantidade);
+                return; // SAI DA FUNÇÃO SE DEU CERTO
             }
         }
         
-        // ❌ REMOVA esta parte que recria o menu
-        // Não feche nem recrie o menu!
+        // ✅ SE NÃO ENCONTROU, TENTA OUTRO MÉTODO
+        const todosDivs = document.querySelectorAll('div.w-8, div.w-6, div');
+        todosDivs.forEach(div => {
+            if (div.textContent && div.textContent.match(/^[0-9]+$/)) {
+                console.log('🔍 Div com número encontrada:', div.textContent);
+                div.textContent = novaQuantidade;
+            }
+        });
     }
 }
 
@@ -4419,6 +4433,28 @@ function handleDanosEnterKey(event) {
         // Remove o foco
         event.target.blur();
     }
+}
+
+		// ✅ CÓDIGO DE DEBUG TEMPORÁRIO - adicione no final do arquivo
+function debugMenu() {
+    console.log('=== 🎯 DEBUG DO MENU ===');
+    const menu = document.querySelector('.menu-danos-defeito');
+    if (!menu) {
+        console.log('❌ Menu não encontrado');
+        return;
+    }
+    
+    console.log('✅ Menu encontrado');
+    
+    // Mostra TODOS os elementos com números
+    const todosElementos = menu.querySelectorAll('*');
+    todosElementos.forEach((el, i) => {
+        if (el.textContent && el.textContent.trim().match(/^[0-9]+$/)) {
+            console.log(`🎯 Elemento ${i}:`, el.outerHTML);
+        }
+    });
+    
+    console.log('=== FIM DEBUG ===');
 }
 		
     </script>
