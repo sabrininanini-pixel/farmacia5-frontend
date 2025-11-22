@@ -619,7 +619,22 @@ body {
     border-color: #059669 !important;
 }
 
-		   
+		   /* 🔧 COMPATIBILIDADE APK ANDROID */
+@media (max-width: 767px) {
+    .btn-desktop-mode.mobile-only {
+        display: flex !important;
+    }
+}
+
+/*  GARANTIR que funciona no WebView Android */
+body.webview-android .btn-desktop-mode.mobile-only {
+    display: flex !important;
+}
+
+/* Detecção de WebView via JavaScript */
+.webview-android .modo-desktop-ativo {
+    min-width: 1024px;
+}
 		   
 </style>
 </head>
@@ -4529,54 +4544,65 @@ function handleDanosEnterKey(event) {
 }
 
 
-// 🔧 SISTEMA MODO DESKTOP PARA MOBILE
+// 🔧 SISTEMA MODO DESKTOP COMPATÍVEL COM APK
 let modoDesktopAtivo = false;
 let viewportOriginal = '';
 
 function alternarModoDesktop() {
-    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    const isAndroidApp = typeof Android !== 'undefined';
     
-    if (!modoDesktopAtivo) {
-        // ✅ ATIVAR MODO DESKTOP
-        modoDesktopAtivo = true;
+    if (isAndroidApp) {
+        // ✅ USA A INTERFACE DO APK
+        modoDesktopAtivo = !modoDesktopAtivo;
+        Android.ativarModoDesktop(modoDesktopAtivo);
         
-        if (!viewportOriginal && viewportMeta) {
-            viewportOriginal = viewportMeta.getAttribute('content');
-        }
-        
-        if (viewportMeta) {
-            viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
-        }
-        
-        document.documentElement.classList.add('modo-desktop-ativo');
-        document.body.classList.add('modo-desktop-ativo');
-        
-        // 🔥 CHAMAR A FUNÇÃO QUE FORÇA A VISIBILIDADE
-        setTimeout(() => {
-            forcarVisibilidadeBotaoDesktop();
-            atualizarBotoesDesktop();
-        }, 100);
-        
-        showNotification('🖥️ Modo Desktop ativado', 'success', 3000);
+        // Atualiza a interface localmente
+        atualizarBotoesDesktop();
+        salvarEstadoDesktop();
         
     } else {
-        // ✅ DESATIVAR MODO DESKTOP
-        modoDesktopAtivo = false;
+        // ✅ MODO NORMAL (NAVEGADOR)
+        const viewportMeta = document.querySelector('meta[name="viewport"]');
         
-        if (viewportMeta && viewportOriginal) {
-            viewportMeta.setAttribute('content', viewportOriginal);
+        if (!modoDesktopAtivo) {
+            // ATIVAR MODO DESKTOP
+            modoDesktopAtivo = true;
+            
+            if (!viewportOriginal && viewportMeta) {
+                viewportOriginal = viewportMeta.getAttribute('content');
+            }
+            
+            if (viewportMeta) {
+                viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
+            }
+            
+            document.documentElement.classList.add('modo-desktop-ativo');
+            document.body.classList.add('modo-desktop-ativo');
+            
         } else {
-            viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+            // DESATIVAR MODO DESKTOP
+            modoDesktopAtivo = false;
+            
+            if (viewportMeta && viewportOriginal) {
+                viewportMeta.setAttribute('content', viewportOriginal);
+            } else {
+                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+            }
+            
+            document.documentElement.classList.remove('modo-desktop-ativo');
+            document.body.classList.remove('modo-desktop-ativo');
         }
         
-        document.documentElement.classList.remove('modo-desktop-ativo');
-        document.body.classList.remove('modo-desktop-ativo', 'modo-desktop-botao-ativo');
-        
         atualizarBotoesDesktop();
-        showNotification('📱 Modo Mobile ativado', 'info', 3000);
+        salvarEstadoDesktop();
+        
+        // Feedback
+        if (modoDesktopAtivo) {
+            showNotification('🖥️ Modo Desktop ativado', 'success', 3000);
+        } else {
+            showNotification('📱 Modo Mobile ativado', 'info', 3000);
+        }
     }
-    
-    salvarEstadoDesktop();
 }
 
 /**
@@ -4636,22 +4662,30 @@ function salvarEstadoDesktop() {
 function carregarEstadoDesktop() {
     const estadoSalvo = localStorage.getItem('modoDesktopMobile');
     const viewportSalvo = localStorage.getItem('viewportOriginal');
+    const isAndroidApp = typeof Android !== 'undefined';
     
     if (viewportSalvo) {
         viewportOriginal = viewportSalvo;
     }
     
     if (estadoSalvo === 'true') {
-        // Aplica modo desktop após um delay para garantir que o DOM está pronto
         setTimeout(() => {
             modoDesktopAtivo = true;
-            const viewportMeta = document.querySelector('meta[name="viewport"]');
-            if (viewportMeta) {
-                viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
+            
+            if (isAndroidApp) {
+                // ✅ USA INTERFACE DO APK
+                Android.ativarModoDesktop(true);
+            } else {
+                // ✅ MODO NAVEGADOR NORMAL
+                const viewportMeta = document.querySelector('meta[name="viewport"]');
+                if (viewportMeta) {
+                    viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
+                }
+                document.documentElement.classList.add('modo-desktop-ativo');
             }
-            document.documentElement.classList.add('modo-desktop-ativo');
+            
             atualizarBotoesDesktop();
-        }, 500);
+        }, 1000);
     }
 }
 
@@ -4712,7 +4746,31 @@ const estiloExtra = `
 const styleSheet = document.createElement('style');
 styleSheet.textContent = estiloExtra;
 document.head.appendChild(styleSheet);
-		
+
+
+
+		// 🔧 DETECTAR SE ESTÁ NO APK ANDROID
+function detectarAmbiente() {
+    const isAndroidApp = typeof Android !== 'undefined';
+    console.log('📱 Ambiente detectado:', isAndroidApp ? 'APK Android' : 'Navegador Web');
+    
+    if (isAndroidApp) {
+        // Configurações específicas para APK
+        console.log('✅ APK Android detectado - Modo Desktop via interface nativa');
+        
+        // Testa a comunicação com o APK
+        try {
+            Android.webViewPronto(); // Notifica que o WebView está pronto
+        } catch (e) {
+            console.log('⚠️ Função webViewPronto não disponível');
+        }
+    }
+    
+    return isAndroidApp;
+}
+
+// Executar ao carregar a página
+setTimeout(detectarAmbiente, 1000);
 		
     </script>
 </body>
