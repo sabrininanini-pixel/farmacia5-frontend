@@ -4012,20 +4012,38 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
     `;
     
     menu.innerHTML = html;
-    
-    // Posiciona para esquerda e baixo
-    const rect = botao.getBoundingClientRect();
-    const menuWidth = 192;
-    
-    let leftPosition = rect.left + window.scrollX - menuWidth + 30;
-    if (leftPosition < 10) {
-        leftPosition = rect.left + window.scrollX;
-    }
-    
-    menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
-    menu.style.left = `${leftPosition}px`;
-    
-    document.body.appendChild(menu);
+
+// ✅ CORREÇÃO DO POSICIONAMENTO - SUBSTITUA ESTA PARTE:
+const rect = botao.getBoundingClientRect();
+const viewportHeight = window.innerHeight;
+const viewportWidth = window.innerWidth;
+
+// Calcula posição segura
+let topPosition = rect.bottom + 5;
+let leftPosition = rect.left - 150; // Menu à esquerda do botão
+
+// Ajusta se ultrapassar a tela
+if (topPosition + 300 > viewportHeight) {
+    topPosition = rect.top - 300; // Mostra acima se não couber abaixo
+}
+
+if (leftPosition < 10) {
+    leftPosition = 10; // Não deixa sair da tela à esquerda
+}
+
+if (leftPosition + 200 > viewportWidth) {
+    leftPosition = viewportWidth - 210; // Não deixa sair da tela à direita
+}
+
+// ✅ POSICIONAMENTO CORRETO
+menu.style.position = 'fixed';
+menu.style.top = `${topPosition}px`;
+menu.style.left = `${leftPosition}px`;
+menu.style.zIndex = '1000';
+menu.style.maxHeight = '300px';
+menu.style.overflowY = 'auto';
+
+document.body.appendChild(menu);
     
     // Foca no input customizado
     setTimeout(() => {
