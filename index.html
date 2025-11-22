@@ -4100,7 +4100,7 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
     
     let html = `
         <div class="text-sm font-medium text-gray-700 mb-2">Adicionar defeito:</div>
-        <div class="space-y-1 max-h-40 overflow-y-auto" id="lista-opcoes-danos">`;
+        <div class="space-y-1 max-h-72 overflow-y-auto" id="lista-opcoes-danos">`;
     
  
     // ✅ BOTÕES COM QUANTIDADE - NOVO FORMATO
@@ -4181,7 +4181,7 @@ let leftPosition = rect.left + window.scrollX - menuWidth - 150; // ✅ 20px de 
 
 // ✅ Se não couber na esquerda, abre à direita
 if (leftPosition < 10) {
-    leftPosition = rect.right + window.scrollX + 10;
+    leftPosition = rect.right + window.scrollX - 10;
 }
 
 // ✅ Garante que não sai da tela pela direita
