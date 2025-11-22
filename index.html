@@ -523,23 +523,49 @@ body {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
-.descricao-danos {
-    min-height: 20px;
+/* ✅ REMOVER TODOS OS ESTILOS DE FOCO - MESMO COM TEXTO */
+.descricao-danos[contenteditable="true"] {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    min-height: 24px;
     word-wrap: break-word;
     padding: 2px 4px;
-    /* ✅ REMOVE BORDA AZUL AO CLICAR */
-    outline: none !important;
-    border: none !important;
+    width: 100%;
+    cursor: text;
+    /* ✅ REMOVER QUALQUER ESTILO DO NAVEGADOR */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-modify: read-write-plaintext-only;
 }
 
-.descricao-danos:focus {
-    /* ✅ MANTÉM APENAS O CURSOR, SEM BORDA */
+/* ✅ REMOVER FOCO EM TODOS OS ESTADOS */
+.descricao-danos[contenteditable="true"]:focus {
     outline: none !important;
     border: none !important;
+    box-shadow: none !important;
     background-color: transparent !important;
 }
 
+.descricao-danos[contenteditable="true"]:focus-visible {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.descricao-danos[contenteditable="true"]:focus-within {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* ✅ REMOVER ESTILOS DO TAILWIND QUE PODEM INTERFERIR */
+.descricao-danos {
+    /* ✅ FORÇAR REMOÇÃO DE TODAS AS CLASSES DE FOCO DO TAILWIND */
+    --tw-ring-color: transparent !important;
+    --tw-ring-offset-shadow: none !important;
+    --tw-ring-shadow: none !important;
+}
 .opcao-danos-btn {
     transition: all 0.2s ease;
     min-width: 20px;
