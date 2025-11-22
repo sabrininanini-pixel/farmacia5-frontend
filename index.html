@@ -3879,23 +3879,13 @@ function abrirOutlook() {
     fecharModalEmail();
 }
 
-// ✅ NOVO: FUNÇÕES COM BACKEND
-async function carregarOpcoesDanosDefeito() {
-    try {
-        const response = await fetch(`${BACKEND_URL}/api/opcoes-danos-defeito`, {
-            method: 'GET',
-            credentials: 'include'
-        });
-        
-        if (response.ok) {
-            const result = await response.json();
-            return result.opcoes || [];
-        }
-    } catch (error) {
-        console.error('Erro ao carregar opções:', error);
+// ✅ NOVO (com localStorage):
+function carregarOpcoesDanosDefeito() {
+    const opcoesSalvas = localStorage.getItem('opcoes_danos_defeito');
+    if (opcoesSalvas) {
+        return JSON.parse(opcoesSalvas);
     }
-    
-    // Fallback para opções padrão
+    // Opções padrão
     return [
         "Caixa amassada",
         "Tampa com defeito", 
@@ -3906,37 +3896,17 @@ async function carregarOpcoesDanosDefeito() {
     ];
 }
 
-async function salvarOpcoesDanosDefeito(opcoes) {
-    try {
-        const response = await fetch(`${BACKEND_URL}/api/opcoes-danos-defeito`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ opcoes })
-        });
-        
-        if (!response.ok) {
-            throw new Error('Erro ao salvar opções');
-        }
-        
-        return true;
-    } catch (error) {
-        console.error('Erro ao salvar opções:', error);
-        // Fallback: salva localmente
-        localStorage.setItem('opcoes_danos_defeito', JSON.stringify(opcoes));
-        return false;
-    }
+function salvarOpcoesDanosDefeito(opcoes) {
+    localStorage.setItem('opcoes_danos_defeito', JSON.stringify(opcoes));
 }
 
-// Array global - AGORA É UMA VARIÁVEL
-let opcoesDanosDefeito = [];
+// Array global que sempre usa as opções salvas
+let opcoesDanosDefeito = carregarOpcoesDanosDefeito();
 
 /**
  * Mostra o menu de opções de danos/defeitos - ATUALIZADA
  */
-async function mostrarOpcoesDanos(botao, sheetRange) {
-    // ✅ CARREGA SEMPRE DO BACKEND (opções mais recentes)
-    opcoesDanosDefeito = await carregarOpcoesDanosDefeito();
+function mostrarOpcoesDanos(botao, sheetRange) {
     const celula = botao.closest('td');
     const elementoEditavel = celula.querySelector('[contenteditable="true"]');
     const textoAtual = elementoEditavel.textContent;
@@ -4150,27 +4120,21 @@ function aplicarConferenciaStyles(numCols) {
     });
 }
 
-async function adicionarNovoDefeitoLista(sheetRange) {
+/**
+ * ✅ FUNÇÃO CORRIGIDA: Adiciona novo defeito à lista PERMANENTEMENTE
+ */
+function adicionarNovoDefeitoLista(sheetRange) {
     const menu = document.querySelector('.menu-danos-defeito');
     const input = menu.querySelector('#input-dano-customizado');
     const textoCustomizado = input.value.trim();
     
     if (textoCustomizado) {
-        // ✅ GARANTE QUE AS OPÇÕES ESTÃO CARREGADAS
-        if (opcoesDanosDefeito.length === 0) {
-            opcoesDanosDefeito = await carregarOpcoesDanosDefeito();
-        }
-        
         // 1. Adiciona à lista de opções se não existir
         if (!opcoesDanosDefeito.includes(textoCustomizado)) {
             opcoesDanosDefeito.push(textoCustomizado);
             
-            // ✅ SALVA NO BACKEND (todas as máquinas veem)
-            const salvou = await salvarOpcoesDanosDefeito(opcoesDanosDefeito);
-            
-            if (salvou) {
-                showNotification('Defeito adicionado à lista global', 'success', 2000);
-            }
+            // ✅ SALVA NO LOCALSTORAGE PERMANENTEMENTE
+            salvarOpcoesDanosDefeito(opcoesDanosDefeito);
             
             // 2. Atualiza a lista no menu
             const listaOpcoes = menu.querySelector('#lista-opcoes-danos');
