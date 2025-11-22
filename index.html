@@ -514,7 +514,7 @@ body {
     color: #374151 !important; /* Texto um pouco mais escuro no hover */
 }
 
-/* Estilos para o sistema de Danos/Defeito - CORRIGIDO */
+/* Estilos para o sistema de Danos/Defeito - MELHORADO */
 .menu-danos-defeito {
     animation: fadeIn 0.2s ease-in-out;
 }
@@ -527,18 +527,34 @@ body {
 .descricao-danos {
     min-height: 20px;
     word-wrap: break-word;
-    padding: 4px 6px;
-    min-width: 120px;
+    padding: 2px 4px;
+    /* ✅ REMOVE BORDA AZUL AO CLICAR */
+    outline: none !important;
+    border: none !important;
+}
+
+.descricao-danos:focus {
+    /* ✅ MANTÉM APENAS O CURSOR, SEM BORDA */
+    outline: none !important;
+    border: none !important;
+    background-color: transparent !important;
 }
 
 .opcao-danos-btn {
     transition: all 0.2s ease;
-    min-width: 24px;
-    min-height: 24px;
-    font-size: 12px;
-    font-weight: 600;
-    /* ✅ SEMPRE VISÍVEL */
+    min-width: 20px;
+    min-height: 20px;
+    font-size: 16px;
+    font-weight: 400;
+    /* ✅ SEM BACKGROUND, APENAS TEXTO */
+    background: none !important;
+    border: none !important;
     opacity: 1 !important;
+}
+
+.opcao-danos-btn:hover {
+    color: #374151 !important;
+    transform: scale(1.1);
 }
 		   
 </style>
@@ -1652,17 +1668,17 @@ function realizarMudancaParaConferencia(sheetName) {
                     html += `<td></td>`;
                 }
             } 
-// ✅ MODIFICAÇÃO: COLUNA DANOS/DEFEITO SEPARADA
+// ✅ MODIFICAÇÃO: BOTÃO + SEM BACKGROUND
 else if (isConferencia && i === 6) { // Coluna "Danos/Defeito"
     html += `
         <td class="relative">
             <div class="flex items-center gap-1">
                 <div ${editAttributes} 
-                     class="flex-1 min-h-[24px] descricao-danos border border-transparent hover:border-gray-300 rounded">
+                     class="flex-1 min-h-[24px] descricao-danos outline-none">
                     ${cellValue}
                 </div>
                 <button onclick="mostrarOpcoesDanos(this, '${sheetRange}')" 
-                        class="opcao-danos-btn px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 transition text-xs font-medium flex-shrink-0">
+                        class="opcao-danos-btn px-1 py-0 text-gray-500 hover:text-gray-700 transition text-lg font-normal">
                     +
                 </button>
             </div>
@@ -3874,7 +3890,7 @@ const opcoesDanosDefeito = [
 ];
 
 /**
- * Mostra o menu de opções de danos/defeitos
+ * Mostra o menu de opções de danos/defeitos - MELHORADA
  */
 function mostrarOpcoesDanos(botao, sheetRange) {
     const celula = botao.closest('td');
@@ -3891,7 +3907,7 @@ function mostrarOpcoesDanos(botao, sheetRange) {
     
     let html = `
         <div class="text-sm font-medium text-gray-700 mb-2">Adicionar defeito:</div>
-        <div class="space-y-1 max-h-40 overflow-y-auto">`;
+        <div class="space-y-1 max-h-40 overflow-y-auto" id="lista-opcoes-danos">`;
     
     // Opções pré-definidas
     opcoesDanosDefeito.forEach(opcao => {
@@ -3903,18 +3919,20 @@ function mostrarOpcoesDanos(botao, sheetRange) {
         `;
     });
     
-    // Campo para texto customizado
+    html += `</div>`;
+    
+    // Campo para texto customizado COM BOTÃO +
     html += `
-        </div>
         <div class="mt-2 pt-2 border-t border-gray-200">
+            <div class="text-xs text-gray-600 mb-1">Adicionar novo defeito:</div>
             <div class="flex gap-1">
                 <input type="text" 
                        id="input-dano-customizado" 
-                       placeholder="Outro defeito..." 
+                       placeholder="Digite novo defeito..." 
                        class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm">
-                <button onclick="adicionarDanoCustomizado('${sheetRange}')" 
-                        class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm">
-                    +
+                <button onclick="adicionarNovoDefeitoLista('${sheetRange}')" 
+                        class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm flex items-center justify-center">
+                    <span class="text-xs">+</span>
                 </button>
             </div>
         </div>
@@ -3929,10 +3947,20 @@ function mostrarOpcoesDanos(botao, sheetRange) {
     
     menu.innerHTML = html;
     
-    // Posiciona o menu
+    // ✅ CORREÇÃO: POSICIONA PARA ESQUERDA E BAIXO
     const rect = botao.getBoundingClientRect();
-    menu.style.top = `${rect.bottom + window.scrollY}px`;
-    menu.style.left = `${rect.left + window.scrollX}px`;
+    const menuWidth = 192; // min-w-48 = 192px
+    
+    // Calcula posição para abrir à esquerda
+    let leftPosition = rect.left + window.scrollX - menuWidth + 30;
+    
+    // Se não couber à esquerda, abre à direita
+    if (leftPosition < 10) {
+        leftPosition = rect.left + window.scrollX;
+    }
+    
+    menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
+    menu.style.left = `${leftPosition}px`;
     
     document.body.appendChild(menu);
     
@@ -4077,6 +4105,52 @@ function aplicarConferenciaStyles(numCols) {
         }
     });
 }
+
+/**
+ * ✅ NOVA FUNÇÃO: Adiciona novo defeito à lista e ao texto
+ */
+function adicionarNovoDefeitoLista(sheetRange) {
+    const menu = document.querySelector('.menu-danos-defeito');
+    const input = menu.querySelector('#input-dano-customizado');
+    const textoCustomizado = input.value.trim();
+    
+    if (textoCustomizado) {
+        // 1. Adiciona à lista de opções se não existir
+        if (!opcoesDanosDefeito.includes(textoCustomizado)) {
+            opcoesDanosDefeito.push(textoCustomizado);
+            
+            // 2. Atualiza a lista no menu
+            const listaOpcoes = menu.querySelector('#lista-opcoes-danos');
+            const novoBotao = document.createElement('button');
+            novoBotao.className = 'w-full text-left px-2 py-1 rounded hover:bg-blue-50 text-sm';
+            novoBotao.onclick = function() { 
+                adicionarOpcaoDano(textoCustomizado, sheetRange); 
+            };
+            novoBotao.textContent = textoCustomizado;
+            
+            listaOpcoes.appendChild(novoBotao);
+        }
+        
+        // 3. Adiciona ao texto atual da célula
+        const celula = document.querySelector(`td [data-sheet-range="${sheetRange}"]`);
+        if (celula) {
+            const textoAtual = celula.textContent.trim();
+            const novoTexto = textoAtual ? `${textoAtual}, ${textoCustomizado}` : textoCustomizado;
+            
+            celula.textContent = novoTexto;
+            
+            // Dispara o evento blur para salvar automaticamente
+            const event = new Event('blur');
+            celula.dispatchEvent(event);
+        }
+        
+        // 4. Limpa o input
+        input.value = '';
+        input.focus();
+    }
+}
+
+		
 		
     </script>
 </body>
