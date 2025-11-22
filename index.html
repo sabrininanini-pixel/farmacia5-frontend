@@ -560,77 +560,63 @@ body {
     transform: scale(1.1);
 }
 
-/* 🔧 MODO DESKTOP PARA MOBILE - CSS CORRIGIDO */
+/* 🔧 MODO DESKTOP PARA MOBILE - CSS ULTRA FORÇADO */
 .modo-desktop-ativo body {
-    min-width: 1024px;
-    overflow-x: auto;
+    min-width: 1024px !important;
+    overflow-x: auto !important;
 }
 
 .modo-desktop-ativo #main-system,
 .modo-desktop-ativo #login-screen {
-    min-width: 1024px;
+    min-width: 1024px !important;
     transform: none !important;
     width: 100% !important;
 }
 
-/* 🔧 BOTÃO MODO DESKTOP - SEMPRE VISÍVEL QUANDO NO MODO DESKTOP */
+/* 🔧 BOTÃO MODO DESKTOP - FORÇADO */
 .btn-desktop-mode {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: #d1fae5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 16px !important;
+    background: #d1fae5 !important;
+    color: #065f46 !important;
+    border: 1px solid #a7f3d0 !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
 }
 
-.btn-desktop-mode:hover {
-    background: #a7f3d0;
-}
-
-/* IMPORTANTE: Botão visível apenas no mobile E no modo desktop */
+/*  ESSA É A SOLUÇÃO - Forçar display em TODAS as situações */
 .btn-desktop-mode.mobile-only {
-    display: none;
+    display: none !important;
 }
 
-/* Mostrar no mobile normal */
+/* No mobile normal */
 @media (max-width: 767px) {
     .btn-desktop-mode.mobile-only {
-        display: flex;
+        display: flex !important;
     }
 }
 
-/* 🔧 🔧 🔧 MAIS IMPORTANTE: SEMPRE mostrar no modo desktop, independente do tamanho da tela */
+/*  MAIS IMPORTANTE - Sobreviver ao modo desktop */
+.modo-desktop-ativo .btn-desktop-mode,
 .modo-desktop-ativo .btn-desktop-mode.mobile-only {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
+    position: relative !important;
+    z-index: 9999 !important;
 }
 
-/* Estado ativo do botão */
+/* Estado ativo */
 .modo-desktop-ativo .btn-desktop-mode {
     background: #10b981 !important;
     color: white !important;
     border-color: #059669 !important;
-}
-
-/* Ajustes para o modo desktop */
-.modo-desktop-ativo .container {
-    min-width: 1024px;
-}
-
-.modo-desktop-ativo .mock-table {
-    min-width: 1000px;
-}
-
-.modo-desktop-ativo .overflow-x-auto {
-    overflow-x: auto !important;
 }
 
 		   
@@ -4542,35 +4528,11 @@ function handleDanosEnterKey(event) {
     }
 }
 
-		// ✅ CÓDIGO DE DEBUG TEMPORÁRIO - adicione no final do arquivo
-function debugMenu() {
-    console.log('=== 🎯 DEBUG DO MENU ===');
-    const menu = document.querySelector('.menu-danos-defeito');
-    if (!menu) {
-        console.log('❌ Menu não encontrado');
-        return;
-    }
-    
-    console.log('✅ Menu encontrado');
-    
-    // Mostra TODOS os elementos com números
-    const todosElementos = menu.querySelectorAll('*');
-    todosElementos.forEach((el, i) => {
-        if (el.textContent && el.textContent.trim().match(/^[0-9]+$/)) {
-            console.log(`🎯 Elemento ${i}:`, el.outerHTML);
-        }
-    });
-    
-    console.log('=== FIM DEBUG ===');
-}
 
 // 🔧 SISTEMA MODO DESKTOP PARA MOBILE
 let modoDesktopAtivo = false;
 let viewportOriginal = '';
 
-/**
- * ✅ ALTERNAR MODO DESKTOP
- */
 function alternarModoDesktop() {
     const viewportMeta = document.querySelector('meta[name="viewport"]');
     
@@ -4578,21 +4540,22 @@ function alternarModoDesktop() {
         // ✅ ATIVAR MODO DESKTOP
         modoDesktopAtivo = true;
         
-        // Salva viewport original se ainda não salvou
         if (!viewportOriginal && viewportMeta) {
             viewportOriginal = viewportMeta.getAttribute('content');
         }
         
-        // Altera a viewport para modo desktop
         if (viewportMeta) {
             viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
         }
         
-        // Aplica classes CSS
         document.documentElement.classList.add('modo-desktop-ativo');
+        document.body.classList.add('modo-desktop-ativo');
         
-        // Atualiza todos os botões Modo Desktop
-        atualizarBotoesDesktop();
+        // 🔥 CHAMAR A FUNÇÃO QUE FORÇA A VISIBILIDADE
+        setTimeout(() => {
+            forcarVisibilidadeBotaoDesktop();
+            atualizarBotoesDesktop();
+        }, 100);
         
         showNotification('🖥️ Modo Desktop ativado', 'success', 3000);
         
@@ -4600,32 +4563,21 @@ function alternarModoDesktop() {
         // ✅ DESATIVAR MODO DESKTOP
         modoDesktopAtivo = false;
         
-        // Restaura viewport original
         if (viewportMeta && viewportOriginal) {
             viewportMeta.setAttribute('content', viewportOriginal);
         } else {
-            // Fallback para viewport mobile padrão
             viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
         }
         
-        // Remove classes CSS
         document.documentElement.classList.remove('modo-desktop-ativo');
+        document.body.classList.remove('modo-desktop-ativo', 'modo-desktop-botao-ativo');
         
-        // Atualiza todos os botões Modo Desktop
         atualizarBotoesDesktop();
-        
         showNotification('📱 Modo Mobile ativado', 'info', 3000);
     }
     
-    // Salva estado
     salvarEstadoDesktop();
-    
-    // Forçar redesenho
-    setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-    }, 100);
 }
-
 
 /**
  * ✅ ATUALIZAR TODOS OS BOTÕES DESKTOP - VERSÃO CORRIGIDA
@@ -4712,7 +4664,54 @@ function verificarModoDesktopAba() {
     }
 }
 
+/**
+ * ✅ FORÇAR VISIBILIDADE DO BOTÃO - SOLUÇÃO DEFINITIVA
+ */
+function forcarVisibilidadeBotaoDesktop() {
+    if (modoDesktopAtivo) {
+        const botoes = document.querySelectorAll('.btn-desktop-mode');
+        console.log('🔍 Procurando botões desktop...', botoes.length);
+        
+        botoes.forEach((botao, index) => {
+            console.log(`🎯 Botão ${index}:`, botao);
+            
+            //  FORÇAR todos os estilos necessários
+            botao.style.cssText = `
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: relative !important;
+                z-index: 9999 !important;
+                background: #10b981 !important;
+                color: white !important;
+                border: 1px solid #059669 !important;
+                padding: 8px 16px !important;
+                border-radius: 8px !important;
+                font-size: 14px !important;
+                font-weight: 500 !important;
+                cursor: pointer !important;
+            `;
+        });
+        
+        // Também forçar via classe
+        document.body.classList.add('modo-desktop-botao-ativo');
+    }
+}
 
+//  ADICIONE ESTE CSS EXTRA
+const estiloExtra = `
+    .modo-desktop-botao-ativo .btn-desktop-mode {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        background: #10b981 !important;
+        color: white !important;
+        border: 1px solid #059669 !important;
+    }
+`;
+const styleSheet = document.createElement('style');
+styleSheet.textContent = estiloExtra;
+document.head.appendChild(styleSheet);
 		
 		
     </script>
