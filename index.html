@@ -3935,30 +3935,8 @@ let opcoesDanosDefeito = [];
  * Mostra o menu de opções de danos/defeitos - ATUALIZADA
  */
 async function mostrarOpcoesDanos(botao, sheetRange) {
-    // ✅ CORREÇÃO CRÍTICA: Garantir que é um array
-    if (!Array.isArray(opcoesDanosDefeito)) {
-        console.warn('❌ opcoesDanosDefeito não é array, resetando...', opcoesDanosDefeito);
-        opcoesDanosDefeito = [];
-    }
-    
     // ✅ CARREGA SEMPRE DO BACKEND (opções mais recentes)
     opcoesDanosDefeito = await carregarOpcoesDanosDefeito();
-    
-    // ✅ GARANTIR NOVAMENTE que é array após carregar
-    if (!Array.isArray(opcoesDanosDefeito)) {
-        console.error('❌ Ainda não é array após carregar, usando fallback');
-        opcoesDanosDefeito = [
-            "Caixa amassada",
-            "Tampa com defeito", 
-            "Veio porém com outro código",
-            "Embalagem violada",
-            "Produto avariado",
-            "Falta componente"
-        ];
-    }
-    
-    console.log('✅ Opções carregadas para menu:', opcoesDanosDefeito);
-    
     const celula = botao.closest('td');
     const elementoEditavel = celula.querySelector('[contenteditable="true"]');
     const textoAtual = elementoEditavel.textContent;
@@ -3966,6 +3944,9 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
     // Remove menu anterior se existir
     const menuAnterior = document.querySelector('.menu-danos-defeito');
     if (menuAnterior) menuAnterior.remove();
+    
+    // ✅ GARANTE QUE USA AS OPÇÕES MAIS RECENTES
+    opcoesDanosDefeito = carregarOpcoesDanosDefeito();
     
     // Cria novo menu
     const menu = document.createElement('div');
@@ -3975,7 +3956,7 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
         <div class="text-sm font-medium text-gray-700 mb-2">Adicionar defeito:</div>
         <div class="space-y-1 max-h-40 overflow-y-auto" id="lista-opcoes-danos">`;
     
-    // ✅ AGORA opcoesDanosDefeito é garantidamente um array
+    // ✅ SEMPRE USA AS OPÇÕES ATUALIZADAS
     opcoesDanosDefeito.forEach(opcao => {
         html += `
             <button onclick="adicionarOpcaoDano('${opcao.replace(/'/g, "\\'")}', '${sheetRange}')"
@@ -3987,7 +3968,7 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
     
     html += `</div>`;
     
-    // ... resto do código da função (igual ao que você já tem)
+    // Campo para texto customizado COM BOTÃO +
     html += `
         <div class="mt-2 pt-2 border-t border-gray-200">
             <div class="text-xs text-gray-600 mb-1">Adicionar novo defeito:</div>
@@ -4012,38 +3993,20 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
     `;
     
     menu.innerHTML = html;
-
-// ✅ CORREÇÃO DO POSICIONAMENTO - SUBSTITUA ESTA PARTE:
-const rect = botao.getBoundingClientRect();
-const viewportHeight = window.innerHeight;
-const viewportWidth = window.innerWidth;
-
-// Calcula posição segura
-let topPosition = rect.bottom + 5;
-let leftPosition = rect.left - 150; // Menu à esquerda do botão
-
-// Ajusta se ultrapassar a tela
-if (topPosition + 300 > viewportHeight) {
-    topPosition = rect.top - 300; // Mostra acima se não couber abaixo
-}
-
-if (leftPosition < 10) {
-    leftPosition = 10; // Não deixa sair da tela à esquerda
-}
-
-if (leftPosition + 200 > viewportWidth) {
-    leftPosition = viewportWidth - 210; // Não deixa sair da tela à direita
-}
-
-// ✅ POSICIONAMENTO CORRETO
-menu.style.position = 'fixed';
-menu.style.top = `${topPosition}px`;
-menu.style.left = `${leftPosition}px`;
-menu.style.zIndex = '1000';
-menu.style.maxHeight = '300px';
-menu.style.overflowY = 'auto';
-
-document.body.appendChild(menu);
+    
+    // Posiciona para esquerda e baixo
+    const rect = botao.getBoundingClientRect();
+    const menuWidth = 192;
+    
+    let leftPosition = rect.left + window.scrollX - menuWidth + 30;
+    if (leftPosition < 10) {
+        leftPosition = rect.left + window.scrollX;
+    }
+    
+    menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
+    menu.style.left = `${leftPosition}px`;
+    
+    document.body.appendChild(menu);
     
     // Foca no input customizado
     setTimeout(() => {
