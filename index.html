@@ -559,76 +559,6 @@ body {
     color: #374151 !important;
     transform: scale(1.1);
 }
-
-		   /* 🔧 CONTROLE DE ZOOM NO MOBILE */
-.zoom-container {
-    transform-origin: 0 0;
-    transition: transform 0.3s ease;
-}
-
-.zoom-controls {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.zoom-btn {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid #4f46e5;
-    color: #4f46e5;
-    font-size: 24px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    cursor: pointer;
-    user-select: none;
-}
-
-.zoom-btn:active {
-    transform: scale(0.95);
-    background: #4f46e5;
-    color: white;
-}
-
-/* Esconder controles no desktop */
-@media (min-width: 768px) {
-    .zoom-controls {
-        display: none;
-    }
-}
-
-		   /* ✅ MELHORIAS PARA MOBILE COM ZOOM */
-@media (max-width: 767px) {
-    body {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    #main-system {
-        min-width: 100%;
-    }
-    
-    /* Garante que as tabelas sejam scrolláveis */
-    .overflow-x-auto {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    /* Ajusta o header para funcionar com zoom */
-    header.print-hidden {
-        position: relative;
-        z-index: 100;
-    }
-}
 		   
 </style>
 </head>
@@ -1108,41 +1038,34 @@ body {
         /**
          * ✅ INICIALIZAÇÃO CORRIGIDA
          */
-        // ✅ INICIALIZAÇÃO COMPLETA DO APP
-async function initializeApp() {
-    console.log("🚀 INICIALIZANDO APLICATIVO...");
-    
-    try {
-        // ✅ CONFIGURA LEMBRAR LOGIN
-        setTimeout(() => {
-            setupLoginRemember();
-        }, 800);
-        
-        // ✅ VERIFICA AUTENTICAÇÃO EXISTENTE
-        const isAuthenticated = await checkAuth();
-        
-        if (isAuthenticated) {
-            console.log("✅ Usuário já autenticado, mostrando sistema...");
-            showMainSystem();
-            showNotification(`Bem-vindo de volta, ${currentUser}!`, 'success');
+        async function initializeApp() {
+            console.log("🚀 INICIALIZANDO APLICATIVO...");
             
-            // ✅ INICIALIZA CONTROLES DE ZOOM (APÓS LOGIN)
-            setTimeout(() => {
-                initializeZoomControls();
-                setupPinchToZoom();
-            }, 1000);
-        } else {
-            console.log("🔐 Usuário não autenticado, mostrando tela de login");
-            document.getElementById('login-screen').classList.remove('hidden');
-            document.getElementById('main-system').classList.add('hidden');
+            try {
+                // ✅ CONFIGURA LEMBRAR LOGIN
+                setTimeout(() => {
+                    setupLoginRemember();
+                }, 800);
+                
+                // ✅ VERIFICA AUTENTICAÇÃO EXISTENTE
+                const isAuthenticated = await checkAuth();
+                
+                if (isAuthenticated) {
+                    console.log("✅ Usuário já autenticado, mostrando sistema...");
+                    showMainSystem();
+                    showNotification(`Bem-vindo de volta, ${currentUser}!`, 'success');
+                } else {
+                    console.log("🔐 Usuário não autenticado, mostrando tela de login");
+                    document.getElementById('login-screen').classList.remove('hidden');
+                    document.getElementById('main-system').classList.add('hidden');
+                }
+                
+            } catch (error) {
+                console.error('💥 Erro crítico na inicialização:', error);
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('main-system').classList.add('hidden');
+            }
         }
-        
-    } catch (error) {
-        console.error('💥 Erro crítico na inicialização:', error);
-        document.getElementById('login-screen').classList.remove('hidden');
-        document.getElementById('main-system').classList.add('hidden');
-    }
-}
 
         // =========================================================================
         // FIM DO SISTEMA DE AUTENTICAÇÃO
@@ -1460,7 +1383,7 @@ function realizarMudancaParaConferencia(sheetName) {
                         <span>Importar por Chave de Acesso</span>
                     </button>
                     
-             <button onclick="toggleScrollMode('CONFERENCIA')" id="scroll-button-conferencia" class="flex md:hidden items-center space-x-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg shadow-sm hover:bg-indigo-200 transition duration-150 text-sm font-medium border border-indigo-300">
+               <button onclick="toggleScrollMode('NOTA FISCAL')" id="scroll-button-notafiscal" class="hidden md:flex items-center space-x-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg shadow-sm hover:bg-indigo-200 transition duration-150 text-sm font-medium border border-indigo-300">
     <span>Modo Scroll</span>
 </button>
 
@@ -4537,129 +4460,6 @@ function debugMenu() {
     });
     
     console.log('=== FIM DEBUG ===');
-}
-
-
-		// 🔧 SISTEMA DE ZOOM PARA MOBILE
-let currentZoom = 1;
-const minZoom = 0.5;  // Permite afastar até 50%
-const maxZoom = 3;    // Permite aproximar até 300%
-const zoomStep = 0.1;
-
-/**
- * ✅ INICIALIZAR CONTROLES DE ZOOM
- */
-function initializeZoomControls() {
-    // Só adiciona controles no mobile
-    if (window.innerWidth < 768) {
-        const zoomControls = document.createElement('div');
-        zoomControls.className = 'zoom-controls print-hidden';
-        zoomControls.innerHTML = `
-            <button class="zoom-btn" onclick="zoomIn()" title="Aproximar">+</button>
-            <button class="zoom-btn" onclick="zoomOut()" title="Afastar">−</button>
-            <button class="zoom-btn" onclick="resetZoom()" title="Zoom Normal">↺</button>
-        `;
-        document.body.appendChild(zoomControls);
-        
-        // Aplica zoom inicial
-        applyZoom();
-    }
-}
-
-/**
- * ✅ APROXIMAR (ZOOM IN)
- */
-function zoomIn() {
-    if (currentZoom < maxZoom) {
-        currentZoom += zoomStep;
-        applyZoom();
-        showNotification(`Zoom: ${Math.round(currentZoom * 100)}%`, 'info', 1000);
-    } else {
-        showNotification('Zoom máximo atingido', 'warning', 1000);
-    }
-}
-
-/**
- * ✅ AFASTAR (ZOOM OUT) - FUNÇÃO QUE VOCÊ QUER
- */
-function zoomOut() {
-    if (currentZoom > minZoom) {
-        currentZoom -= zoomStep;
-        applyZoom();
-        showNotification(`Zoom: ${Math.round(currentZoom * 100)}%`, 'info', 1000);
-    } else {
-        showNotification('Zoom mínimo atingido', 'warning', 1000);
-    }
-}
-
-/**
- * ✅ RESETAR ZOOM
- */
-function resetZoom() {
-    currentZoom = 1;
-    applyZoom();
-    showNotification('Zoom resetado', 'success', 1000);
-}
-
-/**
- * ✅ APLICAR ZOOM NA PÁGINA
- */
-function applyZoom() {
-    const container = document.getElementById('main-system');
-    if (container) {
-        container.style.transform = `scale(${currentZoom})`;
-        container.style.transformOrigin = '0 0';
-        
-        // Ajusta a largura para compensar o zoom
-        container.style.width = `${100 / currentZoom}%`;
-        container.style.height = `${100 / currentZoom}%`;
-    }
-}
-
-/**
- * ✅ DETECTAR GESTOS DE PINÇA NO MOBILE
- */
-function setupPinchToZoom() {
-    let initialDistance = null;
-    
-    document.addEventListener('touchstart', function(e) {
-        if (e.touches.length === 2) {
-            initialDistance = getDistance(e.touches[0], e.touches[1]);
-        }
-    });
-    
-    document.addEventListener('touchmove', function(e) {
-        if (e.touches.length === 2 && initialDistance !== null) {
-            e.preventDefault();
-            
-            const currentDistance = getDistance(e.touches[0], e.touches[1]);
-            const scale = currentDistance / initialDistance;
-            
-            // Ajusta o zoom baseado no gesto
-            if (scale > 1.1) {
-                // Pinch para fora (afastar)
-                zoomOut();
-                initialDistance = currentDistance;
-            } else if (scale < 0.9) {
-                // Pinch para dentro (aproximar)
-                zoomIn();
-                initialDistance = currentDistance;
-            }
-        }
-    });
-    
-    document.addEventListener('touchend', function() {
-        initialDistance = null;
-    });
-}
-
-/**
- * ✅ CALCULAR DISTÂNCIA ENTRE DOIS PONTOS DE TOQUE
- */
-function getDistance(touch1, touch2) {
-    const dx = touch1.clientX - touch2.clientX;
-    const dy = touch1.clientY - touch2.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
 }
 		
     </script>
