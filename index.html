@@ -513,7 +513,32 @@ body {
     border-color: #D1D5DB !important; /* Borda cinza no hover */
     color: #374151 !important; /* Texto um pouco mais escuro no hover */
 }
-	   
+
+	/* Estilos para o sistema de Danos/Defeito */
+.grupo-danos-defeito:hover .opcao-danos-btn {
+    opacity: 1 !important;
+}
+
+.menu-danos-defeito {
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.descricao-danos {
+    min-height: 20px;
+    word-wrap: break-word;
+}
+
+.opcao-danos-btn {
+    transition: all 0.2s ease;
+    min-width: 24px;
+    min-height: 24px;
+}
+		   
 </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -1514,10 +1539,7 @@ function realizarMudancaParaConferencia(sheetName) {
         }
 
 
-        /**
- * Renderiza os dados do Sheets em uma tabela HTML (usado para NF e Conferencia).
- */
-function renderTable(sheetName, data, headers) {
+    function renderTable(sheetName, data, headers) {
     
     if (!data || data.length === 0) {
         return `<p class="text-center text-gray-500 py-10">Nenhum dado encontrado no Google Sheets para esta aba.</p>`;
@@ -1627,7 +1649,22 @@ function renderTable(sheetName, data, headers) {
                 } else {
                     html += `<td></td>`;
                 }
-            } else {
+            } 
+            // ✅ MODIFICAÇÃO: COLUNA DANOS/DEFEITO COM BOTÃO + E EDIÇÃO MANUAL
+            else if (isConferencia && i === 6) { // Coluna "Danos/Defeito"
+                html += `
+                    <td class="${cellClasses} relative grupo-danos-defeito">
+                        <div class="flex items-center">
+                            <div ${editAttributes} class="flex-1 min-h-[24px] descricao-danos">${cellValue}</div>
+                            <button onclick="mostrarOpcoesDanos(this, '${sheetRange}')" 
+                                    class="opcao-danos-btn ml-2 px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 transition opacity-0 grupo-danos-defeito:hover:opacity-100 text-xs font-medium">
+                                +
+                            </button>
+                        </div>
+                    </td>
+                `;
+            }
+            else {
                 html += `<td ${editAttributes} class="${cellClasses}">${cellValue}</td>`;
             }
         }
@@ -3816,7 +3853,153 @@ function abrirOutlook() {
     fecharModalEmail();
 }
 
+// ✅ SISTEMA DE DANOS/DEFEITO - OPÇÕES PRÉ-DEFINIDAS
+const opcoesDanosDefeito = [
+    "Caixa amassada",
+    "Tampa com defeito", 
+    "Veio porém com outro código",
+    "Embalagem violada",
+    "Produto avariado",
+    "Falta componente"
+];
 
+/**
+ * Mostra o menu de opções de danos/defeitos
+ */
+function mostrarOpcoesDanos(botao, sheetRange) {
+    const celula = botao.closest('td');
+    const elementoEditavel = celula.querySelector('[contenteditable="true"]');
+    const textoAtual = elementoEditavel.textContent;
+    
+    // Remove menu anterior se existir
+    const menuAnterior = document.querySelector('.menu-danos-defeito');
+    if (menuAnterior) menuAnterior.remove();
+    
+    // Cria novo menu
+    const menu = document.createElement('div');
+    menu.className = 'menu-danos-defeito absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-2 min-w-48';
+    
+    let html = `
+        <div class="text-sm font-medium text-gray-700 mb-2">Adicionar defeito:</div>
+        <div class="space-y-1 max-h-40 overflow-y-auto">`;
+    
+    // Opções pré-definidas
+    opcoesDanosDefeito.forEach(opcao => {
+        html += `
+            <button onclick="adicionarOpcaoDano('${opcao.replace(/'/g, "\\'")}', '${sheetRange}')"
+                    class="w-full text-left px-2 py-1 rounded hover:bg-blue-50 text-sm">
+                ${opcao}
+            </button>
+        `;
+    });
+    
+    // Campo para texto customizado
+    html += `
+        </div>
+        <div class="mt-2 pt-2 border-t border-gray-200">
+            <div class="flex gap-1">
+                <input type="text" 
+                       id="input-dano-customizado" 
+                       placeholder="Outro defeito..." 
+                       class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                <button onclick="adicionarDanoCustomizado('${sheetRange}')" 
+                        class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm">
+                    +
+                </button>
+            </div>
+        </div>
+        
+        <div class="mt-2">
+            <button onclick="fecharMenuDanos()" 
+                    class="w-full px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm">
+                Fechar
+            </button>
+        </div>
+    `;
+    
+    menu.innerHTML = html;
+    
+    // Posiciona o menu
+    const rect = botao.getBoundingClientRect();
+    menu.style.top = `${rect.bottom + window.scrollY}px`;
+    menu.style.left = `${rect.left + window.scrollX}px`;
+    
+    document.body.appendChild(menu);
+    
+    // Foca no input customizado
+    setTimeout(() => {
+        const input = document.getElementById('input-dano-customizado');
+        if (input) input.focus();
+    }, 100);
+}
+
+/**
+ * Adiciona uma opção pré-definida ao texto
+ */
+function adicionarOpcaoDano(opcao, sheetRange) {
+    const celula = document.querySelector(`td [data-sheet-range="${sheetRange}"]`);
+    
+    if (celula) {
+        const textoAtual = celula.textContent.trim();
+        const novoTexto = textoAtual ? `${textoAtual}, ${opcao}` : opcao;
+        
+        celula.textContent = novoTexto;
+        
+        // Dispara o evento blur para salvar automaticamente
+        const event = new Event('blur');
+        celula.dispatchEvent(event);
+        
+        fecharMenuDanos();
+    }
+}
+
+/**
+ * Adiciona texto customizado
+ */
+function adicionarDanoCustomizado(sheetRange) {
+    const menu = document.querySelector('.menu-danos-defeito');
+    const input = menu.querySelector('#input-dano-customizado');
+    const textoCustomizado = input.value.trim();
+    
+    if (textoCustomizado) {
+        const celula = document.querySelector(`td [data-sheet-range="${sheetRange}"]`);
+        
+        if (celula) {
+            const textoAtual = celula.textContent.trim();
+            const novoTexto = textoAtual ? `${textoAtual}, ${textoCustomizado}` : textoCustomizado;
+            
+            celula.textContent = novoTexto;
+            
+            // Dispara o evento blur para salvar automaticamente
+            const event = new Event('blur');
+            celula.dispatchEvent(event);
+            
+            // Adiciona à lista de opções se não existir
+            if (!opcoesDanosDefeito.includes(textoCustomizado)) {
+                opcoesDanosDefeito.push(textoCustomizado);
+            }
+            
+            // Limpa o input
+            input.value = '';
+            input.focus();
+        }
+    }
+}
+
+/**
+ * Fecha o menu
+ */
+function fecharMenuDanos() {
+    const menu = document.querySelector('.menu-danos-defeito');
+    if (menu) menu.remove();
+}
+
+// Fecha menu ao clicar fora
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.menu-danos-defeito') && !e.target.closest('.opcao-danos-btn')) {
+        fecharMenuDanos();
+    }
+});
 		
     </script>
 </body>
