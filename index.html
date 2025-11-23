@@ -1337,9 +1337,29 @@ body {
                 realizarMudancaParaConferencia(sheetName);
             });
 
-			    setTimeout(() => {
-        verificarModoDesktopAba();
+    setTimeout(() => {
+        console.log('🔄 Sincronizando modo desktop na aba:', sheetName);
+        
+        //  VERIFICAR ESTADO ATUAL
+        const estadoSalvo = localStorage.getItem('modoDesktopAtivo');
+        const ultimaAtualizacao = localStorage.getItem('ultimaAtualizacao');
+        
+        if (estadoSalvo) {
+            const estadoAtual = estadoSalvo === 'true';
+            
+            //  SINCRONIZAR SE O ESTADO ESTIVER DIFERENTE
+            if (estadoAtual !== modoDesktopAtivo) {
+                console.log('🔄 Corrigindo estado dessincronizado:', modoDesktopAtivo, '->', estadoAtual);
+                modoDesktopAtivo = estadoAtual;
+                aplicarModoDesktop(estadoAtual);
+            }
+        }
+        
+        //  ATUALIZAR BOTÕES NA NOVA ABA
+        atualizarBotoesDesktopGlobal();
+        
     }, 300);
+}
             
             return; // ⚠️ IMPORTANTE: para a execução aqui
         }
@@ -1469,6 +1489,7 @@ function realizarMudancaParaConferencia(sheetName) {
                 </div>
             `;
         }
+		setTimeout(atualizarBotoesDesktopGlobal, 100);
 
         /**
          * Retorna o HTML completo da aba CONTAGEM LOJA com mini-menu de contadores.
@@ -1567,6 +1588,7 @@ function realizarMudancaParaConferencia(sheetName) {
     `;
 }
 
+		setTimeout(atualizarBotoesDesktopGlobal, 100);
         /**
          * Abre a caixa de diálogo de impressão do navegador com estilos A4.
          */
@@ -4530,51 +4552,15 @@ let modoDesktopAtivo = false;
 let viewportOriginal = '';
 
 function alternarModoDesktop() {
-    const isAndroidApp = typeof Android !== 'undefined';
-    
-    //  SEMPRE alternar o estado primeiro
+    // 🔥 ALTERNAR ESTADO
     modoDesktopAtivo = !modoDesktopAtivo;
     console.log('🔄 Alternando modo desktop para:', modoDesktopAtivo);
     
-    if (isAndroidApp) {
-        // ✅ USA A INTERFACE DO APK
-        Android.ativarModoDesktop(modoDesktopAtivo);
-        
-    } else {
-        // ✅ MODO NORMAL (NAVEGADOR)
-        const viewportMeta = document.querySelector('meta[name="viewport"]');
-        
-        if (modoDesktopAtivo) {
-            // ATIVAR MODO DESKTOP
-            if (!viewportOriginal && viewportMeta) {
-                viewportOriginal = viewportMeta.getAttribute('content');
-            }
-            
-            if (viewportMeta) {
-                viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
-            }
-            
-            document.documentElement.classList.add('modo-desktop-ativo');
-            document.body.classList.add('modo-desktop-ativo');
-            
-        } else {
-            // DESATIVAR MODO DESKTOP
-            if (viewportMeta && viewportOriginal) {
-                viewportMeta.setAttribute('content', viewportOriginal);
-            } else {
-                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-            }
-            
-            document.documentElement.classList.remove('modo-desktop-ativo');
-            document.body.classList.remove('modo-desktop-ativo');
-        }
-    }
+    //  APLICAR MODO
+    aplicarModoDesktop(modoDesktopAtivo);
     
-    //  CHAMAR FUNÇÃO QUE FORÇA VISIBILIDADE
-    setTimeout(() => {
-        forcarVisibilidadeBotaoDesktop();
-        atualizarBotoesDesktop();
-    }, 100);
+    //  ATUALIZAR BOTÕES EM TODAS AS ABAS
+    atualizarBotoesDesktopGlobal();
     
     //  SALVAR ESTADO
     salvarEstadoDesktop();
@@ -4586,7 +4572,6 @@ function alternarModoDesktop() {
         showNotification('📱 Modo Mobile ativado', 'info', 3000);
     }
 }
-
 /**
  * ✅ ATUALIZAR TODOS OS BOTÕES DESKTOP - VERSÃO CORRIGIDA
  */
@@ -4648,23 +4633,59 @@ function carregarEstadoDesktop() {
     }
     
     if (estadoSalvo === 'true') {
-        setTimeout(() => {
-            modoDesktopAtivo = true;
-            
-            if (isAndroidApp) {
-                // ✅ USA INTERFACE DO APK
-                Android.ativarModoDesktop(true);
-            } else {
-                // ✅ MODO NAVEGADOR NORMAL
-                const viewportMeta = document.querySelector('meta[name="viewport"]');
-                if (viewportMeta) {
-                    viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
-                }
-                document.documentElement.classList.add('modo-desktop-ativo');
-            }
-            
-            atualizarBotoesDesktop();
-        }, 1000);
+        modoDesktopAtivo = true;
+        
+        //  APLICAR IMEDIATAMENTE sem delay
+        aplicarModoDesktop(true);
+    } else {
+        modoDesktopAtivo = false;
+    }
+    
+    //  ATUALIZAR BOTÕES IMEDIATAMENTE
+    setTimeout(atualizarBotoesDesktop, 100);
+}
+
+/**
+ * ✅ FUNÇÃO PARA APLICAR MODO DESKTOP CONSISTENTEMENTE
+ */
+function aplicarModoDesktop(ativo) {
+    const isAndroidApp = typeof Android !== 'undefined';
+    
+    if (ativo) {
+        // ATIVAR MODO DESKTOP
+        const viewportMeta = document.querySelector('meta[name="viewport"]');
+        
+        if (!viewportOriginal && viewportMeta) {
+            viewportOriginal = viewportMeta.getAttribute('content');
+        }
+        
+        if (viewportMeta && !isAndroidApp) {
+            viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
+        }
+        
+        document.documentElement.classList.add('modo-desktop-ativo');
+        document.body.classList.add('modo-desktop-ativo');
+        
+        if (isAndroidApp && typeof Android !== 'undefined') {
+            Android.ativarModoDesktop(true);
+        }
+        
+    } else {
+        // DESATIVAR MODO DESKTOP
+        const viewportMeta = document.querySelector('meta[name="viewport"]');
+        
+        if (viewportMeta && viewportOriginal && !isAndroidApp) {
+            viewportMeta.setAttribute('content', viewportOriginal);
+        } else if (viewportMeta && !isAndroidApp) {
+            viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+        }
+        
+        document.documentElement.classList.remove('modo-desktop-ativo');
+        document.body.classList.remove('modo-desktop-ativo');
+        
+        if (isAndroidApp && typeof Android !== 'undefined') {
+            Android.ativarModoDesktop(false);
+        }
     }
 }
 
@@ -4790,7 +4811,7 @@ function monitorarBotaoDesktop() {
         if (modoDesktopAtivo) {
             const botoes = document.querySelectorAll('.btn-desktop-mode');
             botoes.forEach(botao => {
-                // 🔥 CORRIGIR se estiver invisível
+                //  CORRIGIR se estiver invisível
                 const estilo = window.getComputedStyle(botao);
                 if (estilo.display === 'none' || estilo.visibility === 'hidden' || estilo.opacity === '0') {
                     console.log('🔧 Corrigindo botão invisível');
@@ -4805,6 +4826,89 @@ function monitorarBotaoDesktop() {
 
 // Iniciar monitoramento
 setTimeout(monitorarBotaoDesktop, 2000);
+
+		/**
+ * ✅ ATUALIZAR BOTÕES EM TODAS AS ABAS - GLOBAL
+ */
+function atualizarBotoesDesktopGlobal() {
+    console.log('🌍 Atualizando botões GLOBALMENTE. Modo ativo:', modoDesktopAtivo);
+    
+    //  ATUALIZAR BOTÕES EXISTENTES
+    const botoes = document.querySelectorAll('.btn-desktop-mode');
+    const textos = document.querySelectorAll('[id^="desktop-mode-text"]');
+    
+    botoes.forEach(botao => {
+        botao.style.display = 'flex';
+        botao.style.visibility = 'visible';
+        botao.style.opacity = '1';
+        
+        if (modoDesktopAtivo) {
+            botao.style.background = '#10b981';
+            botao.style.color = 'white';
+            botao.style.borderColor = '#059669';
+        } else {
+            botao.style.background = '#d1fae5';
+            botao.style.color = '#065f46';
+            botao.style.borderColor = '#a7f3d0';
+        }
+    });
+    
+    textos.forEach(texto => {
+        if (texto) {
+            texto.textContent = modoDesktopAtivo ? 'Modo Mobile' : 'Modo Desktop';
+        }
+    });
+    
+    //  SALVAR ESTADO NO localStorage PARA SINCRONIZAÇÃO
+    localStorage.setItem('modoDesktopAtivo', modoDesktopAtivo.toString());
+    localStorage.setItem('ultimaAtualizacao', Date.now().toString());
+}
+
+// 🔧 SINCRONIZAÇÃO EM TEMPO REAL ENTRE ABAS
+function iniciarSincronizacaoModoDesktop() {
+    //  VERIFICAR ALTERAÇÕES NO localStorage A CADA SEGUNDO
+    setInterval(() => {
+        const estadoSalvo = localStorage.getItem('modoDesktopAtivo');
+        const ultimaAtualizacao = localStorage.getItem('ultimaAtualizacao');
+        
+        if (estadoSalvo && ultimaAtualizacao) {
+            const estadoAtual = estadoSalvo === 'true';
+            const tempoAtualizacao = parseInt(ultimaAtualizacao);
+            
+            //  SÓ ATUALIZAR SE A ATUALIZAÇÃO FOR RECENTE (últimos 5 segundos)
+            if (Date.now() - tempoAtualizacao < 5000 && estadoAtual !== modoDesktopAtivo) {
+                console.log('🔄 Sincronização em tempo real detectada');
+                modoDesktopAtivo = estadoAtual;
+                aplicarModoDesktop(estadoAtual);
+                atualizarBotoesDesktopGlobal();
+            }
+        }
+    }, 1000);
+}
+
+// 🔧 VERIFICAR ESTADO AO CARREGAR A PÁGINA
+function verificarEstadoInicial() {
+    const estadoSalvo = localStorage.getItem('modoDesktopAtivo');
+    if (estadoSalvo) {
+        modoDesktopAtivo = estadoSalvo === 'true';
+        console.log('🎯 Estado inicial carregado:', modoDesktopAtivo);
+        
+        //  APLICAR MODO SE NECESSÁRIO
+        if (modoDesktopAtivo) {
+            aplicarModoDesktop(true);
+        }
+        
+        atualizarBotoesDesktopGlobal();
+    }
+}
+
+// 🔧 INICIAR SISTEMA DE SINCRONIZAÇÃO
+setTimeout(() => {
+    verificarEstadoInicial();
+    iniciarSincronizacaoModoDesktop();
+}, 1000);
+
+		
 		
     </script>
 </body>
