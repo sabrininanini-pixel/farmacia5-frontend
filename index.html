@@ -560,12 +560,11 @@ body {
     transform: scale(1.1);
 }
 
-/* ========== BOTÃO MODO DESKTOP - À PROVA DE ROTAÇÃO ========== */
+/* ========== BOTÃO MODO DESKTOP - EMERGÊNCIA ========== */
 
-/* 🔧 BOTÃO BASE - SEMPRE VISÍVEL EM MOBILE, NUNCA EM DESKTOP */
+/* 🔧 BOTÃO BASE - SEMPRE VISÍVEL (REMOVER DISPLAY NONE) */
 .btn-desktop-mode {
-    /* NO DESKTOP REAL: ESCONDER */
-    display: none !important;
+    display: flex !important;
     align-items: center !important;
     gap: 8px !important;
     padding: 8px 16px !important;
@@ -582,13 +581,6 @@ body {
     opacity: 1 !important;
     position: relative !important;
     z-index: 9999 !important;
-}
-
-/* 📱 MOBILE/APK: FORÇAR VISIBILIDADE MÁXIMA */
-body.mobile-device .btn-desktop-mode,
-body.webview-android .btn-desktop-mode,
-body:not(.desktop-real) .btn-desktop-mode {
-    display: flex !important;
 }
 
 /* 🎨 MODO DESKTOP ATIVO - MUDAR COR DO BOTÃO */
@@ -609,6 +601,13 @@ body:not(.desktop-real) .btn-desktop-mode {
     min-width: 1024px !important;
     transform: none !important;
     width: 100% !important;
+}
+
+/* 🖥️ DESKTOP REAL: ESCONDER BOTÃO (apenas em telas muito grandes) */
+@media (min-width: 1200px) and (pointer: fine) {
+    .btn-desktop-mode {
+        display: none !important;
+    }
 }
 		   
 </style>
@@ -4519,50 +4518,49 @@ function handleDanosEnterKey(event) {
 }
 
 
-// ========== SISTEMA MODO DESKTOP - VERSÃO DEFINITIVA ==========
+// ========== SISTEMA MODO DESKTOP - RESET DE EMERGÊNCIA ==========
 
 let modoDesktopAtivo = false;
 let viewportOriginal = '';
 
 /**
- * ✅ DETECTAR DISPOSITIVO MOBILE ROBUSTO
+ * ✅ RESETAR PARA MODO MOBILE (função de emergência)
  */
-function detectarDispositivoMobile() {
-    // Método 1: User Agent
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    const isMobileUserAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+function resetarParaModoMobile() {
+    console.log('🔄 RESETANDO para modo mobile...');
     
-    // Método 2: Touch screen
-    const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    modoDesktopAtivo = false;
     
-    // Método 3: APK Android
-    const isAndroidApp = typeof Android !== 'undefined';
-    
-    // Método 4: Screen size (apenas como fallback)
-    const isSmallScreen = window.innerWidth <= 1024;
-    
-    // É MOBILE se qualquer um dos métodos principais detectar
-    const isMobile = isMobileUserAgent || hasTouchScreen || isAndroidApp;
-    
-    console.log('📱 Detecção Mobile:', {
-        userAgent: isMobileUserAgent,
-        touch: hasTouchScreen,
-        androidApp: isAndroidApp,
-        smallScreen: isSmallScreen,
-        resultado: isMobile
-    });
-    
-    if (isMobile) {
-        document.body.classList.add('mobile-device');
-        document.body.classList.remove('desktop-real');
-        console.log('✅ Dispositivo mobile detectado - Botão SEMPRE visível');
-    } else {
-        document.body.classList.remove('mobile-device');
-        document.body.classList.add('desktop-real');
-        console.log('🖥️ Dispositivo desktop REAL detectado - Botão SEMPRE oculto');
+    // Resetar viewport
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    if (viewportMeta) {
+        viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
     }
     
-    return isMobile;
+    // Remover classe modo desktop
+    document.body.classList.remove('modo-desktop-ativo');
+    
+    // Limpar localStorage
+    localStorage.removeItem('modoDesktopMobile');
+    localStorage.removeItem('viewportOriginal');
+    
+    console.log('✅ Reset completo - Modo Mobile ativado');
+    showNotification('📱 Modo Mobile ativado', 'success', 3000);
+}
+
+/**
+ * ✅ DETECTAR DISPOSITIVO MOBILE SIMPLES
+ */
+function detectarDispositivoMobile() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    const isAndroidApp = typeof Android !== 'undefined';
+    
+    console.log('📱 Detecção:', { isMobile, isAndroidApp });
+    
+    // SEMPRE considerar mobile para teste
+    document.body.classList.add('mobile-device');
+    console.log('✅ Forçando modo mobile para teste');
 }
 
 /**
@@ -4625,70 +4623,43 @@ function salvarEstadoDesktop() {
 }
 
 /**
- * ✅ CARREGAR ESTADO SALVO
+ * ✅ CARREGAR ESTADO SALVO (SEM FORÇAR MODO DESKTOP)
  */
 function carregarEstadoDesktop() {
     const estadoSalvo = localStorage.getItem('modoDesktopMobile');
     const viewportSalvo = localStorage.getItem('viewportOriginal');
-    const isAndroidApp = typeof Android !== 'undefined';
     
     if (viewportSalvo) {
         viewportOriginal = viewportSalvo;
     }
     
+    // NÃO aplicar modo desktop automaticamente
     if (estadoSalvo === 'true') {
         modoDesktopAtivo = true;
-        
-        if (isAndroidApp) {
-            Android.ativarModoDesktop(true);
-        } else {
-            const viewportMeta = document.querySelector('meta[name="viewport"]');
-            if (viewportMeta) {
-                viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
-            }
-        }
-        
-        document.body.classList.add('modo-desktop-ativo');
-        console.log('📂 Estado carregado: Modo Desktop ATIVO');
+        console.log('📂 Estado carregado: Modo Desktop (não aplicado)');
     } else {
         modoDesktopAtivo = false;
-        console.log('📂 Estado carregado: Modo Desktop INATIVO');
+        console.log('📂 Estado carregado: Modo Mobile');
     }
 }
 
 /**
- * ✅ DETECTAR APK ANDROID E CONFIGURAR
- */
-function detectarAPKAndroid() {
-    const isAndroidApp = typeof Android !== 'undefined';
-    if (isAndroidApp) {
-        document.body.classList.add('webview-android');
-        console.log('📱 APK Android detectado');
-        
-        // Testa comunicação com APK
-        try {
-            Android.webViewPronto();
-        } catch (e) {
-            console.log('⚠️ Função webViewPronto não disponível');
-        }
-    }
-    return isAndroidApp;
-}
-
-/**
- * ✅ INICIALIZAÇÃO COMPLETA DO SISTEMA
+ * ✅ INICIALIZAÇÃO - FORÇAR MODO MOBILE
  */
 function inicializarSistemaDesktop() {
     console.log('🚀 Iniciando sistema modo desktop...');
     
-    // 1. Detectar dispositivo mobile (ROBUSTO)
+    // 1. Sempre forçar detecção mobile
     detectarDispositivoMobile();
     
-    // 2. Detectar APK Android
-    detectarAPKAndroid();
-    
-    // 3. Carregar estado salvo
+    // 2. Carregar estado (mas não aplicar)
     carregarEstadoDesktop();
+    
+    // 3. Se estava em modo desktop, resetar
+    if (modoDesktopAtivo) {
+        console.log('⚠️ Modo desktop detectado - Resetando...');
+        setTimeout(resetarParaModoMobile, 1000);
+    }
     
     console.log('✅ Sistema modo desktop inicializado');
 }
@@ -4698,19 +4669,17 @@ document.addEventListener('DOMContentLoaded', function() {
     inicializarSistemaDesktop();
 });
 
-// ✅ REDETECTAR EM TODOS OS EVENTOS POSSÍVEIS
-window.addEventListener('orientationchange', function() {
-    console.log('🔄 Tela girou - Redetectando...');
-    setTimeout(detectarDispositivoMobile, 100);
-});
+// ✅ BOTÃO DE RESET MANUAL (adicione temporariamente no HTML)
+function adicionarBotaoReset() {
+    const resetBtn = document.createElement('button');
+    resetBtn.textContent = 'RESET MODO';
+    resetBtn.style.cssText = 'position:fixed; top:10px; left:10px; background:red; color:white; z-index:10000; padding:10px;';
+    resetBtn.onclick = resetarParaModoMobile;
+    document.body.appendChild(resetBtn);
+}
 
-window.addEventListener('resize', function() {
-    console.log('🔄 Tela redimensionada - Redetectando...');
-    setTimeout(detectarDispositivoMobile, 100);
-});
-
-// ✅ CARREGAR ESTADO COM DELAY (backup)
-setTimeout(carregarEstadoDesktop, 1000);
+// ✅ ADICIONAR BOTÃO RESET TEMPORÁRIO
+setTimeout(adicionarBotaoReset, 2000);
 		
     </script>
 </body>
