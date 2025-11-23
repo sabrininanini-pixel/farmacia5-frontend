@@ -4184,7 +4184,7 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
     menu.className = 'menu-danos-defeito absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-2 min-w-64';
     
     let html = `
-        <div class="text-sm font-medium text-gray-700 mb-2">Adicionar defeito:</div>
+        <div class="text-sm font-medium text-gray-700 mb-2">Adicionar observação:</div>
         <div class="space-y-1 max-h-72 overflow-y-auto" id="lista-opcoes-danos">`;
     
  
@@ -4234,11 +4234,11 @@ opcoesDanosDefeito.forEach((opcao, index) => {
     // Campo para texto customizado COM BOTÃO +
     html += `
 <div class="space-y-1 max-h-64 overflow-y-auto" id="lista-opcoes-danos" style="scroll-behavior: smooth;">
-            <div class="text-xs text-gray-600 mb-1">Adicionar novo defeito:</div>
+            <div class="text-xs text-gray-600 mb-1">Adicionar nova frase na lista:</div>
             <div class="flex gap-1">
                 <input type="text" 
                        id="input-dano-customizado" 
-                       placeholder="Digite novo defeito..." 
+                       placeholder="Digite aqui..." 
                        class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm">
                 <button onclick="adicionarNovoDefeitoLista('${sheetRange}')" 
                         class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm flex items-center justify-center">
@@ -4553,7 +4553,7 @@ function resetarParaModoMobile() {
     localStorage.removeItem('viewportOriginal');
     
     console.log('✅ Reset completo - Modo Mobile ativado');
-    showNotification('📱 Modo Mobile ativado', 'success', 3000);
+    showNotification('Modo Mobile', 'success', 3000);
 }
 
 /**
@@ -4613,9 +4613,9 @@ function alternarModoDesktop() {
     
     // Feedback visual
     if (modoDesktopAtivo) {
-        showNotification('🖥️ Modo Desktop ativado', 'success', 3000);
+        showNotification('Modo Desktop', 'success', 3000);
     } else {
-        showNotification('📱 Modo Mobile ativado', 'info', 3000);
+        showNotification('Modo Mobile', 'info', 3000);
     }
 }
 
