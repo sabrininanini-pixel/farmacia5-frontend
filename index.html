@@ -242,11 +242,7 @@ body {
         box-shadow: 0 0 0 2px #c7d2fe; 
     }
     
-    /* ---------------------------------------------------------------- */
-    /* --- Estilos de Impressão (A4) --- */
-    /* ---------------------------------------------------------------- */
-  /*
-	   @media print {
+    @media print {
     * {
         box-sizing: border-box;
     }
@@ -260,6 +256,11 @@ body {
         line-height: 1.2 !important;
         background: white !important;
         color: black !important;
+        
+        /* ✅ ADICIONADO: Correção específica para iPhone */
+        -webkit-text-size-adjust: 100% !important;
+        text-size-adjust: 100% !important;
+        overflow: visible !important;
     }
 
     .container, .bg-white, .shadow-lg {
@@ -272,19 +273,23 @@ body {
         background: white !important;
     }
     
-    /* Ocultar elementos não essenciais 
+    /* Ocultar elementos não essenciais */
     header, nav, #paste-modal, #notifications-container, .print-hidden,
     .flex.border-b, .flex.flex-wrap, button, .tab-button {
         display: none !important;
     }
 
-    /* ✅ CORREÇÃO DA TABELA - FORÇAR CABER NA PÁGINA 
+    /* ✅ CORREÇÃO DA TABELA - FORÇAR CABER NA PÁGINA */
     .mock-table {
         width: 100% !important;
         max-width: 100% !important;
         font-size: 8pt !important;
         border-collapse: collapse;
         page-break-inside: auto;
+        
+        /* ✅ ADICIONADO: Para iPhone */
+        table-layout: fixed !important;
+        word-wrap: break-word !important;
     }
     
     .mock-table th, .mock-table td {
@@ -294,6 +299,11 @@ body {
         line-height: 1.1 !important;
         word-wrap: break-word;
         overflow-wrap: break-word;
+        
+        /* ✅ ADICIONADO: Para iPhone */
+        word-break: break-word !important;
+        -webkit-hyphens: auto !important;
+        hyphens: auto !important;
     }
     
     .mock-table th {
@@ -302,7 +312,7 @@ body {
         color: black !important;
     }
     
-    /* ✅ REMOVER TODOS OS MODOS DE LARGURA FIXA NA IMPRESSÃO 
+    /* ✅ REMOVER TODOS OS MODOS DE LARGURA FIXA NA IMPRESSÃO */
     .scroll-mode-cell, .scroll-mode-cell-numeric, .expand-mode-cell, 
     .scroll-mode-cell-code, .truncate-mode-cell {
         max-width: none !important;
@@ -313,21 +323,23 @@ body {
         text-overflow: clip !important;
     }
     
-    /* ✅ FORÇAR QUEBRA DE TEXTO LONGO 
+    /* ✅ FORÇAR QUEBRA DE TEXTO LONGO */
     .mock-table td {
         word-break: break-word;
         hyphens: auto;
     }
     
-    /* ✅ AJUSTAR LARGURAS ESPECÍFICAS DAS COLUNAS PARA IMPRESSÃO 
+    /* ✅ AJUSTAR LARGURAS ESPECÍFICAS DAS COLUNAS PARA IMPRESSÃO */
     #conferencia-table th:nth-child(1),
     #conferencia-table td:nth-child(1) {
-        width: 15% !important; /* Código de Barras 
+        width: 18% !important; /* Código de Barras - Aumentei um pouco */
+        min-width: 90px !important; /* ✅ ADICIONADO: Para iPhone */
     }
     
     #conferencia-table th:nth-child(2),
     #conferencia-table td:nth-child(2) {
-        width: 40% !important;  
+        width: 42% !important; /* Descrição - Ajustei */
+        min-width: 120px !important; /* ✅ ADICIONADO: Para iPhone */
     }
     
     #conferencia-table th:nth-child(3),
@@ -338,11 +350,19 @@ body {
     #conferencia-table td:nth-child(5),
     #conferencia-table th:nth-child(6),
     #conferencia-table td:nth-child(6) {
-        width: 10% !important; 
+        width: 8% !important; /* Reduzi para caber melhor */
+        min-width: 45px !important; /* ✅ ADICIONADO: Para iPhone */
         text-align: center !important;
     }
     
-    /* ✅ MANTER CORES DAS DIVERGÊNCIAS MESMO NA IMPRESSÃO 
+    /* ✅ CORREÇÃO EXTRA: Para a coluna Danos/Defeito não cortar */
+    #conferencia-table th:nth-child(7),
+    #conferencia-table td:nth-child(7) {
+        width: 16% !important;
+        min-width: 80px !important; /* ✅ ADICIONADO: Para iPhone */
+    }
+    
+    /* ✅ MANTER CORES DAS DIVERGÊNCIAS MESMO NA IMPRESSÃO */
     .bg-fee2e2, .text-b91c1c {
         background-color: #fee2e2 !important;
         color: #b91c1c !important;
@@ -363,13 +383,13 @@ body {
         print-color-adjust: exact;
     }
     
-    /* ✅ EVITAR QUEBRA DE LINHA NO MEIO DA LINHA 
+    /* ✅ EVITAR QUEBRA DE LINHA NO MEIO DA LINHA */
     .mock-table tr {
         page-break-inside: avoid;
         page-break-after: auto;
     }
     
-    /* ✅ CABEÇALHO FIXO NA IMPRESSÃO (se possível) 
+    /* ✅ CABEÇALHO FIXO NA IMPRESSÃO (se possível) */
     .mock-table thead {
         display: table-header-group;
     }
@@ -378,7 +398,7 @@ body {
         position: static !important;
     }
     
-    /* ✅ INFORMAÇÕES DAS NOTAS FISCAIS NA IMPRESSÃO 
+    /* ✅ INFORMAÇÕES DAS NOTAS FISCAIS NA IMPRESSÃO */
     .mb-4 {
         margin-bottom: 8px !important;
     }
@@ -391,20 +411,24 @@ body {
         border: 1px solid #d1d5db !important;
     }
 
-	       .bg-red-100 {
+    .bg-red-100 {
         background-color: #fee2e2 !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
 
-	    /* ✅ OCULTAR COLUNA AJUSTAR NA IMPRESSÃO 
+    /* ✅ OCULTAR COLUNA AJUSTAR NA IMPRESSÃO */
     #conferencia-table th:nth-child(6),
     #conferencia-table td:nth-child(6) {
         display: none !important;
     }
-
-} 
-	   */
+    
+    /* ✅ ADICIONADO: Configuração de página para iPhone */
+    @page {
+        margin: 0.5cm !important;
+        size: auto !important;
+    }
+}
     
     /* ---------------------------------------------------------------- */
     /* --- Ajuste de Notificação para Mobile (Compactação) --- */
@@ -613,148 +637,7 @@ body {
 }
 
 
-@media print {
-    /* ✅ CORREÇÃO ESPECÍFICA PARA IPHONE/SAFARI */
-    @page {
-        margin: 0.5cm !important;
-        size: auto !important;
-    }
-    
-    * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        overflow: visible !important;
-    }
-    
-    body {
-        margin: 0 !important;
-        padding: 10px !important;
-        width: 100% !important;
-        min-height: auto !important;
-        font-size: 10pt !important;
-        line-height: 1.2 !important;
-        background: white !important;
-        color: black !important;
-        overflow: visible !important;
-        -webkit-overflow-scrolling: touch !important;
-        -webkit-text-size-adjust: 100% !important;
-        text-size-adjust: 100% !important;
-    }
 
-    .container, .bg-white, .shadow-lg {
-        box-shadow: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-        max-width: none !important;
-        border: none !important;
-        background: white !important;
-        overflow: visible !important;
-    }
-    
-    /* ✅ CORREÇÃO DA TABELA - LARGURAS FLEXÍVEIS */
-    .mock-table {
-        width: 100% !important;
-        max-width: 100% !important;
-        font-size: 8pt !important;
-        border-collapse: collapse;
-        page-break-inside: auto;
-        table-layout: auto !important; /* ✅ MUDOU: auto em vez de fixed */
-        word-wrap: break-word !important;
-    }
-    
-    .mock-table th, .mock-table td {
-        padding: 3px 4px !important;
-        border: 1px solid #ccc !important;
-        font-size: 8pt !important;
-        line-height: 1.1 !important;
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
-        hyphens: auto !important;
-        word-break: break-word !important;
-        -webkit-hyphens: auto !important;
-    }
-    
-    /* ✅ REMOVER LARGURAS FIXAS QUE ESTAVAM CAUSANDO CONFLITO */
-    /* ❌ REMOVE estas linhas se existirem:
-    #conferencia-table th:nth-child(1),
-    #conferencia-table td:nth-child(1) {
-        width: 15% !important;
-        max-width: 15% !important;
-    }
-    
-    #conferencia-table th:nth-child(2),
-    #conferencia-table td:nth-child(2) {
-        width: 35% !important;
-        max-width: 35% !important;
-    }
-    
-    #conferencia-table th:nth-child(3),
-    #conferencia-table td:nth-child(3),
-    #conferencia-table th:nth-child(4),
-    #conferencia-table td:nth-child(4),
-    #conferencia-table th:nth-child(5),
-    #conferencia-table td:nth-child(5),
-    #conferencia-table th:nth-child(6),
-    #conferencia-table td:nth-child(6) {
-        width: 10% !important;
-        max-width: 10% !important;
-        text-align: center !important;
-    }
-    */
-    
-    /* ✅ EM VEZ DISSO, USAR LARGURAS RELATIVAS */
-    #conferencia-table th:nth-child(1),
-    #conferencia-table td:nth-child(1) {
-        width: 20% !important; /* Código Barras */
-        min-width: 80px !important;
-        max-width: 120px !important;
-    }
-    
-    #conferencia-table th:nth-child(2),
-    #conferencia-table td:nth-child(2) {
-        width: 40% !important; /* Descrição */
-        min-width: 150px !important;
-        max-width: none !important;
-    }
-    
-    #conferencia-table th:nth-child(3),
-    #conferencia-table td:nth-child(3),
-    #conferencia-table th:nth-child(4),
-    #conferencia-table td:nth-child(4),
-    #conferencia-table th:nth-child(5),
-    #conferencia-table td:nth-child(5) {
-        width: 8% !important; /* Colunas numéricas */
-        min-width: 50px !important;
-        max-width: 70px !important;
-        text-align: center !important;
-    }
-    
-    /* ✅ COLUNA DANOS/DEFEITO - MAIS LARGURA */
-    #conferencia-table th:nth-child(6),
-    #conferencia-table td:nth-child(6) {
-        width: 16% !important;
-        min-width: 100px !important;
-        max-width: 200px !important;
-    }
-    
-    /* ✅ EVITAR QUEBRA DE PÁGINA */
-    .mock-table tr {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-    }
-    
-    /* ✅ GARANTIR QUE CABEÇALHO REPETE */
-    .mock-table thead {
-        display: table-header-group !important;
-    }
-    
-    .mock-table th {
-        position: static !important;
-        background-color: #f8f9fa !important;
-        font-weight: bold !important;
-    }
-}
 		   
 		   
 </style>
