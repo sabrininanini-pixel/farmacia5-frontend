@@ -246,14 +246,25 @@ body {
     /* --- Estilos de Impressão (A4) --- */
     /* ---------------------------------------------------------------- */
    @media print {
+    /* 🚨 CORREÇÃO CRÍTICA 1: Define o tamanho da página A4 e remove margens padrão
+       Isto ajuda o WebKit (iOS) a renderizar corretamente. */
+    @page {
+        size: A4;
+        margin: 0; 
+    }
+
     * {
         box-sizing: border-box;
     }
     
     body {
         margin: 0 !important;
-        padding: 10px !important;
-        width: 100% !important;
+        padding: 10px !important; 
+        
+        /* 🚨 CORREÇÃO CRÍTICA 2: Força a largura exata de uma folha A4 (210mm) */
+        width: 210mm !important; 
+        max-width: 210mm !important;
+
         min-height: 297mm;
         font-size: 10pt !important;
         line-height: 1.2 !important;
@@ -291,8 +302,11 @@ body {
         border: 1px solid #ccc !important;
         font-size: 8pt !important;
         line-height: 1.1 !important;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
+        /* Força quebra de texto agressiva em todas as células */
+        word-break: break-word !important; 
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important; /* Importante para não manter linha única */
     }
     
     .mock-table th {
@@ -312,7 +326,7 @@ body {
         text-overflow: clip !important;
     }
     
-    /* ✅ FORÇAR QUEBRA DE TEXTO LONGO */
+    /* ✅ REFORÇAR QUEBRA DE TEXTO LONGO */
     .mock-table td {
         word-break: break-word;
         hyphens: auto;
@@ -334,15 +348,13 @@ body {
     #conferencia-table th:nth-child(4),
     #conferencia-table td:nth-child(4),
     #conferencia-table th:nth-child(5),
-    #conferencia-table td:nth-child(5),
-    #conferencia-table th:nth-child(6),
-    #conferencia-table td:nth-child(6) {
+    #conferencia-table td:nth-child(5) {
         width: 10% !important; /* Colunas numéricas */
         text-align: center !important;
     }
     
     /* ✅ MANTER CORES DAS DIVERGÊNCIAS MESMO NA IMPRESSÃO */
-    .bg-fee2e2, .text-b91c1c {
+    .bg-fee2e2, .text-b91c1c, .bg-red-100 {
         background-color: #fee2e2 !important;
         color: #b91c1c !important;
         -webkit-print-color-adjust: exact;
@@ -390,18 +402,12 @@ body {
         border: 1px solid #d1d5db !important;
     }
 
-	       .bg-red-100 {
-        background-color: #fee2e2 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-
-	    /* ✅ OCULTAR COLUNA AJUSTAR NA IMPRESSÃO */
+	/* ✅ OCULTAR COLUNA AJUSTAR NA IMPRESSÃO */
     #conferencia-table th:nth-child(6),
     #conferencia-table td:nth-child(6) {
         display: none !important;
     }
-
+}
 }
     
     /* ---------------------------------------------------------------- */
