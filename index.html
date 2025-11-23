@@ -245,7 +245,8 @@ body {
     /* ---------------------------------------------------------------- */
     /* --- Estilos de Impressão (A4) --- */
     /* ---------------------------------------------------------------- */
-   @media print {
+  /*
+	   @media print {
     * {
         box-sizing: border-box;
     }
@@ -271,13 +272,13 @@ body {
         background: white !important;
     }
     
-    /* Ocultar elementos não essenciais */
+    /* Ocultar elementos não essenciais 
     header, nav, #paste-modal, #notifications-container, .print-hidden,
     .flex.border-b, .flex.flex-wrap, button, .tab-button {
         display: none !important;
     }
 
-    /* ✅ CORREÇÃO DA TABELA - FORÇAR CABER NA PÁGINA */
+    /* ✅ CORREÇÃO DA TABELA - FORÇAR CABER NA PÁGINA 
     .mock-table {
         width: 100% !important;
         max-width: 100% !important;
@@ -301,7 +302,7 @@ body {
         color: black !important;
     }
     
-    /* ✅ REMOVER TODOS OS MODOS DE LARGURA FIXA NA IMPRESSÃO */
+    /* ✅ REMOVER TODOS OS MODOS DE LARGURA FIXA NA IMPRESSÃO 
     .scroll-mode-cell, .scroll-mode-cell-numeric, .expand-mode-cell, 
     .scroll-mode-cell-code, .truncate-mode-cell {
         max-width: none !important;
@@ -312,21 +313,21 @@ body {
         text-overflow: clip !important;
     }
     
-    /* ✅ FORÇAR QUEBRA DE TEXTO LONGO */
+    /* ✅ FORÇAR QUEBRA DE TEXTO LONGO 
     .mock-table td {
         word-break: break-word;
         hyphens: auto;
     }
     
-    /* ✅ AJUSTAR LARGURAS ESPECÍFICAS DAS COLUNAS PARA IMPRESSÃO */
+    /* ✅ AJUSTAR LARGURAS ESPECÍFICAS DAS COLUNAS PARA IMPRESSÃO 
     #conferencia-table th:nth-child(1),
     #conferencia-table td:nth-child(1) {
-        width: 15% !important; /* Código de Barras */
+        width: 15% !important; /* Código de Barras 
     }
     
     #conferencia-table th:nth-child(2),
     #conferencia-table td:nth-child(2) {
-        width: 40% !important; /* Descrição */
+        width: 40% !important;  
     }
     
     #conferencia-table th:nth-child(3),
@@ -337,11 +338,11 @@ body {
     #conferencia-table td:nth-child(5),
     #conferencia-table th:nth-child(6),
     #conferencia-table td:nth-child(6) {
-        width: 10% !important; /* Colunas numéricas */
+        width: 10% !important; 
         text-align: center !important;
     }
     
-    /* ✅ MANTER CORES DAS DIVERGÊNCIAS MESMO NA IMPRESSÃO */
+    /* ✅ MANTER CORES DAS DIVERGÊNCIAS MESMO NA IMPRESSÃO 
     .bg-fee2e2, .text-b91c1c {
         background-color: #fee2e2 !important;
         color: #b91c1c !important;
@@ -362,13 +363,13 @@ body {
         print-color-adjust: exact;
     }
     
-    /* ✅ EVITAR QUEBRA DE LINHA NO MEIO DA LINHA */
+    /* ✅ EVITAR QUEBRA DE LINHA NO MEIO DA LINHA 
     .mock-table tr {
         page-break-inside: avoid;
         page-break-after: auto;
     }
     
-    /* ✅ CABEÇALHO FIXO NA IMPRESSÃO (se possível) */
+    /* ✅ CABEÇALHO FIXO NA IMPRESSÃO (se possível) 
     .mock-table thead {
         display: table-header-group;
     }
@@ -377,7 +378,7 @@ body {
         position: static !important;
     }
     
-    /* ✅ INFORMAÇÕES DAS NOTAS FISCAIS NA IMPRESSÃO */
+    /* ✅ INFORMAÇÕES DAS NOTAS FISCAIS NA IMPRESSÃO 
     .mb-4 {
         margin-bottom: 8px !important;
     }
@@ -396,13 +397,14 @@ body {
         print-color-adjust: exact;
     }
 
-	    /* ✅ OCULTAR COLUNA AJUSTAR NA IMPRESSÃO */
+	    /* ✅ OCULTAR COLUNA AJUSTAR NA IMPRESSÃO 
     #conferencia-table th:nth-child(6),
     #conferencia-table td:nth-child(6) {
         display: none !important;
     }
 
-}
+} 
+	   */
     
     /* ---------------------------------------------------------------- */
     /* --- Ajuste de Notificação para Mobile (Compactação) --- */
@@ -635,6 +637,8 @@ body {
         color: black !important;
         overflow: visible !important;
         -webkit-overflow-scrolling: touch !important;
+        -webkit-text-size-adjust: 100% !important;
+        text-size-adjust: 100% !important;
     }
 
     .container, .bg-white, .shadow-lg {
@@ -648,14 +652,14 @@ body {
         overflow: visible !important;
     }
     
-    /* ✅ CORREÇÃO DA TABELA - IPHONE */
+    /* ✅ CORREÇÃO DA TABELA - LARGURAS FLEXÍVEIS */
     .mock-table {
         width: 100% !important;
         max-width: 100% !important;
         font-size: 8pt !important;
         border-collapse: collapse;
         page-break-inside: auto;
-        table-layout: fixed !important;
+        table-layout: auto !important; /* ✅ MUDOU: auto em vez de fixed */
         word-wrap: break-word !important;
     }
     
@@ -667,25 +671,21 @@ body {
         word-wrap: break-word !important;
         overflow-wrap: break-word !important;
         hyphens: auto !important;
-    }
-    
-    /* ✅ FORÇAR QUEBRA EM IPHONE */
-    .mock-table td {
         word-break: break-word !important;
         -webkit-hyphens: auto !important;
-        hyphens: auto !important;
     }
     
-    /* ✅ LARGURAS ESPECÍFICAS PARA IPHONE */
+    /* ✅ REMOVER LARGURAS FIXAS QUE ESTAVAM CAUSANDO CONFLITO */
+    /* ❌ REMOVE estas linhas se existirem:
     #conferencia-table th:nth-child(1),
     #conferencia-table td:nth-child(1) {
-        width: 15% !important; /* Código de Barras */
+        width: 15% !important;
         max-width: 15% !important;
     }
     
     #conferencia-table th:nth-child(2),
     #conferencia-table td:nth-child(2) {
-        width: 35% !important; /* Descrição */
+        width: 35% !important;
         max-width: 35% !important;
     }
     
@@ -697,9 +697,62 @@ body {
     #conferencia-table td:nth-child(5),
     #conferencia-table th:nth-child(6),
     #conferencia-table td:nth-child(6) {
-        width: 10% !important; /* Colunas numéricas */
+        width: 10% !important;
         max-width: 10% !important;
         text-align: center !important;
+    }
+    */
+    
+    /* ✅ EM VEZ DISSO, USAR LARGURAS RELATIVAS */
+    #conferencia-table th:nth-child(1),
+    #conferencia-table td:nth-child(1) {
+        width: 20% !important; /* Código Barras */
+        min-width: 80px !important;
+        max-width: 120px !important;
+    }
+    
+    #conferencia-table th:nth-child(2),
+    #conferencia-table td:nth-child(2) {
+        width: 40% !important; /* Descrição */
+        min-width: 150px !important;
+        max-width: none !important;
+    }
+    
+    #conferencia-table th:nth-child(3),
+    #conferencia-table td:nth-child(3),
+    #conferencia-table th:nth-child(4),
+    #conferencia-table td:nth-child(4),
+    #conferencia-table th:nth-child(5),
+    #conferencia-table td:nth-child(5) {
+        width: 8% !important; /* Colunas numéricas */
+        min-width: 50px !important;
+        max-width: 70px !important;
+        text-align: center !important;
+    }
+    
+    /* ✅ COLUNA DANOS/DEFEITO - MAIS LARGURA */
+    #conferencia-table th:nth-child(6),
+    #conferencia-table td:nth-child(6) {
+        width: 16% !important;
+        min-width: 100px !important;
+        max-width: 200px !important;
+    }
+    
+    /* ✅ EVITAR QUEBRA DE PÁGINA */
+    .mock-table tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    
+    /* ✅ GARANTIR QUE CABEÇALHO REPETE */
+    .mock-table thead {
+        display: table-header-group !important;
+    }
+    
+    .mock-table th {
+        position: static !important;
+        background-color: #f8f9fa !important;
+        font-weight: bold !important;
     }
 }
 		   
