@@ -4669,17 +4669,7 @@ document.addEventListener('DOMContentLoaded', function() {
     inicializarSistemaDesktop();
 });
 
-// ✅ BOTÃO DE RESET MANUAL (adicione temporariamente no HTML)
-function adicionarBotaoReset() {
-    const resetBtn = document.createElement('button');
-    resetBtn.textContent = 'RESET MODO';
-    resetBtn.style.cssText = 'position:fixed; top:10px; left:10px; background:red; color:white; z-index:10000; padding:10px;';
-    resetBtn.onclick = resetarParaModoMobile;
-    document.body.appendChild(resetBtn);
-}
 
-// ✅ ADICIONAR BOTÃO RESET TEMPORÁRIO
-setTimeout(adicionarBotaoReset, 2000);
 		
     </script>
 </body>
