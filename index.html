@@ -560,20 +560,20 @@ body {
     transform: scale(1.1);
 }
 
-/* 🔧 MODO DESKTOP - CSS DEFINITIVO */
+/* 🔧 MODO DESKTOP PARA MOBILE - CSS ULTRA FORÇADO */
 .modo-desktop-ativo body {
-    min-width: 1024px;
-    overflow-x: auto;
+    min-width: 1024px !important;
+    overflow-x: auto !important;
 }
 
 .modo-desktop-ativo #main-system,
 .modo-desktop-ativo #login-screen {
-    min-width: 1024px;
+    min-width: 1024px !important;
     transform: none !important;
     width: 100% !important;
 }
 
-/*  BOTÃO DESKTOP - SEMPRE VISÍVEL */
+/* 🔧 BOTÃO MODO DESKTOP - FORÇADO */
 .btn-desktop-mode {
     display: flex !important;
     align-items: center !important;
@@ -588,34 +588,52 @@ body {
     white-space: nowrap !important;
     cursor: pointer !important;
     transition: all 0.3s ease !important;
+}
+
+/*  ESSA É A SOLUÇÃO - Forçar display em TODAS as situações */
+.btn-desktop-mode.mobile-only {
+    display: none !important;
+}
+
+/* No mobile normal */
+@media (max-width: 767px) {
+    .btn-desktop-mode.mobile-only {
+        display: flex !important;
+    }
+}
+
+/*  MAIS IMPORTANTE - Sobreviver ao modo desktop */
+.modo-desktop-ativo .btn-desktop-mode,
+.modo-desktop-ativo .btn-desktop-mode.mobile-only {
+    display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
+    position: relative !important;
+    z-index: 9999 !important;
 }
 
-/*  REMOVER COMPLETAMENTE o mobile-only */
-.btn-desktop-mode.mobile-only {
-    display: flex !important; /* SEMPRE visível */
-}
-
-
-/* Estado ativo do botão */
+/* Estado ativo */
 .modo-desktop-ativo .btn-desktop-mode {
     background: #10b981 !important;
     color: white !important;
     border-color: #059669 !important;
 }
 
-/* Ajustes para o modo desktop */
-.modo-desktop-ativo .container {
+		   /* 🔧 COMPATIBILIDADE APK ANDROID */
+@media (max-width: 767px) {
+    .btn-desktop-mode.mobile-only {
+        display: flex !important;
+    }
+}
+
+/*  GARANTIR que funciona no WebView Android */
+body.webview-android .btn-desktop-mode.mobile-only {
+    display: flex !important;
+}
+
+/* Detecção de WebView via JavaScript */
+.webview-android .modo-desktop-ativo {
     min-width: 1024px;
-}
-
-.modo-desktop-ativo .mock-table {
-    min-width: 1000px;
-}
-
-.modo-desktop-ativo .overflow-x-auto {
-    overflow-x: auto !important;
 }
 		   
 </style>
@@ -1337,34 +1355,17 @@ body {
                 realizarMudancaParaConferencia(sheetName);
             });
 
-    setTimeout(() => {
-        console.log('🔄 Sincronizando modo desktop na aba:', sheetName);
-        
-        //  VERIFICAR ESTADO ATUAL
-        const estadoSalvo = localStorage.getItem('modoDesktopAtivo');
-        const ultimaAtualizacao = localStorage.getItem('ultimaAtualizacao');
-        
-        if (estadoSalvo) {
-            const estadoAtual = estadoSalvo === 'true';
-            
-            //  SINCRONIZAR SE O ESTADO ESTIVER DIFERENTE
-            if (estadoAtual !== modoDesktopAtivo) {
-                console.log('🔄 Corrigindo estado dessincronizado:', modoDesktopAtivo, '->', estadoAtual);
-                modoDesktopAtivo = estadoAtual;
-                aplicarModoDesktop(estadoAtual);
-            }
-        }
-        
-        //  ATUALIZAR BOTÕES NA NOVA ABA
-        atualizarBotoesDesktopGlobal();
-        
+			    setTimeout(() => {
+        verificarModoDesktopAba();
     }, 300);
-}
             
             return; // ⚠️ IMPORTANTE: para a execução aqui
         }
     }
     
+    // ✅ SE NÃO FOR PARA CONFERÊNCIA OU NÃO HOUVER DADOS, MUDA NORMALMENTE
+    realizarMudancaNormal(sheetName);
+}
 
 /**
  * ✅ FUNÇÃO AUXILIAR: Mudança normal para qualquer aba
@@ -1463,12 +1464,12 @@ function realizarMudancaParaConferencia(sheetName) {
                     </button>
 
 					  <!-- BOTÃO MODO DESKTOP - APENAS MOBILE -->
-               <button onclick="alternarModoDesktop()" id="desktop-mode-button-nota" class="btn-desktop-mode mobile-only">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-    </svg>
-    <span id="desktop-mode-text-nota">Modo Desktop</span>
-</button>
+                <button onclick="alternarModoDesktop()" id="desktop-mode-button-conferencia" class="btn-desktop-mode mobile-only">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span id="desktop-mode-text-conferencia">Modo Desktop</span>
+                </button>
 					
             <!--
                 <button onclick="toggleScrollMode('CONFERENCIA')" id="scroll-button-conferencia" class="flex md:hidden items-center space-x-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg shadow-sm hover:bg-indigo-200 transition duration-150 text-sm font-medium border border-indigo-300">
@@ -1486,7 +1487,6 @@ function realizarMudancaParaConferencia(sheetName) {
                 </div>
             `;
         }
-		setTimeout(atualizarBotoesDesktopGlobal, 100);
 
         /**
          * Retorna o HTML completo da aba CONTAGEM LOJA com mini-menu de contadores.
@@ -1565,12 +1565,13 @@ function realizarMudancaParaConferencia(sheetName) {
     </svg>
     <span>Enviar por Email</span>
 </button>
-                  <button onclick="alternarModoDesktop()" id="desktop-mode-button-conferencia" class="btn-desktop-mode mobile-only">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-    </svg>
-    <span id="desktop-mode-text-conferencia">Modo Desktop</span>
-</button>
+                  <!-- BOTÃO MODO DESKTOP - APENAS MOBILE -->
+                <button onclick="alternarModoDesktop()" id="desktop-mode-button-conferencia" class="btn-desktop-mode mobile-only">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span id="desktop-mode-text-conferencia">Modo Desktop</span>
+                </button>
 
                 <!--
                 <button onclick="toggleScrollMode('CONFERENCIA')" id="scroll-button-conferencia" class="flex md:hidden items-center space-x-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg shadow-sm hover:bg-indigo-200 transition duration-150 text-sm font-medium border border-indigo-300">
@@ -1585,7 +1586,6 @@ function realizarMudancaParaConferencia(sheetName) {
     `;
 }
 
-		setTimeout(atualizarBotoesDesktopGlobal, 100);
         /**
          * Abre a caixa de diálogo de impressão do navegador com estilos A4.
          */
@@ -4549,26 +4549,62 @@ let modoDesktopAtivo = false;
 let viewportOriginal = '';
 
 function alternarModoDesktop() {
-    // 🔥 ALTERNAR ESTADO
-    modoDesktopAtivo = !modoDesktopAtivo;
-    console.log('🔄 Alternando modo desktop para:', modoDesktopAtivo);
+    const isAndroidApp = typeof Android !== 'undefined';
     
-    //  APLICAR MODO
-    aplicarModoDesktop(modoDesktopAtivo);
-    
-    //  ATUALIZAR BOTÕES EM TODAS AS ABAS
-    atualizarBotoesDesktopGlobal();
-    
-    //  SALVAR ESTADO
-    salvarEstadoDesktop();
-    
-    // Feedback
-    if (modoDesktopAtivo) {
-        showNotification('🖥️ Modo Desktop ativado', 'success', 3000);
+    if (isAndroidApp) {
+        // ✅ USA A INTERFACE DO APK
+        modoDesktopAtivo = !modoDesktopAtivo;
+        Android.ativarModoDesktop(modoDesktopAtivo);
+        
+        // Atualiza a interface localmente
+        atualizarBotoesDesktop();
+        salvarEstadoDesktop();
+        
     } else {
-        showNotification('📱 Modo Mobile ativado', 'info', 3000);
+        // ✅ MODO NORMAL (NAVEGADOR)
+        const viewportMeta = document.querySelector('meta[name="viewport"]');
+        
+        if (!modoDesktopAtivo) {
+            // ATIVAR MODO DESKTOP
+            modoDesktopAtivo = true;
+            
+            if (!viewportOriginal && viewportMeta) {
+                viewportOriginal = viewportMeta.getAttribute('content');
+            }
+            
+            if (viewportMeta) {
+                viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
+            }
+            
+            document.documentElement.classList.add('modo-desktop-ativo');
+            document.body.classList.add('modo-desktop-ativo');
+            
+        } else {
+            // DESATIVAR MODO DESKTOP
+            modoDesktopAtivo = false;
+            
+            if (viewportMeta && viewportOriginal) {
+                viewportMeta.setAttribute('content', viewportOriginal);
+            } else {
+                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+            }
+            
+            document.documentElement.classList.remove('modo-desktop-ativo');
+            document.body.classList.remove('modo-desktop-ativo');
+        }
+        
+        atualizarBotoesDesktop();
+        salvarEstadoDesktop();
+        
+        // Feedback
+        if (modoDesktopAtivo) {
+            showNotification('🖥️ Modo Desktop ativado', 'success', 3000);
+        } else {
+            showNotification('📱 Modo Mobile ativado', 'info', 3000);
+        }
     }
 }
+
 /**
  * ✅ ATUALIZAR TODOS OS BOTÕES DESKTOP - VERSÃO CORRIGIDA
  */
@@ -4576,13 +4612,16 @@ function atualizarBotoesDesktop() {
     const botoes = document.querySelectorAll('.btn-desktop-mode');
     const textos = document.querySelectorAll('[id^="desktop-mode-text"]');
     
-    console.log('🔄 Atualizando botões. Total:', botoes.length);
+    console.log('🔄 Atualizando botões desktop. Modo ativo:', modoDesktopAtivo);
+    console.log('🔍 Botões encontrados:', botoes.length);
     
-    // 🔥 PRIMEIRO: Garantir que estão visíveis
     botoes.forEach(botao => {
-        botao.style.display = 'flex';
-        botao.style.visibility = 'visible';
-        botao.style.opacity = '1';
+        // 🔥 FORÇAR display flex sempre que estiver no modo desktop
+        if (modoDesktopAtivo) {
+            botao.style.display = 'flex !important';
+            botao.style.visibility = 'visible !important';
+            botao.style.opacity = '1 !important';
+        }
     });
     
     if (modoDesktopAtivo) {
@@ -4630,59 +4669,23 @@ function carregarEstadoDesktop() {
     }
     
     if (estadoSalvo === 'true') {
-        modoDesktopAtivo = true;
-        
-        //  APLICAR IMEDIATAMENTE sem delay
-        aplicarModoDesktop(true);
-    } else {
-        modoDesktopAtivo = false;
-    }
-    
-    //  ATUALIZAR BOTÕES IMEDIATAMENTE
-    setTimeout(atualizarBotoesDesktop, 100);
-}
-
-/**
- * ✅ FUNÇÃO PARA APLICAR MODO DESKTOP CONSISTENTEMENTE
- */
-function aplicarModoDesktop(ativo) {
-    const isAndroidApp = typeof Android !== 'undefined';
-    
-    if (ativo) {
-        // ATIVAR MODO DESKTOP
-        const viewportMeta = document.querySelector('meta[name="viewport"]');
-        
-        if (!viewportOriginal && viewportMeta) {
-            viewportOriginal = viewportMeta.getAttribute('content');
-        }
-        
-        if (viewportMeta && !isAndroidApp) {
-            viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
-        }
-        
-        document.documentElement.classList.add('modo-desktop-ativo');
-        document.body.classList.add('modo-desktop-ativo');
-        
-        if (isAndroidApp && typeof Android !== 'undefined') {
-            Android.ativarModoDesktop(true);
-        }
-        
-    } else {
-        // DESATIVAR MODO DESKTOP
-        const viewportMeta = document.querySelector('meta[name="viewport"]');
-        
-        if (viewportMeta && viewportOriginal && !isAndroidApp) {
-            viewportMeta.setAttribute('content', viewportOriginal);
-        } else if (viewportMeta && !isAndroidApp) {
-            viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-        }
-        
-        document.documentElement.classList.remove('modo-desktop-ativo');
-        document.body.classList.remove('modo-desktop-ativo');
-        
-        if (isAndroidApp && typeof Android !== 'undefined') {
-            Android.ativarModoDesktop(false);
-        }
+        setTimeout(() => {
+            modoDesktopAtivo = true;
+            
+            if (isAndroidApp) {
+                // ✅ USA INTERFACE DO APK
+                Android.ativarModoDesktop(true);
+            } else {
+                // ✅ MODO NAVEGADOR NORMAL
+                const viewportMeta = document.querySelector('meta[name="viewport"]');
+                if (viewportMeta) {
+                    viewportMeta.setAttribute('content', 'width=1024, initial-scale=0.5, maximum-scale=5.0, user-scalable=yes');
+                }
+                document.documentElement.classList.add('modo-desktop-ativo');
+            }
+            
+            atualizarBotoesDesktop();
+        }, 1000);
     }
 }
 
@@ -4768,144 +4771,6 @@ function detectarAmbiente() {
 
 // Executar ao carregar a página
 setTimeout(detectarAmbiente, 1000);
-
-
-		/**
- * ✅ FORÇAR VISIBILIDADE DO BOTÃO - SOLUÇÃO DEFINITIVA
- */
-function forcarVisibilidadeBotaoDesktop() {
-    console.log('🔧 Forçando visibilidade do botão desktop...');
-    
-    const botoes = document.querySelectorAll('.btn-desktop-mode');
-    console.log('🎯 Botões encontrados:', botoes.length);
-    
-    botoes.forEach((botao, index) => {
-        console.log(`🎯 Aplicando estilos no botão ${index}`);
-        
-        //  FORÇAR visibilidade com estilos inline
-        botao.style.display = 'flex';
-        botao.style.visibility = 'visible';
-        botao.style.opacity = '1';
-        botao.style.position = 'relative';
-        botao.style.zIndex = '9999';
-        
-        if (modoDesktopAtivo) {
-            botao.style.background = '#10b981';
-            botao.style.color = 'white';
-            botao.style.borderColor = '#059669';
-        } else {
-            botao.style.background = '#d1fae5';
-            botao.style.color = '#065f46';
-            botao.style.borderColor = '#a7f3d0';
-        }
-    });
-}
-
-
-		// 🔧 MONITORAR E CORRIGIR VISIBILIDADE CONTINUAMENTE
-function monitorarBotaoDesktop() {
-    setInterval(() => {
-        if (modoDesktopAtivo) {
-            const botoes = document.querySelectorAll('.btn-desktop-mode');
-            botoes.forEach(botao => {
-                //  CORRIGIR se estiver invisível
-                const estilo = window.getComputedStyle(botao);
-                if (estilo.display === 'none' || estilo.visibility === 'hidden' || estilo.opacity === '0') {
-                    console.log('🔧 Corrigindo botão invisível');
-                    botao.style.display = 'flex';
-                    botao.style.visibility = 'visible';
-                    botao.style.opacity = '1';
-                }
-            });
-        }
-    }, 500); // Verifica a cada 500ms
-}
-
-// Iniciar monitoramento
-setTimeout(monitorarBotaoDesktop, 2000);
-
-		/**
- * ✅ ATUALIZAR BOTÕES EM TODAS AS ABAS - GLOBAL
- */
-function atualizarBotoesDesktopGlobal() {
-    console.log('🌍 Atualizando botões GLOBALMENTE. Modo ativo:', modoDesktopAtivo);
-    
-    //  ATUALIZAR BOTÕES EXISTENTES
-    const botoes = document.querySelectorAll('.btn-desktop-mode');
-    const textos = document.querySelectorAll('[id^="desktop-mode-text"]');
-    
-    botoes.forEach(botao => {
-        botao.style.display = 'flex';
-        botao.style.visibility = 'visible';
-        botao.style.opacity = '1';
-        
-        if (modoDesktopAtivo) {
-            botao.style.background = '#10b981';
-            botao.style.color = 'white';
-            botao.style.borderColor = '#059669';
-        } else {
-            botao.style.background = '#d1fae5';
-            botao.style.color = '#065f46';
-            botao.style.borderColor = '#a7f3d0';
-        }
-    });
-    
-    textos.forEach(texto => {
-        if (texto) {
-            texto.textContent = modoDesktopAtivo ? 'Modo Mobile' : 'Modo Desktop';
-        }
-    });
-    
-    //  SALVAR ESTADO NO localStorage PARA SINCRONIZAÇÃO
-    localStorage.setItem('modoDesktopAtivo', modoDesktopAtivo.toString());
-    localStorage.setItem('ultimaAtualizacao', Date.now().toString());
-}
-
-// 🔧 SINCRONIZAÇÃO EM TEMPO REAL ENTRE ABAS
-function iniciarSincronizacaoModoDesktop() {
-    //  VERIFICAR ALTERAÇÕES NO localStorage A CADA SEGUNDO
-    setInterval(() => {
-        const estadoSalvo = localStorage.getItem('modoDesktopAtivo');
-        const ultimaAtualizacao = localStorage.getItem('ultimaAtualizacao');
-        
-        if (estadoSalvo && ultimaAtualizacao) {
-            const estadoAtual = estadoSalvo === 'true';
-            const tempoAtualizacao = parseInt(ultimaAtualizacao);
-            
-            //  SÓ ATUALIZAR SE A ATUALIZAÇÃO FOR RECENTE (últimos 5 segundos)
-            if (Date.now() - tempoAtualizacao < 5000 && estadoAtual !== modoDesktopAtivo) {
-                console.log('🔄 Sincronização em tempo real detectada');
-                modoDesktopAtivo = estadoAtual;
-                aplicarModoDesktop(estadoAtual);
-                atualizarBotoesDesktopGlobal();
-            }
-        }
-    }, 1000);
-}
-
-// 🔧 VERIFICAR ESTADO AO CARREGAR A PÁGINA
-function verificarEstadoInicial() {
-    const estadoSalvo = localStorage.getItem('modoDesktopAtivo');
-    if (estadoSalvo) {
-        modoDesktopAtivo = estadoSalvo === 'true';
-        console.log('🎯 Estado inicial carregado:', modoDesktopAtivo);
-        
-        //  APLICAR MODO SE NECESSÁRIO
-        if (modoDesktopAtivo) {
-            aplicarModoDesktop(true);
-        }
-        
-        atualizarBotoesDesktopGlobal();
-    }
-}
-
-// 🔧 INICIAR SISTEMA DE SINCRONIZAÇÃO
-setTimeout(() => {
-    verificarEstadoInicial();
-    iniciarSincronizacaoModoDesktop();
-}, 1000);
-
-		
 		
     </script>
 </body>
