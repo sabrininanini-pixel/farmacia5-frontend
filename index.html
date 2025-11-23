@@ -609,6 +609,100 @@ body {
         display: none !important;
     }
 }
+
+
+@media print {
+    /* ✅ CORREÇÃO ESPECÍFICA PARA IPHONE/SAFARI */
+    @page {
+        margin: 0.5cm !important;
+        size: auto !important;
+    }
+    
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        overflow: visible !important;
+    }
+    
+    body {
+        margin: 0 !important;
+        padding: 10px !important;
+        width: 100% !important;
+        min-height: auto !important;
+        font-size: 10pt !important;
+        line-height: 1.2 !important;
+        background: white !important;
+        color: black !important;
+        overflow: visible !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .container, .bg-white, .shadow-lg {
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        border: none !important;
+        background: white !important;
+        overflow: visible !important;
+    }
+    
+    /* ✅ CORREÇÃO DA TABELA - IPHONE */
+    .mock-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        font-size: 8pt !important;
+        border-collapse: collapse;
+        page-break-inside: auto;
+        table-layout: fixed !important;
+        word-wrap: break-word !important;
+    }
+    
+    .mock-table th, .mock-table td {
+        padding: 3px 4px !important;
+        border: 1px solid #ccc !important;
+        font-size: 8pt !important;
+        line-height: 1.1 !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        hyphens: auto !important;
+    }
+    
+    /* ✅ FORÇAR QUEBRA EM IPHONE */
+    .mock-table td {
+        word-break: break-word !important;
+        -webkit-hyphens: auto !important;
+        hyphens: auto !important;
+    }
+    
+    /* ✅ LARGURAS ESPECÍFICAS PARA IPHONE */
+    #conferencia-table th:nth-child(1),
+    #conferencia-table td:nth-child(1) {
+        width: 15% !important; /* Código de Barras */
+        max-width: 15% !important;
+    }
+    
+    #conferencia-table th:nth-child(2),
+    #conferencia-table td:nth-child(2) {
+        width: 35% !important; /* Descrição */
+        max-width: 35% !important;
+    }
+    
+    #conferencia-table th:nth-child(3),
+    #conferencia-table td:nth-child(3),
+    #conferencia-table th:nth-child(4),
+    #conferencia-table td:nth-child(4),
+    #conferencia-table th:nth-child(5),
+    #conferencia-table td:nth-child(5),
+    #conferencia-table th:nth-child(6),
+    #conferencia-table td:nth-child(6) {
+        width: 10% !important; /* Colunas numéricas */
+        max-width: 10% !important;
+        text-align: center !important;
+    }
+}
+		   
 		   
 </style>
 </head>
