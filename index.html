@@ -1494,6 +1494,14 @@ function realizarMudancaParaConferencia(sheetName) {
                             <span>Forçar Envio</span>
                             <span id="pending-count" class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">0</span>
                         </button>
+
+						 <button onclick="alternarModoDesktop()" class="btn-desktop-mode mobile-only flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg shadow-sm hover:bg-gray-200 transition duration-150 text-sm font-medium border border-gray-300">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        <span id="desktop-mode-text-contagem">Modo Desktop</span>
+    </button>
+						
                     </div>
                     <div id="dynamic-table-content-contagem">
                         <p class="text-center text-gray-400 py-10">Carregando dados...</p>
