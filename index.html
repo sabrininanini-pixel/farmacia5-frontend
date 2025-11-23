@@ -560,11 +560,11 @@ body {
     transform: scale(1.1);
 }
 
-/* ========== BOTÃO MODO DESKTOP - VERSÃO DEFINITIVA ========== */
+/* ========== BOTÃO MODO DESKTOP - SEM MEDIA QUERY ========== */
 
-/* 🔧 BOTÃO BASE - SEMPRE VISÍVEL NO MOBILE */
+/* 🔧 BOTÃO BASE - CONTROLE VIA CLASSE JS */
 .btn-desktop-mode {
-    display: flex !important;
+    display: none !important;
     align-items: center !important;
     gap: 8px !important;
     padding: 8px 16px !important;
@@ -583,11 +583,10 @@ body {
     z-index: 9999 !important;
 }
 
-/* 🖥️ DESKTOP REAL: ESCONDER BOTÃO */
-@media (min-width: 1025px) {
-    .btn-desktop-mode {
-        display: none !important;
-    }
+/* 📱 MOBILE: SEMPRE MOSTRAR (controlado por JavaScript) */
+body.mobile-device .btn-desktop-mode,
+body.webview-android .btn-desktop-mode {
+    display: flex !important;
 }
 
 /* 🎨 MODO DESKTOP ATIVO - MUDAR COR DO BOTÃO */
@@ -608,11 +607,6 @@ body {
     min-width: 1024px !important;
     transform: none !important;
     width: 100% !important;
-}
-
-/* 📱 COMPATIBILIDADE APK ANDROID */
-body.webview-android .btn-desktop-mode {
-    display: flex !important;
 }
 		   
 </style>
@@ -4523,10 +4517,27 @@ function handleDanosEnterKey(event) {
 }
 
 
-// ========== SISTEMA MODO DESKTOP - VERSÃO SIMPLES ==========
+// ========== SISTEMA MODO DESKTOP - VERSÃO CORRIGIDA ==========
 
 let modoDesktopAtivo = false;
 let viewportOriginal = '';
+
+/**
+ * ✅ DETECTAR DISPOSITIVO MOBILE (NOVA FUNÇÃO)
+ */
+function detectarDispositivoMobile() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    const isAndroidApp = typeof Android !== 'undefined';
+    
+    if (isMobile || isAndroidApp) {
+        document.body.classList.add('mobile-device');
+        console.log('📱 Dispositivo mobile detectado - Botão visível');
+    } else {
+        document.body.classList.remove('mobile-device');
+        console.log('🖥️ Dispositivo desktop detectado - Botão oculto');
+    }
+}
 
 /**
  * ✅ ALTERNAR MODO DESKTOP - FUNÇÃO PRINCIPAL
@@ -4644,10 +4655,13 @@ function detectarAPKAndroid() {
 function inicializarSistemaDesktop() {
     console.log('🚀 Iniciando sistema modo desktop...');
     
-    // 1. Detectar APK Android
+    // 1. Detectar dispositivo mobile (NOVA LINHA)
+    detectarDispositivoMobile();
+    
+    // 2. Detectar APK Android
     detectarAPKAndroid();
     
-    // 2. Carregar estado salvo
+    // 3. Carregar estado salvo
     carregarEstadoDesktop();
     
     console.log('✅ Sistema modo desktop inicializado');
@@ -4656,6 +4670,11 @@ function inicializarSistemaDesktop() {
 // ✅ EXECUTAR QUANDO A PÁGINA CARREGAR
 document.addEventListener('DOMContentLoaded', function() {
     inicializarSistemaDesktop();
+});
+
+// ✅ REDETECTAR QUANDO A TELA GIRAR (NOVA FUNÇÃO)
+window.addEventListener('orientationchange', function() {
+    setTimeout(detectarDispositivoMobile, 100);
 });
 
 // ✅ CARREGAR ESTADO COM DELAY (backup)
