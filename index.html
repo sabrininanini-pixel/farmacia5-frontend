@@ -1898,7 +1898,7 @@ async function getNotasFiscaisInfo() {
                     formattedInfo = formattedInfo.replace(/Data:/g, 'Data de emissão:');
                     
                     // Substitui "Pedido:" por "Pedido Capta:"
-                    formattedInfo = formattedInfo.replace(/Pedido:/g, 'Pedido Capta:');
+                    formattedInfo = formattedInfo.replace(/Pedido:/g, 'Pedido :');
                     
                     // Mantém "Chave:" (já está correto)
                     
@@ -1941,7 +1941,7 @@ function renderNotasFiscaisInfo(notasFiscaisInfo) {
         formattedInfo = formattedInfo.replace(/Data:/g, 'Data de emissão:');
         
         // Substitui "Pedido:" por "Pedido Capta:"
-        formattedInfo = formattedInfo.replace(/Pedido:/g, 'Pedido Capta:');
+        formattedInfo = formattedInfo.replace(/Pedido:/g, 'Pedido :');
         
         html += `<div class="p-2 border-b border-gray-200 text-sm font-sans bg-blue-200">${formattedInfo}</div>`;
     });
