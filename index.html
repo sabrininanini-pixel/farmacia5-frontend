@@ -270,6 +270,7 @@ body {
         line-height: 1.2 !important;
         background: white !important;
         color: black !important;
+		overflow: visible !important;
     }
 
     .container, .bg-white, .shadow-lg {
@@ -406,6 +407,14 @@ body {
     #conferencia-table th:nth-child(6),
     #conferencia-table td:nth-child(6) {
         display: none !important;
+    }
+
+	    #email-modal,
+    .modal-backdrop,
+    .print-hidden {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
     }
 }
 }
@@ -3798,7 +3807,7 @@ function handleDanosDefeitoEdit(element, sheetRange, sheetName) {
 
 
 	/**
- * ✅ GERAR PDF DA CONFERÊNCIA PARA EMAIL
+ * ✅ GERAR PDF DA CONFERÊNCIA PARA EMAIL - VERSÃO CORRIGIDA
  */
 function gerarPDFParaEmail() {
     // Verifica se está na aba CONFERENCIA
@@ -3811,62 +3820,89 @@ function gerarPDFParaEmail() {
         
         // Espera carregar a conferência antes de gerar o PDF
         setTimeout(() => {
-            window.print();
+            // Força um redraw da tabela para garantir que está visível
+            const tabela = document.getElementById('conferencia-table');
+            if (tabela) {
+                tabela.style.display = 'table';
+            }
+            
+            // Pequeno delay adicional para renderização
+            setTimeout(() => {
+                window.print();
+            }, 500);
         }, 2500);
     } else {
-        // Já está na conferência, gera o PDF imediatamente
-        window.print();
+        // Já está na conferência, garante que a tabela está visível
+        const tabela = document.getElementById('conferencia-table');
+        if (tabela) {
+            tabela.style.display = 'table';
+        }
+        
+        // Pequeno delay para renderização
+        setTimeout(() => {
+            window.print();
+        }, 300);
     }
 }
 
 /**
- * ✅ ABRIR OPÇÕES DE EMAIL
+ * ✅ ABRIR OPÇÕES DE EMAIL - VERSÃO CORRIGIDA PARA MOBILE
  */
 function abrirOpcoesEmail() {
-    // Primeiro gera o PDF DA CONFERÊNCIA
-    gerarPDFParaEmail();
+    // Primeiro fecha qualquer modal aberto
+    fecharModalEmail();
     
-    // Mostra modal com opções
-    const modalHtml = `
-        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
-                <h3 class="text-lg font-bold mb-4">Enviar Conferência por Email</h3>
-                <p class="text-sm text-gray-600 mb-4">
-                    <strong>Instruções:</strong><br>
-                    1. Salve o PDF da conferência<br>
-                    2. Clique no seu provedor de email preferido<br>
-                    3. Anexe o PDF manualmente no email
-                </p>
-                <div class="space-y-3">
-                    <button onclick="abrirGmail()" class="w-full flex items-center space-x-3 px-4 py-3 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition duration-150 text-sm font-medium border border-red-200">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24">
-                            <path fill="#EA4335" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#4285F4" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#34A853" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        <span>Abrir Gmail</span>
-                    </button>
-                    
-                    <button onclick="abrirOutlook()" class="w-full flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition duration-150 text-sm font-medium border border-blue-200">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-    </svg>
-    <span>Abrir Outlook</span>
-</button>
-                    
-                    <button onclick="fecharModalEmail()" class="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition duration-150">
-                        Cancelar
-                    </button>
+    // Pequeno delay para garantir que o modal foi fechado
+    setTimeout(() => {
+        // Gera o PDF PRIMEIRO (isso garante que a tabela será capturada)
+        gerarPDFParaEmail();
+        
+        // Depois de um tempo, abre o modal de email
+        setTimeout(() => {
+            const modalHtml = `
+                <div class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 print-hidden">
+                    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
+                        <h3 class="text-lg font-bold mb-4">Enviar Conferência por Email</h3>
+                        <p class="text-sm text-gray-600 mb-4">
+                            <strong>Instruções:</strong><br>
+                            1. Salve o PDF da conferência (já foi gerado)<br>
+                            2. Clique no seu provedor de email preferido<br>
+                            3. Anexe o PDF manualmente no email
+                        </p>
+                        <div class="space-y-3">
+                            <button onclick="abrirGmail()" class="w-full flex items-center space-x-3 px-4 py-3 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition duration-150 text-sm font-medium border border-red-200">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                                    <path fill="#EA4335" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                    <path fill="#4285F4" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                    <path fill="#34A853" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                </svg>
+                                <span>Abrir Gmail</span>
+                            </button>
+                            
+                            <button onclick="abrirOutlook()" class="w-full flex items-center space-x-3 px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition duration-150 text-sm font-medium border border-blue-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                <span>Abrir Outlook</span>
+                            </button>
+                            
+                            <button onclick="fecharModalEmail()" class="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition duration-150">
+                                Fechar
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    `;
-    
-    const modal = document.createElement('div');
-    modal.id = 'email-modal';
-    modal.innerHTML = modalHtml;
-    document.body.appendChild(modal);
+            `;
+            
+            const modal = document.createElement('div');
+            modal.id = 'email-modal';
+            modal.innerHTML = modalHtml;
+            document.body.appendChild(modal);
+            
+            showNotification('PDF gerado! Escolha seu provedor de email.', 'success', 3000);
+        }, 1000); // Delay para garantir que a impressão foi acionada
+    }, 100);
 }
 
 /**
