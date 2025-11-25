@@ -4701,6 +4701,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /**
+ * ✅ FUNÇÃO AUXILIAR - Data formatada
+ */
+function getDataAtual() {
+    const agora = new Date();
+    return `${agora.getFullYear()}-${(agora.getMonth()+1).toString().padStart(2, '0')}-${agora.getDate().toString().padStart(2, '0')}_${agora.getHours().toString().padStart(2, '0')}-${agora.getMinutes().toString().padStart(2, '0')}`;
+}
+
+/**
  * ✅ DIVIDIR CONTEÚDO EM PÁGINAS - CONSIDERANDO FILTRO DE DIVERGÊNCIAS
  */
 function dividirEmPaginas(elemento) {
@@ -4772,7 +4780,7 @@ function dividirEmPaginas(elemento) {
 }
 
 /**
- * ✅ EXPORTAR PDF - VERSÃO COM MULTIPLAS PÁGINAS (ATUALIZADA)
+ * ✅ EXPORTAR PDF - VERSÃO COM MULTIPLAS PÁGINAS (CORRIGIDA)
  */
 async function exportarPDFIdentico() {
     console.log('🎯 Exportação PDF - Múltiplas páginas...');
@@ -4853,20 +4861,25 @@ async function exportarPDFIdentico() {
 
             const paginaEl = paginas[i];
             
-            // ✅ CRIAR CONTAINER TEMPORÁRIO PARA CADA PÁGINA
+            // ✅ CRIAR CONTAINER TEMPORÁRIO PARA CADA PÁGINA (AGORA ESCONDIDO!)
             const container = document.createElement('div');
             container.style.cssText = `
-                position: fixed;
+                position: absolute; /* Manda para fora do fluxo */
                 top: 0;
                 left: 0;
+                z-index: -1; /* Manda para trás de tudo */
+                opacity: 0.0001; /* 🚨 CRÍTICO: Invisual para o usuário, visível para o html2canvas */
+                
                 width: ${pdfWidth - (margin * 2)}mm;
                 background: white;
-                z-index: 10000;
                 padding: ${margin}mm;
                 box-sizing: border-box;
             `;
             container.appendChild(paginaEl);
             document.body.appendChild(container);
+
+            // 🚨 CRÍTICO: PEQUENO ATRASO PARA GARANTIR A RENDERIZAÇÃO E CÁLCULO DO SCROLLHEIGHT
+            await new Promise(resolve => setTimeout(resolve, 50)); 
 
             // ✅ CAPTURAR PÁGINA
             const canvas = await html2canvas(container, {
@@ -4908,63 +4921,6 @@ async function exportarPDFIdentico() {
         console.error('❌ Erro na exportação de PDF:', error);
         showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
     }
-}
-/**
- * ✅ FUNÇÃO ALTERNATIVA - DIVISÃO AUTOMÁTICA POR ALTURA
- */
-function dividirEmPaginasPorAltura(elemento) {
-    const paginas = [];
-    const clone = elemento.cloneNode(true);
-    
-    // ✅ CONFIGURAÇÕES
-    const alturaMaximaPagina = 1000; // pixels - ajuste conforme necessário
-    let alturaAtual = 0;
-    let paginaAtual = document.createElement('div');
-    let paginasCriadas = 0;
-
-    // ✅ ESTILOS DA PÁGINA
-    paginaAtual.style.cssText = `
-        width: 100%;
-        background: white;
-        page-break-inside: avoid;
-    `;
-
-    // ✅ PROCESSAR ELEMENTOS FILHOS
-    Array.from(clone.children).forEach(child => {
-        const alturaChild = child.offsetHeight || 100; // estimativa
-        
-        if (alturaAtual + alturaChild > alturaMaximaPagina && alturaAtual > 0) {
-            // ✅ NOVA PÁGINA
-            paginas.push(paginaAtual);
-            paginaAtual = document.createElement('div');
-            paginaAtual.style.cssText = `
-                width: 100%;
-                background: white;
-                page-break-inside: avoid;
-            `;
-            alturaAtual = 0;
-            paginasCriadas++;
-        }
-        
-        paginaAtual.appendChild(child.cloneNode(true));
-        alturaAtual += alturaChild;
-    });
-
-    // ✅ ADICIONAR ÚLTIMA PÁGINA
-    if (paginaAtual.children.length > 0) {
-        paginas.push(paginaAtual);
-    }
-
-    console.log(`📊 Criadas ${paginas.length} páginas por altura`);
-    return paginas;
-}
-
-/**
- * ✅ FUNÇÃO AUXILIAR - Data formatada
- */
-function getDataAtual() {
-    const agora = new Date();
-    return `${agora.getFullYear()}-${(agora.getMonth()+1).toString().padStart(2, '0')}-${agora.getDate().toString().padStart(2, '0')}_${agora.getHours().toString().padStart(2, '0')}-${agora.getMinutes().toString().padStart(2, '0')}`;
 }
 		
     </script>
