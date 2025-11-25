@@ -647,7 +647,12 @@ body {
     font-weight: bold;
 }
 
-
+/* ✅ ESTILO PARA O X VERMELHO */
+.text-sm.font-bold {
+    font-size: 0.875rem;
+    font-weight: bold;
+    line-height: 1;
+}
 		   
 		   
 </style>
@@ -1798,17 +1803,17 @@ function realizarMudancaParaConferencia(sheetName) {
                     const jaIgualado = adjustments[`E${sheetRowIndex}`] === "0";
                     
                     if (jaIgualado) {
-                        // ✅ MOSTRAR "IGUALADO" + SETA
-                        html += `<td class="text-center">
-                            <div class="flex items-center justify-center gap-2">
-                                <span class="text-green-600 font-medium text-sm">IGUALADO</span>
-                                <button onclick="desfazerIgualar('${sheetRowIndex}')" 
-                                        class="text-red-500 hover:text-red-700 transition duration-150 text-lg font-bold"
-                                        title="Desfazer igualação">
-                                    ←
-                                </button>
-                            </div>
-                        </td>`;
+                        // ✅ MOSTRAR "OK" + X VERMELHO
+html += `<td class="text-center">
+    <div class="flex items-center justify-center gap-2">
+        <span class="text-green-600 font-medium text-sm">OK</span>
+        <button onclick="desfazerIgualar('${sheetRowIndex}')" 
+                class="text-red-500 hover:text-red-700 transition duration-150 text-sm font-bold"
+                title="Desfazer igualação">
+            ×
+        </button>
+    </div>
+</td>`;
                     } else {
                         // ✅ MOSTRAR BOTÃO NORMAL
                         html += `<td class="text-center">
@@ -3354,15 +3359,15 @@ function transformarBotaoIgualado(rowIndex) {
         
         if (corrigirCell) {
             corrigirCell.innerHTML = `
-                <div class="flex items-center justify-center gap-2">
-                    <span class="text-green-600 font-medium text-sm">IGUALADO</span>
-                    <button onclick="desfazerIgualar('${rowIndex}')" 
-                            class="text-red-500 hover:text-red-700 transition duration-150 text-lg font-bold"
-                            title="Desfazer igualação">
-                        ←
-                    </button>
-                </div>
-            `;
+    <div class="flex items-center justify-center gap-2">
+        <span class="text-green-600 font-medium text-sm">OK</span>
+        <button onclick="desfazerIgualar('${rowIndex}')" 
+                class="text-red-500 hover:text-red-700 transition duration-150 text-sm font-bold"
+                title="Desfazer igualação">
+            ×
+        </button>
+    </div>
+`;
         }
     }
 }
