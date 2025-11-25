@@ -4699,189 +4699,262 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /**
- * ✅ EXPORTAR PDF FORMATADO - VERSÃO FINAL CORRIGIDA
+ * ✅ EXPORTAR PDF IDÊNTICO AO BOTÃO IMPRIMIR - VERSÃO CORRIGIDA
  */
 function exportarPDFIdentico() {
-    console.log('🎯 Iniciando exportação de PDF formatado...');
+    console.log('🎯 Exportação PDF - Modo impressão nativo...');
     
-    showNotification('Gerando PDF formatado...', 'loading', 5000);
+    showNotification('Preparando PDF...', 'loading', 3000);
     
     try {
-        // 🚨 MUDANÇA 1: Usar o elemento que contém TUDO (Notas e Tabela)
-        const conferenciaWrapper = document.getElementById('conferencia-content');
-        if (!conferenciaWrapper) {
-            showNotification('Elemento principal da conferência (conferencia-content) não encontrado', 'error');
-            return;
-        }
-
-        // ✅ 2. CRIA UM CLONE COMPLETO DO CONTEÚDO
-        const element = conferenciaWrapper.cloneNode(true); // 'element' agora contém NF-Infos e Tabela
+        // ✅ 1. SALVA O ESTADO ATUAL DA PÁGINA
+        const bodyOriginal = document.body.innerHTML;
+        const displayOriginal = document.body.style.display;
         
-        // ✅ 3. REMOVE ELEMENTOS DESNECESSÁRIOS DO CLONE
-        // Oculta/remove o que não é de impressão
-        const elementosParaRemover = element.querySelectorAll(
-            '.print-hidden, button, nav, header, #paste-modal, #notifications-container, .tab-button, .flex.border-b, .flex.flex-wrap' // Mantendo a remoção de wrappers
+        // ✅ 2. PREPARA UMA VERSÃO OTIMIZADA PARA IMPRESSÃO
+        const contentToPrint = document.getElementById('conferencia-content').cloneNode(true);
+        
+        // ✅ 3. REMOVE ELEMENTOS DESNECESSÁRIOS (mas mantém tudo importante)
+        const elementosRemover = contentToPrint.querySelectorAll(
+            'button, .print-hidden, nav, header, .flex.border-b, .tab-button'
         );
-        elementosParaRemover.forEach(el => el.remove());
-
-        // ✅ 4. APLICA ESTILOS DE CORPO DE DOCUMENTO DIRETAMENTE NO CLONE
-        element.style.padding = '10px';
-        element.style.fontFamily = 'Arial, sans-serif';
-        element.style.fontSize = '10pt';
-        element.style.color = '#000';
-        element.style.background = 'white';
-        // Simula A4: Força largura para evitar scrollbars no html2canvas
-        element.style.width = '794px'; 
-        element.style.maxWidth = '794px';
-        element.style.margin = '0';
+        elementosRemover.forEach(el => el.remove());
         
-        // ✅ 5. APLICA ESTILOS ESPECÍFICOS NA TABELA (E TRATA OBS)
-        const tabela = element.querySelector('#conferencia-table');
-        if (tabela) {
-            tabela.style.width = '100%';
-            tabela.style.maxWidth = '100%';
-            tabela.style.fontSize = '8pt';
-            tabela.style.borderCollapse = 'collapse';
-            tabela.style.tableLayout = 'fixed'; // Ajuda a respeitar as larguras
-
-            // Itera sobre as células para aplicar estilos e larguras
-            tabela.querySelectorAll('th, td').forEach(celula => {
-                celula.style.border = '1px solid #ccc';
-                celula.style.padding = '3px 4px';
-                celula.style.fontSize = '8pt';
-                celula.style.lineHeight = '1.1';
-                celula.style.wordBreak = 'break-word';
-                celula.style.whiteSpace = 'normal'; // CRÍTICO: Permite quebra de linha
-                celula.style.verticalAlign = 'top';
-
-                // Remove classes que possam interferir na largura/visualização
-                celula.classList.remove('scroll-mode-cell', 'scroll-mode-cell-numeric', 'expand-mode-cell', 'scroll-mode-cell-code', 'truncate-mode-cell');
-            });
-            
-            // ✅ CORREÇÃO CRÍTICA PARA COLUNA OBS/DANOS (7ª coluna no HTML original)
-            const todasLinhas = tabela.querySelectorAll('tr');
-            todasLinhas.forEach(linha => {
-                const celulas = linha.querySelectorAll('td, th');
+        // ✅ 4. APLICA ESTILOS ESPECÍFICOS PARA IMPRESSÃO
+        const style = document.createElement('style');
+        style.innerHTML = `
+            /* ✅ ESTILOS DE IMPRESSÃO ESPECÍFICOS */
+            @media print {
+                body {
+                    margin: 0 !important;
+                    padding: 10px !important;
+                    width: 210mm !important;
+                    min-height: 297mm;
+                    font-size: 10pt !important;
+                    background: white !important;
+                    color: black !important;
+                    font-family: Arial, sans-serif !important;
+                }
                 
-                // Oculta coluna "Corrigir" (índice 5)
-                if (celulas.length > 5) {
-                    celulas[5].style.display = 'none';
+                .container-impressao {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: white !important;
                 }
-
-                // Ajusta a célula de Observação/Danos (índice 6)
-                if (celulas.length > 6) {
-                    const celulaObs = celulas[6];
-                    // Remove botões internos e garante que o conteúdo editável seja texto
-                    const conteudoEditavel = celulaObs.querySelector('[contenteditable="true"]');
-                    if (conteudoEditavel) {
-                        // Substitui o elemento editável pelo seu texto puro
-                        const texto = conteudoEditavel.textContent || '';
-                        celulaObs.innerHTML = texto;
-                        celulaObs.style.minHeight = 'auto'; // Garante quebra de texto
-                    }
-                    // Remove botões que podem estar na célula
-                    celulaObs.querySelectorAll('button, .opcao-danos-btn').forEach(btn => btn.remove());
+                
+                /* ✅ INFORMAÇÕES DAS NOTAS FISCAIS */
+                .mb-4 > div {
+                    background: #e3f2fd !important;
+                    padding: 8px 10px !important;
+                    margin-bottom: 8px !important;
+                    border: 1px solid #90caf9 !important;
+                    border-radius: 4px;
+                    font-size: 9pt !important;
+                    font-weight: normal !important;
+                    color: #000 !important;
+                    page-break-inside: avoid;
                 }
-            });
+                
+                /* ✅ TABELA PRINCIPAL */
+                .mock-table {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    font-size: 8pt !important;
+                    border-collapse: collapse;
+                    page-break-inside: auto;
+                }
+                
+                .mock-table th, 
+                .mock-table td {
+                    border: 1px solid #ccc !important;
+                    padding: 4px 5px !important;
+                    font-size: 8pt !important;
+                    line-height: 1.2 !important;
+                    word-break: break-word !important;
+                    white-space: normal !important;
+                    vertical-align: top;
+                }
+                
+                .mock-table th {
+                    background-color: #f8f9fa !important;
+                    font-weight: bold !important;
+                    color: black !important;
+                    text-align: center;
+                }
+                
+                /* ✅ LARGURAS DAS COLUNAS */
+                #conferencia-table th:nth-child(1),
+                #conferencia-table td:nth-child(1) {
+                    width: 15% !important; /* Código de Barras */
+                }
+                
+                #conferencia-table th:nth-child(2),
+                #conferencia-table td:nth-child(2) {
+                    width: 35% !important; /* Descrição */
+                }
+                
+                #conferencia-table th:nth-child(3),
+                #conferencia-table td:nth-child(3),
+                #conferencia-table th:nth-child(4),
+                #conferencia-table td:nth-child(4),
+                #conferencia-table th:nth-child(5),
+                #conferencia-table td:nth-child(5) {
+                    width: 10% !important; /* Colunas numéricas */
+                    text-align: center !important;
+                }
+                
+                #conferencia-table th:nth-child(6),
+                #conferencia-table td:nth-child(6) {
+                    width: 5% !important; /* Corrigir */
+                    text-align: center !important;
+                }
+                
+                #conferencia-table th:nth-child(7),
+                #conferencia-table td:nth-child(7) {
+                    width: 25% !important; /* Danos/Defeito */
+                }
+                
+                /* ✅ CORES DAS DIVERGÊNCIAS */
+                .bg-fee2e2, .text-b91c1c {
+                    background-color: #fee2e2 !important;
+                    color: #b91c1c !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                
+                .bg-green-100, .text-green-700 {
+                    background-color: #d1fae5 !important;
+                    color: #047857 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                
+                .bg-red-100 {
+                    background-color: #fecaca !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                
+                .bg-yellow-50 {
+                    background-color: #fefce8 !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                
+                /* ✅ OCULTAR COLUNA CORRIGIR NA IMPRESSÃO */
+                #conferencia-table th:nth-child(6),
+                #conferencia-table td:nth-child(6) {
+                    display: none !important;
+                }
+                
+                /* ✅ GARANTIR QUE BOTÕES NÃO APAREÇAM */
+                button, .opcao-danos-btn, .igualar-btn {
+                    display: none !important;
+                }
+                
+                /* ✅ CABEÇALHO FIXO */
+                .mock-table thead {
+                    display: table-header-group;
+                }
+                
+                /* ✅ EVITAR QUEBRA DE PÁGINA DENTRO DAS LINHAS */
+                .mock-table tr {
+                    page-break-inside: avoid;
+                    page-break-after: auto;
+                }
+            }
             
-            // ✅ DEFINIÇÃO DAS LARGURAS APÓS A OCUlTAÇÃO DA COLUNA 6
-            // A largura total deve somar 100%. Usamos os seletores nth-child corrigidos (a 6ª é ignorada)
+            /* ✅ ESTILOS PARA VISUALIZAÇÃO (antes da impressão) */
+            .visualizacao-impressao {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: white;
+                z-index: 9999;
+                padding: 20px;
+                overflow: auto;
+                font-family: Arial, sans-serif;
+            }
             
-            // Coluna 1 (15%) - Código
-            tabela.querySelectorAll('th:nth-child(1), td:nth-child(1)').forEach(el => el.style.width = '15%');
-            // Coluna 2 (40%) - Descrição
-            tabela.querySelectorAll('th:nth-child(2), td:nth-child(2)').forEach(el => el.style.width = '40%');
+            .visualizacao-impressao .mb-4 > div {
+                background: #e3f2fd;
+                padding: 8px 10px;
+                margin-bottom: 8px;
+                border: 1px solid #90caf9;
+                border-radius: 4px;
+                font-size: 9pt;
+            }
             
-            // Colunas 3, 4, 5 (10% cada = 30%) - Numéricas
-            tabela.querySelectorAll('th:nth-child(3), td:nth-child(3), th:nth-child(4), td:nth-child(4), th:nth-child(5), td:nth-child(5)').forEach(el => {
-                el.style.width = '10%';
-                el.style.textAlign = 'center';
-            });
+            .visualizacao-impressao .mock-table {
+                width: 100%;
+                font-size: 8pt;
+                border-collapse: collapse;
+            }
             
-            // Coluna 7 (15%) - Obs/Danos
-            tabela.querySelectorAll('th:nth-child(7), td:nth-child(7)').forEach(el => el.style.width = '15%');
-        }
-        
-        // ✅ 6. CRIA CONTAINER TEMPORÁRIO E ADICIONA CABEÇALHO SUPERIOR
-        const container = document.createElement('div');
-        container.style.position = 'absolute';
-container.style.top = '0';
-container.style.left = '0';
-container.style.opacity = '0';        // invisível, mas renderizado
-container.style.pointerEvents = 'none';
-container.style.width = '794px';
-container.style.zIndex = '-1';        // fora da interação
-container.style.background = 'white';
-
-
-		
-        // Adiciona um cabeçalho fixo no topo do PDF
-        const cabecalho = document.createElement('div');
-        cabecalho.innerHTML = `
-            <div style="text-align: center; margin-bottom: 15px; border-bottom: 2px solid #333; padding: 15px 0 10px 0; background-color: #f7f7f7;">
-                <h1 style="margin: 0; font-size: 16pt; color: #1e3a8a;">Conferência de Nota Fiscal</h1>
-                <p style="margin: 5px 0 0 0; font-size: 10pt; color: #666;">
-                    Gerado em ${new Date().toLocaleString('pt-BR')} - Sistema GTGO
-                </p>
-            </div>
+            .visualizacao-impressao .mock-table th,
+            .visualizacao-impressao .mock-table td {
+                border: 1px solid #ccc;
+                padding: 4px 5px;
+            }
+            
+            .visualizacao-impressao .mock-table th {
+                background: #f8f9fa;
+                font-weight: bold;
+            }
         `;
         
-        // ✅ ORDEM CORRETA: CABEÇALHO -> CONTEÚDO (INFOS NF + TABELA)
-        container.appendChild(cabecalho);
-        container.appendChild(element); // O 'element' já tem as infos da NF acima da tabela
+        // ✅ 5. CRIA UM CONTAINER DE VISUALIZAÇÃO
+        const container = document.createElement('div');
+        container.className = 'visualizacao-impressao';
+        container.appendChild(style);
+        container.appendChild(contentToPrint);
+        
+        // ✅ 6. SUBSTITUI O BODY TEMPORARIAMENTE
+        document.body.innerHTML = '';
         document.body.appendChild(container);
+        document.body.style.display = 'block';
         
-        // ✅ 7. CONFIGURAÇÕES DO PDF
-        const options = {
-            margin: [10, 10, 10, 10],
-            filename: `conferencia_${getDataAtual()}.pdf`,
-            image: { type: 'jpeg', quality: 0.95 },
-            html2canvas: { 
-                scale: 2,
-                useCORS: true,
-                logging: true,
-                backgroundColor: '#ffffff',
-                windowWidth: 800, // Largura de renderização, ajustada para a simulação A4
-                width: 800 
-            },
-            jsPDF: { 
-                unit: 'mm', 
-                format: 'a4', 
-                orientation: 'portrait' 
+        // ✅ 7. AGUARDA O RENDER E CHAMA A IMPRESSÃO NATIVA
+        setTimeout(() => {
+            // Primeiro mostra preview, depois imprime
+            const preview = confirm('Deseja ver a visualização antes de imprimir/salvar? Clique em OK para visualizar, Cancelar para imprimir diretamente.');
+            
+            if (preview) {
+                // Mostra preview e dá opção de imprimir
+                const imprimir = confirm('Visualização pronta! Clique em OK para imprimir/salvar como PDF.');
+                if (imprimir) {
+                    window.print();
+                }
+            } else {
+                // Imprime diretamente
+                window.print();
             }
-        };
+            
+            // ✅ 8. RESTAURA A PÁGINA ORIGINAL
+            setTimeout(() => {
+                document.body.innerHTML = bodyOriginal;
+                document.body.style.display = displayOriginal;
+                showNotification('PDF pronto para salvar/imprimir!', 'success', 3000);
+            }, 1000);
+            
+        }, 1000);
         
-        console.log('📄 Elemento preparado para PDF:', container);
-        
-        // 🚨 MUDANÇA 2: Usa o CONTEINER como fonte do html2pdf
-        html2pdf()
-            .set(options)
-            .from(container) // 👈 CORREÇÃO: Usar o container que engloba tudo
-            .save()
-            // ... (o restante do .then e .catch está correto)
-            .then(() => {
-                console.log('✅ PDF gerado com sucesso!');
-                showNotification('PDF formatado gerado com sucesso!', 'success', 4000);
-                document.body.removeChild(container);
-            })
-            .catch((error) => {
-                console.error('❌ Erro ao gerar PDF:', error);
-                showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
-                document.body.removeChild(container);
-            });
-
     } catch (error) {
         console.error('❌ Erro na exportação de PDF:', error);
         showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
+        
+        // ✅ RESTAURA A PÁGINA EM CASO DE ERRO
+        try {
+            document.body.innerHTML = bodyOriginal;
+            document.body.style.display = displayOriginal;
+        } catch (e) {
+            location.reload(); // Fallback extremo
+        }
     }
-}
-		
-/**
- * ✅ FUNÇÃO AUXILIAR - Data formatada para nome do arquivo
- */
-function getDataAtual() {
-    const agora = new Date();
-    return `${agora.getFullYear()}-${(agora.getMonth()+1).toString().padStart(2, '0')}-${agora.getDate().toString().padStart(2, '0')}_${agora.getHours().toString().padStart(2, '0')}-${agora.getMinutes().toString().padStart(2, '0')}`;
 }
 		
     </script>
