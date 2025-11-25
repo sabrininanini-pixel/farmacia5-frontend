@@ -4700,7 +4700,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /**
  * ✅ DIVIDIR CONTEÚDO EM PÁGINAS - CONSIDERANDO FILTRO DE DIVERGÊNCIAS
- * (Esta função permanece inalterada, pois já estava correta)
  */
 function dividirEmPaginas(elemento) {
     const paginas = [];
@@ -4714,8 +4713,6 @@ function dividirEmPaginas(elemento) {
     // ✅ CLONAR CABEÇALHO E INFORMAÇÕES DAS NOTAS
     const cabecalho = elemento.cloneNode(true);
     cabecalho.querySelectorAll('#conferencia-table tbody tr').forEach(tr => tr.remove());
-    
-    // ... (restante da função dividirEmPaginas inalterada) ...
     
     const corpoTabela = tabela.querySelector('tbody');
     
@@ -4773,7 +4770,7 @@ function dividirEmPaginas(elemento) {
 }
 
 /**
- * ✅ EXPORTAR PDF - VERSÃO COM MULTIPLAS PÁGINAS (CORRIGIDA)
+ * ✅ EXPORTAR PDF - VERSÃO COM MULTIPLAS PÁGINAS (ATUALIZADA)
  */
 async function exportarPDFIdentico() {
     console.log('🎯 Exportação PDF - Múltiplas páginas...');
@@ -4845,10 +4842,6 @@ async function exportarPDFIdentico() {
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
         const margin = 10; // margem de 10mm
-        
-        // NOVO: Largura do container temporário em PIXELS (para o html2canvas)
-        const contentWidthMm = pdfWidth - (margin * 2);
-        const contentWidthPx = mmToPx(contentWidthMm); 
 
         // ✅ 8. PROCESSAR CADA PÁGINA
         for (let i = 0; i < paginas.length; i++) {
@@ -4858,25 +4851,20 @@ async function exportarPDFIdentico() {
 
             const paginaEl = paginas[i];
             
-            // ✅ CRIAR CONTAINER TEMPORÁRIO PARA CADA PÁGINA (AGORA ESCONDIDO)
+            // ✅ CRIAR CONTAINER TEMPORÁRIO PARA CADA PÁGINA
             const container = document.createElement('div');
             container.style.cssText = `
-                position: absolute; /* Não bloqueia o layout */
+                position: fixed;
                 top: 0;
                 left: 0;
-                z-index: -1; /* Manda para trás */
-                opacity: 0.0001; /* 🚨 CRÍTICO: Invisual, mas renderizável */
-                
-                width: ${contentWidthPx}px; /* Usando PX */
+                width: ${pdfWidth - (margin * 2)}mm;
                 background: white;
-                padding: 0; /* Removido padding para simplificar o cálculo do scroll */
+                z-index: -1;
+                padding: ${margin}mm;
                 box-sizing: border-box;
             `;
             container.appendChild(paginaEl);
             document.body.appendChild(container);
-
-            // 🚨 CRÍTICO: PEQUENO ATRASO PARA GARANTIR A RENDERIZAÇÃO
-            await new Promise(resolve => setTimeout(resolve, 50)); 
 
             // ✅ CAPTURAR PÁGINA
             const canvas = await html2canvas(container, {
@@ -4898,8 +4886,7 @@ async function exportarPDFIdentico() {
             const imgData = canvas.toDataURL('image/jpeg', 0.9);
 
             // ✅ CALCULAR DIMENSÕES PARA CABER NA PÁGINA
-            // Usamos a largura em MM para o addImage do jsPDF
-            const imgWidth = contentWidthMm; 
+            const imgWidth = pdfWidth - (margin * 2);
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
             // ✅ ADICIONAR IMAGEM AO PDF
@@ -4920,6 +4907,7 @@ async function exportarPDFIdentico() {
         showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
     }
 }
+
 /**
  * ✅ FUNÇÃO ALTERNATIVA - DIVISÃO AUTOMÁTICA POR ALTURA
  */
@@ -4976,14 +4964,6 @@ function dividirEmPaginasPorAltura(elemento) {
 function getDataAtual() {
     const agora = new Date();
     return `${agora.getFullYear()}-${(agora.getMonth()+1).toString().padStart(2, '0')}-${agora.getDate().toString().padStart(2, '0')}_${agora.getHours().toString().padStart(2, '0')}-${agora.getMinutes().toString().padStart(2, '0')}`;
-}
-
-		/**
- * FUNÇÃO AUXILIAR: Converte mm para pixels (aproximadamente, em 96 DPI)
- * Necessária para garantir que o container temporário tenha um width em 'px' que o html2canvas entenda.
- */
-function mmToPx(mm) {
-    return Math.floor(mm * (96 / 25.4));
 }
 		
     </script>
