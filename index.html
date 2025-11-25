@@ -4698,7 +4698,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /**
- * ✅ EXPORTAR PDF FORMATADO - ABORDAGEM CORRIGIDA
+ * ✅ EXPORTAR PDF FORMATADO - VERSÃO CORRIGIDA E COMPLETA
  */
 function exportarPDFIdentico() {
     console.log('🎯 Iniciando exportação de PDF formatado...');
@@ -4706,27 +4706,40 @@ function exportarPDFIdentico() {
     showNotification('Gerando PDF formatado...', 'loading', 5000);
     
     try {
-        // ✅ 1. CAPTURA O ELEMENTO REAL DA PÁGINA (não criar um novo)
-        const conferenciaContent = document.getElementById('conferencia-content');
-        if (!conferenciaContent) {
-            showNotification('Elemento da conferência não encontrado', 'error');
+        // ✅ 1. CAPTURA TODO O CONTEÚDO DA CONFERÊNCIA (incluindo informações das notas)
+        const dynamicContent = document.getElementById('dynamic-table-content-conferencia');
+        if (!dynamicContent) {
+            showNotification('Conteúdo da conferência não encontrado', 'error');
             return;
         }
 
-        // ✅ 2. CRIA UM CLONE DO ELEMENTO REAL
-        const element = conferenciaContent.cloneNode(true);
+        // ✅ 2. CRIA UM CLONE COMPLETO DO CONTEÚDO
+        const element = dynamicContent.cloneNode(true);
         
-        // ✅ 3. REMOVE ELEMENTOS DESNECESSÁRIOS DO CLONE
+        // ✅ 3. REMOVE APENAS ELEMENTOS DESNECESSÁRIOS (mantém informações das notas)
         const elementosParaRemover = element.querySelectorAll(
-            '.print-hidden, button, .flex, .border-b, .tab-button, nav, header'
+            'button, .print-hidden, .flex, .border-b, .tab-button, nav, header'
         );
         elementosParaRemover.forEach(el => el.remove());
         
-        // Remove botões específicos
+        // Remove botões específicos mas MANTÉM informações das notas fiscais
         const botoes = element.querySelectorAll('button');
         botoes.forEach(btn => btn.remove());
         
-        // ✅ 4. APLICA ESTILOS DE IMPRESSÃO DIRETAMENTE NO CLONE
+        // ✅ 4. GARANTIR QUE INFORMAÇÕES DAS NOTAS FISCAIS ESTEJAM VISÍVEIS
+        const notasInfoElements = element.querySelectorAll('.mb-4 > div');
+        notasInfoElements.forEach(nota => {
+            nota.style.display = 'block';
+            nota.style.background = '#e3f2fd';
+            nota.style.padding = '8px';
+            nota.style.marginBottom = '5px';
+            nota.style.border = '1px solid #90caf9';
+            nota.style.borderRadius = '4px';
+            nota.style.fontSize = '9pt';
+            nota.style.fontFamily = 'Arial, sans-serif';
+        });
+        
+        // ✅ 5. APLICA ESTILOS DE IMPRESSÃO DIRETAMENTE NO CLONE
         element.style.padding = '10px';
         element.style.fontFamily = 'Arial, sans-serif';
         element.style.fontSize = '10pt';
@@ -4735,76 +4748,119 @@ function exportarPDFIdentico() {
         element.style.width = '100%';
         element.style.margin = '0';
         
-        // ✅ 5. APLICA ESTILOS ESPECÍFICOS NA TABELA
+        // ✅ 6. APLICA ESTILOS ESPECÍFICOS NA TABELA - GARANTIR QUE TODAS AS COLUNAS APAREÇAM
         const tabela = element.querySelector('#conferencia-table');
         if (tabela) {
             tabela.style.width = '100%';
             tabela.style.maxWidth = '100%';
             tabela.style.fontSize = '8pt';
             tabela.style.borderCollapse = 'collapse';
+            tabela.style.tableLayout = 'fixed';
             
-            // Aplica estilos nas células
-            const todasCelulas = tabela.querySelectorAll('th, td');
-            todasCelulas.forEach(celula => {
+            // Define larguras específicas para as colunas
+            const colunas = tabela.querySelectorAll('th, td');
+            colunas.forEach((celula, index) => {
                 celula.style.border = '1px solid #ccc';
                 celula.style.padding = '3px 4px';
                 celula.style.fontSize = '8pt';
                 celula.style.lineHeight = '1.1';
                 celula.style.wordBreak = 'break-word';
                 celula.style.whiteSpace = 'normal';
+                celula.style.verticalAlign = 'top';
                 
                 // Remove classes de modo que possam interferir
-                celula.classList.remove('scroll-mode-cell', 'scroll-mode-cell-numeric', 'expand-mode-cell');
+                celula.classList.remove('scroll-mode-cell', 'scroll-mode-cell-numeric', 'expand-mode-cell', 'scroll-mode-cell-code');
+                
+                // Define larguras específicas
+                if (index % 7 === 0) { // Código de Barras (15%)
+                    celula.style.width = '15%';
+                } else if (index % 7 === 1) { // Descrição (30%)
+                    celula.style.width = '30%';
+                } else if (index % 7 === 2 || index % 7 === 3 || index % 7 === 4) { // Quantidade NF, Contagem Loja, Diferença (10% cada)
+                    celula.style.width = '10%';
+                    celula.style.textAlign = 'center';
+                } else if (index % 7 === 5) { // Corrigir (5%)
+                    celula.style.width = '5%';
+                    celula.style.textAlign = 'center';
+                } else if (index % 7 === 6) { // Danos/Defeito e Obs (20%)
+                    celula.style.width = '20%';
+                }
                 
                 if (celula.tagName === 'TH') {
                     celula.style.backgroundColor = '#f8f9fa';
                     celula.style.fontWeight = 'bold';
-                }
-                
-                // Centraliza colunas numéricas
-                const index = Array.from(celula.parentNode.children).indexOf(celula);
-                if (index === 2 || index === 3 || index === 4) { // Colunas numéricas
                     celula.style.textAlign = 'center';
                 }
             });
             
-            // Oculta coluna "Corrigir" (índice 5)
-            const todasLinhas = tabela.querySelectorAll('tr');
-            todasLinhas.forEach(linha => {
-                const celulas = linha.querySelectorAll('td, th');
-                if (celulas.length > 5) {
-                    celulas[5].style.display = 'none';
+            // ✅ GARANTIR QUE A COLUNA DANOS/DEFEITO ESTEJA COMPLETA
+            const linhasDanos = tabela.querySelectorAll('tr');
+            linhasDanos.forEach(linha => {
+                const celulas = linha.querySelectorAll('td');
+                if (celulas.length >= 7) {
+                    const celulaDanos = celulas[6]; // 7ª coluna
+                    if (celulaDanos) {
+                        // Remove qualquer elemento de botão dentro da célula
+                        const botoesInternos = celulaDanos.querySelectorAll('button, .opcao-danos-btn');
+                        botoesInternos.forEach(botao => botao.remove());
+                        
+                        // Garante que o conteúdo editável seja visível
+                        const conteudoEditavel = celulaDanos.querySelector('[contenteditable="true"]');
+                        if (conteudoEditavel) {
+                            // Aplica estilos ao conteúdo editável
+                            conteudoEditavel.style.border = 'none';
+                            conteudoEditavel.style.background = 'transparent';
+                            conteudoEditavel.style.padding = '0';
+                            conteudoEditavel.style.minHeight = 'auto';
+                        }
+                    }
                 }
             });
         }
         
-        // ✅ 6. CRIA UM CONTAINER TEMPORÁRIO VISÍVEL
+        // ✅ 7. CRIA UM CONTAINER TEMPORÁRIO COM LAYOUT OTIMIZADO
         const container = document.createElement('div');
         container.style.position = 'fixed';
         container.style.left = '-9999px';
         container.style.top = '0';
         container.style.width = '210mm';
+        container.style.minHeight = '297mm';
         container.style.background = 'white';
-        container.style.padding = '10px';
+        container.style.padding = '15px';
+        container.style.boxSizing = 'border-box';
+        
+        // ✅ 8. ADICIONA CABEÇALHO COM INFORMAÇÕES DO SISTEMA
+        const cabecalho = document.createElement('div');
+        cabecalho.innerHTML = `
+            <div style="text-align: center; margin-bottom: 15px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+                <h1 style="margin: 0; font-size: 16pt; color: #1e3a8a;">Conferência de Nota Fiscal</h1>
+                <p style="margin: 5px 0 0 0; font-size: 10pt; color: #666;">
+                    Gerado em ${new Date().toLocaleString('pt-BR')} - Sistema GTGO
+                </p>
+            </div>
+        `;
+        container.appendChild(cabecalho);
         container.appendChild(element);
+        
         document.body.appendChild(container);
         
-        // ✅ 7. CONFIGURAÇÕES DO PDF
+        // ✅ 9. CONFIGURAÇÕES DO PDF OTIMIZADAS
         const options = {
-            margin: [10, 10, 10, 10],
-            filename: `conferencia_${getDataAtual()}.pdf`,
+            margin: [10, 15, 10, 15],
+            filename: `conferencia_nfe_${getDataAtual()}.pdf`,
             image: { 
                 type: 'jpeg', 
-                quality: 0.95 
+                quality: 0.98 
             },
             html2canvas: { 
                 scale: 2,
                 useCORS: true,
-                logging: true,
+                logging: false,
                 backgroundColor: '#ffffff',
                 scrollX: 0,
                 scrollY: 0,
-                windowWidth: 800
+                windowWidth: 800,
+                width: 800
             },
             jsPDF: { 
                 unit: 'mm', 
@@ -4815,10 +4871,10 @@ function exportarPDFIdentico() {
         
         console.log('📄 Elemento preparado para PDF:', element);
         
-        // ✅ 8. EXECUTA A CONVERSÃO
+        // ✅ 10. EXECUTA A CONVERSÃO
         html2pdf()
             .set(options)
-            .from(element)
+            .from(container)
             .save()
             .then(() => {
                 console.log('✅ PDF gerado com sucesso!');
@@ -4840,7 +4896,7 @@ function exportarPDFIdentico() {
 }
 
 /**
- * ✅ FUNÇÃO AUXILIAR - Data formatada
+ * ✅ FUNÇÃO AUXILIAR - Data formatada para nome do arquivo
  */
 function getDataAtual() {
     const agora = new Date();
