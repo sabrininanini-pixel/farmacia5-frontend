@@ -4696,58 +4696,164 @@ document.addEventListener('DOMContentLoaded', function() {
     inicializarSistemaDesktop();
 });
 
+
 /**
- * ✅ EXPORTAR PDF IDÊNTICO - HTML2PDF.js (TESTE CRU)
+ * ✅ EXPORTAR PDF FORMATADO - IGUAL AO BOTÃO IMPRIMIR/SALVAR PDF
  */
 function exportarPDFIdentico() {
-    console.log('🎯 Iniciando html2pdf.js...');
+    console.log('🎯 Iniciando exportação de PDF formatado...');
     
-    showNotification('Gerando PDF idêntico à tela...', 'loading', 5000);
+    showNotification('Gerando PDF formatado...', 'loading', 5000);
     
-    // ✅ CAPTURA o elemento completo da conferência
-    const element = document.getElementById('conferencia-content');
-    
-    if (!element) {
-        showNotification('Erro: Elemento não encontrado', 'error');
-        return;
-    }
-    
-    console.log('📄 Elemento capturado:', element);
-    
-    // ✅ CONFIGURAÇÕES BÁSICAS
-    const options = {
-        margin: [10, 10, 10, 10], // [top, left, bottom, right]
-        filename: `conferencia_${getDataAtual()}.pdf`,
-        image: { 
-            type: 'jpeg', 
-            quality: 0.95 
-        },
-        html2canvas: { 
-            scale: 2, // Alta qualidade
-            useCORS: true,
-            logging: true, // Para debug
-            backgroundColor: '#ffffff'
-        },
-        jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'portrait' 
+    try {
+        // ✅ 1. CAPTURA APENAS O CONTEÚDO ESSENCIAL (igual ao print)
+        const element = document.createElement('div');
+        element.style.padding = '20px';
+        element.style.fontFamily = 'Arial, sans-serif';
+        element.style.fontSize = '12pt';
+        element.style.color = '#333';
+        
+        // ✅ 2. ADICIONA INFORMAÇÕES DAS NOTAS FISCAIS (igual ao print)
+        const notasInfoElements = document.querySelectorAll('#dynamic-table-content-conferencia .mb-4 > div');
+        
+        if (notasInfoElements.length > 0) {
+            const infoDiv = document.createElement('div');
+            infoDiv.style.marginBottom = '20px';
+            infoDiv.style.borderBottom = '2px solid #333';
+            infoDiv.style.paddingBottom = '15px';
+            
+            // Título "Notas Fiscais na Conferencia"
+            const tituloDiv = document.createElement('div');
+            tituloDiv.style.fontSize = '14px';
+            tituloDiv.style.marginBottom = '10px';
+            tituloDiv.style.fontWeight = 'bold';
+            tituloDiv.textContent = `Notas Fiscais na Conferencia: ${notasInfoElements.length}`;
+            infoDiv.appendChild(tituloDiv);
+            
+            // Informações de cada nota fiscal
+            notasInfoElements.forEach(notaElement => {
+                const notaDiv = document.createElement('div');
+                notaDiv.style.fontSize = '12px';
+                notaDiv.style.marginBottom = '5px';
+                notaDiv.style.padding = '8px';
+                notaDiv.style.backgroundColor = '#dbeafe'; // Azul claro igual ao print
+                notaDiv.style.border = '1px solid #93c5fd';
+                notaDiv.style.borderRadius = '4px';
+                
+                let textoNota = notaElement.textContent.trim();
+                
+                // Formata igual ao print
+                textoNota = textoNota.replace(/NF:/g, 'Nfe:');
+                textoNota = textoNota.replace(/Data:/g, 'Data de emissão:');
+                textoNota = textoNota.replace(/Pedido:/g, 'Pedido Capta:');
+                
+                notaDiv.textContent = textoNota;
+                infoDiv.appendChild(notaDiv);
+            });
+            
+            element.appendChild(infoDiv);
         }
-    };
-    
-    // ✅ EXECUTA A CONVERSÃO
-    html2pdf()
-        .set(options)
-        .from(element)
-        .save()
-        .then(() => {
-            console.log('✅ PDF gerado com sucesso!');
-            showNotification('PDF idêntico gerado com sucesso!', 'success', 4000);
-        })
-        .catch((error) => {
-            console.error('❌ Erro html2pdf:', error);
-            showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
+
+        // ✅ 3. ADICIONA TÍTULO "CÓDIGO DE BARRAS"
+        const tituloCodigos = document.createElement('h3');
+        tituloCodigos.textContent = 'CÓDIGO DE BARRAS';
+        tituloCodigos.style.fontSize = '14px';
+        tituloCodigos.style.fontWeight = 'bold';
+        tituloCodigos.style.marginBottom = '15px';
+        tituloCodigos.style.borderBottom = '1px solid #ccc';
+        tituloCodigos.style.paddingBottom = '5px';
+        element.appendChild(tituloCodigos);
+
+        // ✅ 4. CRIA UMA CÓPIA LIMPA DA TABELA (apenas colunas essenciais)
+        const tabelaOriginal = document.getElementById('conferencia-table');
+        if (!tabelaOriginal) {
+            showNotification('Tabela de conferência não encontrada', 'error');
+            return;
+        }
+
+        const tabelaClone = tabelaOriginal.cloneNode(true);
+        
+        // Remove elementos desnecessários
+        const botoesCorrigir = tabelaClone.querySelectorAll('button');
+        botoesCorrigir.forEach(btn => btn.remove());
+        
+        // Remove a coluna "Corrigir" (6ª coluna) se existir
+        const todasLinhas = tabelaClone.querySelectorAll('tr');
+        todasLinhas.forEach(linha => {
+            const celulas = linha.querySelectorAll('td, th');
+            if (celulas.length >= 7) {
+                // Remove a coluna "Corrigir" (índice 5) e "Danos/Defeito" (índice 6)
+                celulas[6]?.remove(); // Remove Danos/Defeito
+                celulas[5]?.remove(); // Remove Corrigir
+            }
         });
+
+        // Aplica estilos de impressão à tabela
+        tabelaClone.style.width = '100%';
+        tabelaClone.style.borderCollapse = 'collapse';
+        tabelaClone.style.fontSize = '10pt';
+        
+        // Estiliza células
+        const todasCelulas = tabelaClone.querySelectorAll('th, td');
+        todasCelulas.forEach(celula => {
+            celula.style.border = '1px solid #ddd';
+            celula.style.padding = '8px';
+            celula.style.textAlign = 'left';
+            
+            // Cabeçalhos com fundo cinza
+            if (celula.tagName === 'TH') {
+                celula.style.backgroundColor = '#f8f9fa';
+                celula.style.fontWeight = 'bold';
+            }
+            
+            // Centraliza colunas numéricas
+            const index = Array.from(celula.parentNode.children).indexOf(celula);
+            if (index === 2 || index === 3) { // Quantidade NF e Contagem Loja
+                celula.style.textAlign = 'center';
+            }
+        });
+
+        element.appendChild(tabelaClone);
+
+        // ✅ 5. CONFIGURAÇÕES DO PDF
+        const options = {
+            margin: [10, 10, 10, 10],
+            filename: `conferencia_${getDataAtual()}.pdf`,
+            image: { 
+                type: 'jpeg', 
+                quality: 0.95 
+            },
+            html2canvas: { 
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff'
+            },
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait' 
+            }
+        };
+        
+        // ✅ 6. EXECUTA A CONVERSÃO
+        html2pdf()
+            .set(options)
+            .from(element)
+            .save()
+            .then(() => {
+                console.log('✅ PDF formatado gerado com sucesso!');
+                showNotification('PDF formatado gerado com sucesso!', 'success', 4000);
+            })
+            .catch((error) => {
+                console.error('❌ Erro ao gerar PDF:', error);
+                showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
+            });
+
+    } catch (error) {
+        console.error('❌ Erro na exportação de PDF:', error);
+        showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
+    }
 }
 
 /**
