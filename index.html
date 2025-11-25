@@ -4697,56 +4697,102 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-
+/**
+ * ✅ EXPORTAR PDF IDENTICO - VERSÃO FINAL (Limpeza, Largura Automática e Qualidade Ajustada)
+ */
 function exportarPDFIdentico() {
-
-    const element = document.getElementById('conferencia-content');
-    if (!element) {
-        showNotification('Erro: Elemento não encontrado', 'error');
+    console.log('🎯 Iniciando exportação de PDF formatado...');
+    
+    showNotification('Gerando PDF formatado...', 'loading', 5000);
+    
+    // 1. CAPTURA O ELEMENTO PRINCIPAL
+    const originalElement = document.getElementById('conferencia-content');
+    if (!originalElement) {
+        showNotification('Erro: Elemento da conferência não encontrado', 'error');
         return;
     }
 
-    showNotification('Gerando PDF...', 'loading', 4000);
-
-    // 🔥 Criar clone sem limites
-    const clone = element.cloneNode(true);
+    // 2. CRIA UM CLONE COMPLETO E PREPARA PARA CÁLCULO
+    const clone = originalElement.cloneNode(true);
+    
+    // 3. APLICA ESTILOS DE EXPANSÃO CRÍTICOS no CLONE para calcular a largura real
+    // Usamos 'absolute' e 'translate' para esconder, evitando o problema do PDF em branco.
     clone.style.position = 'absolute';
-    clone.style.top = '-9999px';
-    clone.style.left = '-9999px';
-    clone.style.width = 'max-content';       // 👈 permite largura total REAL
+    clone.style.top = '0';
+    clone.style.transform = 'translateY(-20000px)';
+    clone.style.zIndex = '-1'; 
+    clone.style.width = 'max-content';
     clone.style.maxWidth = 'none';
     clone.style.overflow = 'visible';
-
+    
+    // Adiciona o clone temporariamente ao DOM para que o scrollWidth seja calculado corretamente
     document.body.appendChild(clone);
+    
+    // 4. CÁLCULO DA LARGURA REAL
+    // Captura a largura real do clone no DOM
+    const tabela = clone.querySelector('table');
+    const larguraReal = tabela ? tabela.scrollWidth : clone.scrollWidth;
+    const larguraForcada = larguraReal + 100; // Adiciona margem de segurança de 100px
+    
+    console.log(`📏 Largura calculada: ${larguraReal}px. Usando: ${larguraForcada}px`);
 
+    // 5. LIMPEZA FINAL DO CLONE (Remoção de botões e elementos de interface)
+    clone.querySelectorAll(
+        'button, .print-hidden, nav, header, .flex.border-b, .flex.flex-wrap, .tab-button'
+    ).forEach(el => el.remove());
+
+    // 6. TRATAMENTO DE OBSERVAÇÕES E CORES (Para garantir a aparência correta)
+    // Adapte este bloco se precisar manter as cores de divergência
+    clone.querySelectorAll('td, th').forEach(celula => {
+        // Garante quebra de texto na célula
+        celula.style.whiteSpace = 'normal'; 
+        // Trata conteúdo editável na coluna Obs/Danos
+        const conteudoEditavel = celula.querySelector('[contenteditable="true"]');
+        if (conteudoEditavel) {
+            celula.innerHTML = conteudoEditavel.textContent || '';
+        }
+        // Aplica estilos inline para cores (se necessário)
+        if (celula.classList.contains('bg-fee2e2') || celula.classList.contains('bg-red-100')) {
+             celula.style.backgroundColor = '#fee2e2'; // Cor de fundo divergência
+             celula.style.color = '#b91c1c'; // Cor do texto divergência
+        }
+    });
+
+    // 7. CONFIGURAÇÕES DO PDF
     const options = {
-        margin: 10,
+        margin: [10, 10, 10, 10], // Margem em mm
         filename: `conferencia_${getDataAtual()}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
-            scale: 2,
+            // 🚨 AJUSTE PARA REDUZIR EMBASSAMENTO E TAMANHO: 1.5 é um bom meio termo
+            scale: 1.5, 
             useCORS: true,
             backgroundColor: '#ffffff',
-            windowWidth: clone.scrollWidth   // 👈 captura largura REAL
+            // Usa a largura REAL calculada + margem
+            windowWidth: larguraForcada,
+            width: larguraForcada 
         },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } // Usar 'landscape' (paisagem) é ideal para tabelas largas
     };
 
+    // 8. EXECUTA A CONVERSÃO E SALVA
     html2pdf()
         .set(options)
         .from(clone)
         .save()
         .then(() => {
+            // Remove o clone temporário
             clone.remove();
-            showNotification('PDF gerado!', 'success', 3000);
+            console.log('✅ PDF gerado com sucesso!');
+            showNotification('PDF formatado gerado com sucesso!', 'success', 4000);
         })
         .catch(err => {
+            // Remove o clone mesmo em caso de erro
             clone.remove();
-            console.error(err);
-            showNotification('Erro ao gerar PDF', 'error', 3000);
+            console.error('❌ Erro ao gerar PDF:', err);
+            showNotification('Erro ao gerar PDF: ' + err.message, 'error', 5000);
         });
 }
-
 
 /**
  * ✅ FUNÇÃO AUXILIAR - Data formatada
