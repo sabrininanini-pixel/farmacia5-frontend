@@ -4730,7 +4730,7 @@ function dividirEmPaginas(elemento) {
     console.log(`📊 ${linhasVisiveis.length} linhas visíveis encontradas no DOM original`);
 
     // ✅ CONFIGURAÇÕES DE PÁGINA
-    const linhasPorPagina = 25; // Ajuste conforme necessário
+    const linhasPorPagina = 37; // Ajuste conforme necessário
     const totalPaginas = Math.ceil(linhasVisiveis.length / linhasPorPagina);
 
     // ✅ CRIAR CADA PÁGINA
@@ -4750,13 +4750,13 @@ function dividirEmPaginas(elemento) {
             corpoPagina.appendChild(linha.cloneNode(true));
         });
 
-        // ✅ ADICIONAR RODAPÉ COM NUMERAÇÃO
+        // ✅ ADICIONAR RODAPÉ COM NUMERAÇÃO - GLORIA A JESUS CRISTO
         const rodape = document.createElement('div');
         rodape.style.cssText = `
             text-align: center;
             margin-top: 10px;
             font-size: 9pt;
-            color: #666;
+            color: #655;
             border-top: 1px solid #ccc;
             padding-top: 5px;
         `;
@@ -4816,6 +4816,7 @@ async function exportarPDFIdentico() {
                 border: 1px solid #ccc !important;
                 padding: 6px !important;
                 word-break: break-word !important;
+				vertical-align: middle !important;  // ✅ Centraliza verticalmente
             }
             .print-optimized th {
                 background: #f8f9fa !important;
