@@ -4699,65 +4699,54 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 function exportarPDFIdentico() {
-    const element = document.getElementById('conferencia-content');
 
+    const element = document.getElementById('conferencia-content');
     if (!element) {
         showNotification('Erro: Elemento não encontrado', 'error');
         return;
     }
 
-    // ✔ Salva estilos originais
-    const originalStyles = {
-        width: element.style.width,
-        maxWidth: element.style.maxWidth,
-        overflow: element.style.overflow
-    };
+    showNotification('Gerando PDF...', 'loading', 4000);
 
-    // ✔ Expande para capturar tudo
-    element.style.width = 'auto';
-    element.style.maxWidth = 'none';
-    element.style.overflow = 'visible';
+    // 🔥 Criar clone sem limites
+    const clone = element.cloneNode(true);
+    clone.style.position = 'absolute';
+    clone.style.top = '-9999px';
+    clone.style.left = '-9999px';
+    clone.style.width = 'max-content';       // 👈 permite largura total REAL
+    clone.style.maxWidth = 'none';
+    clone.style.overflow = 'visible';
+
+    document.body.appendChild(clone);
 
     const options = {
-        margin: [10,10,10,10],
+        margin: 10,
         filename: `conferencia_${getDataAtual()}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
             scale: 2,
             useCORS: true,
-            logging: false,
             backgroundColor: '#ffffff',
-            windowWidth: document.body.scrollWidth // 👈 captura todo o conteúdo horizontal
+            windowWidth: clone.scrollWidth   // 👈 captura largura REAL
         },
-        jsPDF: {
-            unit: 'mm',
-            format: 'a4',
-            orientation: 'portrait'
-        }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     html2pdf()
         .set(options)
-        .from(element)
+        .from(clone)
         .save()
         .then(() => {
-            // ✔ Restaura estilos originais
-            element.style.width = originalStyles.width;
-            element.style.maxWidth = originalStyles.maxWidth;
-            element.style.overflow = originalStyles.overflow;
-
-            showNotification('PDF gerado com sucesso!', 'success', 3000);
+            clone.remove();
+            showNotification('PDF gerado!', 'success', 3000);
         })
-        .catch((e) => {
-            // ✔ Restaura mesmo em caso de erro
-            element.style.width = originalStyles.width;
-            element.style.maxWidth = originalStyles.maxWidth;
-            element.style.overflow = originalStyles.overflow;
-
-            console.error('Erro ao gerar PDF', e);
-            showNotification('Erro ao gerar PDF', 'error');
+        .catch(err => {
+            clone.remove();
+            console.error(err);
+            showNotification('Erro ao gerar PDF', 'error', 3000);
         });
 }
+
 
 /**
  * ✅ FUNÇÃO AUXILIAR - Data formatada
