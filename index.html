@@ -1534,8 +1534,8 @@ function realizarMudancaParaConferencia(sheetName) {
 </button>
 
 		<!-- ✅ BOTÃO PDF IDÊNTICO (TESTE) -->
-<button onclick="exportarPDFIdentico()" class="flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg shadow-sm hover:bg-purple-200 transition duration-150 text-sm font-medium border border-purple-300">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+<button onclick="exportarPDFIdentico()" class="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg shadow-sm hover:bg-gray-200 transition duration-150 text-sm font-medium border border-gray-300">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
     <span>Exportar PDF</span>
@@ -4698,7 +4698,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /**
- * ✅ EXPORTAR PDF FORMATADO - COM ESTILOS DE IMPRESSÃO CORRETOS
+ * ✅ EXPORTAR PDF FORMATADO - ABORDAGEM CORRIGIDA
  */
 function exportarPDFIdentico() {
     console.log('🎯 Iniciando exportação de PDF formatado...');
@@ -4706,196 +4706,131 @@ function exportarPDFIdentico() {
     showNotification('Gerando PDF formatado...', 'loading', 5000);
     
     try {
-        // ✅ 1. CAPTURA APENAS O CONTEÚDO ESSENCIAL (igual ao print)
-        const element = document.createElement('div');
+        // ✅ 1. CAPTURA O ELEMENTO REAL DA PÁGINA (não criar um novo)
+        const conferenciaContent = document.getElementById('conferencia-content');
+        if (!conferenciaContent) {
+            showNotification('Elemento da conferência não encontrado', 'error');
+            return;
+        }
+
+        // ✅ 2. CRIA UM CLONE DO ELEMENTO REAL
+        const element = conferenciaContent.cloneNode(true);
+        
+        // ✅ 3. REMOVE ELEMENTOS DESNECESSÁRIOS DO CLONE
+        const elementosParaRemover = element.querySelectorAll(
+            '.print-hidden, button, .flex, .border-b, .tab-button, nav, header'
+        );
+        elementosParaRemover.forEach(el => el.remove());
+        
+        // Remove botões específicos
+        const botoes = element.querySelectorAll('button');
+        botoes.forEach(btn => btn.remove());
+        
+        // ✅ 4. APLICA ESTILOS DE IMPRESSÃO DIRETAMENTE NO CLONE
         element.style.padding = '10px';
         element.style.fontFamily = 'Arial, sans-serif';
         element.style.fontSize = '10pt';
         element.style.color = '#000';
         element.style.background = 'white';
-        element.style.width = '210mm';
-        element.style.maxWidth = '210mm';
-        element.style.margin = '0 auto';
+        element.style.width = '100%';
+        element.style.margin = '0';
         
-        // ✅ 2. ADICIONA INFORMAÇÕES DAS NOTAS FISCAIS (igual ao print)
-        const notasInfoElements = document.querySelectorAll('#dynamic-table-content-conferencia .mb-4 > div');
-        
-        if (notasInfoElements.length > 0) {
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'mb-4';
-            infoDiv.style.marginBottom = '8px';
+        // ✅ 5. APLICA ESTILOS ESPECÍFICOS NA TABELA
+        const tabela = element.querySelector('#conferencia-table');
+        if (tabela) {
+            tabela.style.width = '100%';
+            tabela.style.maxWidth = '100%';
+            tabela.style.fontSize = '8pt';
+            tabela.style.borderCollapse = 'collapse';
             
-            // Título "Notas Fiscais na Conferencia"
-            const tituloDiv = document.createElement('div');
-            tituloDiv.style.fontSize = '10px';
-            tituloDiv.style.marginBottom = '5px';
-            tituloDiv.style.fontWeight = 'bold';
-            tituloDiv.textContent = `Notas Fiscais na Conferencia: ${notasInfoElements.length}`;
-            infoDiv.appendChild(tituloDiv);
-            
-            // Informações de cada nota fiscal
-            notasInfoElements.forEach(notaElement => {
-                const notaDiv = document.createElement('div');
-                notaDiv.style.background = '#e5e7eb';
-                notaDiv.style.padding = '4px 6px';
-                notaDiv.style.marginBottom = '2px';
-                notaDiv.style.fontSize = '7pt';
-                notaDiv.style.border = '1px solid #d1d5db';
-                notaDiv.style.borderRadius = '2px';
+            // Aplica estilos nas células
+            const todasCelulas = tabela.querySelectorAll('th, td');
+            todasCelulas.forEach(celula => {
+                celula.style.border = '1px solid #ccc';
+                celula.style.padding = '3px 4px';
+                celula.style.fontSize = '8pt';
+                celula.style.lineHeight = '1.1';
+                celula.style.wordBreak = 'break-word';
+                celula.style.whiteSpace = 'normal';
                 
-                let textoNota = notaElement.textContent.trim();
+                // Remove classes de modo que possam interferir
+                celula.classList.remove('scroll-mode-cell', 'scroll-mode-cell-numeric', 'expand-mode-cell');
                 
-                // Formata igual ao print
-                textoNota = textoNota.replace(/NF:/g, 'Nfe:');
-                textoNota = textoNota.replace(/Data:/g, 'Data de emissão:');
-                textoNota = textoNota.replace(/Pedido:/g, 'Pedido Capta:');
+                if (celula.tagName === 'TH') {
+                    celula.style.backgroundColor = '#f8f9fa';
+                    celula.style.fontWeight = 'bold';
+                }
                 
-                notaDiv.textContent = textoNota;
-                infoDiv.appendChild(notaDiv);
+                // Centraliza colunas numéricas
+                const index = Array.from(celula.parentNode.children).indexOf(celula);
+                if (index === 2 || index === 3 || index === 4) { // Colunas numéricas
+                    celula.style.textAlign = 'center';
+                }
             });
             
-            element.appendChild(infoDiv);
-        }
-
-        // ✅ 3. ADICIONA TÍTULO "CÓDIGO DE BARRAS"
-        const tituloCodigos = document.createElement('h3');
-        tituloCodigos.textContent = 'CÓDIGO DE BARRAS';
-        tituloCodigos.style.fontSize = '11px';
-        tituloCodigos.style.fontWeight = 'bold';
-        tituloCodigos.style.marginBottom = '10px';
-        tituloCodigos.style.borderBottom = '1px solid #ccc';
-        tituloCodigos.style.paddingBottom = '3px';
-        element.appendChild(tituloCodigos);
-
-        // ✅ 4. CRIA UMA CÓPIA DA TABELA COMPLETA (com todas as colunas)
-        const tabelaOriginal = document.getElementById('conferencia-table');
-        if (!tabelaOriginal) {
-            showNotification('Tabela de conferência não encontrada', 'error');
-            return;
-        }
-
-        const tabelaClone = tabelaOriginal.cloneNode(true);
-        tabelaClone.id = 'conferencia-table-pdf';
-        
-        // ✅ APLICA ESTILOS DE IMPRESSÃO DIRETAMENTE NA TABELA
-        tabelaClone.style.width = '100%';
-        tabelaClone.style.maxWidth = '100%';
-        tabelaClone.style.fontSize = '8pt';
-        tabelaClone.style.borderCollapse = 'collapse';
-        tabelaClone.style.pageBreakInside = 'auto';
-        
-        // ✅ APLICA ESTILOS ESPECÍFICOS PARA CABER NA PÁGINA
-        const todasCelulas = tabelaClone.querySelectorAll('th, td');
-        todasCelulas.forEach(celula => {
-            celula.style.border = '1px solid #ccc';
-            celula.style.padding = '3px 4px';
-            celula.style.fontSize = '8pt';
-            celula.style.lineHeight = '1.1';
-            celula.style.wordBreak = 'break-word';
-            celula.style.wordWrap = 'break-word';
-            celula.style.overflowWrap = 'break-word';
-            celula.style.whiteSpace = 'normal';
-            celula.style.hyphens = 'auto';
-            
-            // Remove todas as classes de largura fixa
-            celula.classList.remove('scroll-mode-cell', 'scroll-mode-cell-numeric', 'expand-mode-cell', 'scroll-mode-cell-code', 'truncate-mode-cell');
-            
-            // Cabeçalhos com fundo cinza
-            if (celula.tagName === 'TH') {
-                celula.style.backgroundColor = '#f8f9fa';
-                celula.style.fontWeight = 'bold';
-                celula.style.color = 'black';
-            }
-            
-            // ✅ APLICA LARGURAS ESPECÍFICAS POR COLUNA (igual ao CSS de impressão)
-            const index = Array.from(celula.parentNode.children).indexOf(celula);
-            if (index === 0) {
-                // Coluna 1: Código de Barras (15%)
-                celula.style.width = '15%';
-            } else if (index === 1) {
-                // Coluna 2: Descrição (40%)
-                celula.style.width = '40%';
-            } else if (index >= 2 && index <= 4) {
-                // Colunas 3-5: Numéricas (10% cada)
-                celula.style.width = '10%';
-                celula.style.textAlign = 'center';
-            } else if (index === 5) {
-                // Coluna 6: Corrigir (oculta na impressão)
-                celula.style.display = 'none';
-            } else if (index === 6) {
-                // Coluna 7: Danos/Defeito (15%)
-                celula.style.width = '15%';
-            }
-            
-            // ✅ MANTÉM CORES DAS DIVERGÊNCIAS
-            if (celula.classList.contains('bg-fee2e2') || celula.classList.contains('text-b91c1c') || celula.classList.contains('bg-red-100')) {
-                celula.style.backgroundColor = '#fee2e2';
-                celula.style.color = '#b91c1c';
-            }
-            if (celula.classList.contains('bg-green-100') || celula.classList.contains('text-green-700')) {
-                celula.style.backgroundColor = '#d1fae5';
-                celula.style.color = '#047857';
-            }
-            if (celula.classList.contains('bg-yellow-50')) {
-                celula.style.backgroundColor = '#fefce8';
-            }
-        });
-
-        // ✅ REMOVE BOTÕES DA COLUNA "CORRIGIR"
-        const botoesCorrigir = tabelaClone.querySelectorAll('button');
-        botoesCorrigir.forEach(btn => btn.remove());
-        
-        // ✅ OCULTA COMPLETAMENTE A COLUNA "CORRIGIR" (índice 5)
-        const todasLinhas = tabelaClone.querySelectorAll('tr');
-        todasLinhas.forEach(linha => {
-            const celulas = linha.querySelectorAll('td, th');
-            if (celulas.length >= 7) {
-                // Oculta a coluna "Corrigir" (índice 5)
-                if (celulas[5]) {
+            // Oculta coluna "Corrigir" (índice 5)
+            const todasLinhas = tabela.querySelectorAll('tr');
+            todasLinhas.forEach(linha => {
+                const celulas = linha.querySelectorAll('td, th');
+                if (celulas.length > 5) {
                     celulas[5].style.display = 'none';
                 }
-            }
-        });
-
-        element.appendChild(tabelaClone);
-
-        // ✅ 5. CONFIGURAÇÕES DO PDF OTIMIZADAS PARA A4
+            });
+        }
+        
+        // ✅ 6. CRIA UM CONTAINER TEMPORÁRIO VISÍVEL
+        const container = document.createElement('div');
+        container.style.position = 'fixed';
+        container.style.left = '-9999px';
+        container.style.top = '0';
+        container.style.width = '210mm';
+        container.style.background = 'white';
+        container.style.padding = '10px';
+        container.appendChild(element);
+        document.body.appendChild(container);
+        
+        // ✅ 7. CONFIGURAÇÕES DO PDF
         const options = {
-            margin: [5, 5, 5, 5], // Margens menores
+            margin: [10, 10, 10, 10],
             filename: `conferencia_${getDataAtual()}.pdf`,
             image: { 
                 type: 'jpeg', 
-                quality: 0.98 
+                quality: 0.95 
             },
             html2canvas: { 
                 scale: 2,
                 useCORS: true,
-                logging: false,
+                logging: true,
                 backgroundColor: '#ffffff',
-                width: 800, // Largura fixa para controle
-                height: element.scrollHeight,
+                scrollX: 0,
+                scrollY: 0,
                 windowWidth: 800
             },
             jsPDF: { 
                 unit: 'mm', 
                 format: 'a4', 
-                orientation: 'portrait',
-                compress: true
+                orientation: 'portrait' 
             }
         };
         
-        // ✅ 6. EXECUTA A CONVERSÃO
+        console.log('📄 Elemento preparado para PDF:', element);
+        
+        // ✅ 8. EXECUTA A CONVERSÃO
         html2pdf()
             .set(options)
             .from(element)
             .save()
             .then(() => {
-                console.log('✅ PDF formatado gerado com sucesso!');
+                console.log('✅ PDF gerado com sucesso!');
                 showNotification('PDF formatado gerado com sucesso!', 'success', 4000);
+                // Remove o container temporário
+                document.body.removeChild(container);
             })
             .catch((error) => {
                 console.error('❌ Erro ao gerar PDF:', error);
                 showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
+                // Remove o container temporário mesmo em caso de erro
+                document.body.removeChild(container);
             });
 
     } catch (error) {
