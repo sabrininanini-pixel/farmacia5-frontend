@@ -3118,46 +3118,38 @@ function applyConferenciaStyles(numCols) {
         }
 
         // ✅ DETECTA SE ESTÁ NO APK ANDROID E CONFIGURA IMPRESSÃO
-        function setupAndroidPrint() {
-            // Verifica se está no APK Android (interface Android existe)
-            const isAndroidApp = typeof Android !== 'undefined';
-            
-            if (isAndroidApp) {
-                console.log("📱 APK Android detectado - Configurando impressão...");
-                
-                // Substitui a função de impressão padrão
-                const originalPrint = window.print;
-                
-                window.print = function() {
-                    if (isAndroidApp) {
-                        // Usa a função nativa do Android
-                        Android.printConferencia();
-                        return true;
-                    } else {
-                        // Fallback para impressão normal do navegador
-                        return originalPrint();
-                    }
-                };
-                
-                // Também intercepta cliques no botão "Imprimir Conferência"
-                document.addEventListener('click', function(e) {
-                    const target = e.target;
-                    if (target.textContent.includes('Imprimir Conferência') || 
-                        target.textContent.includes('imprimir conferência') ||
-                        target.onclick && target.onclick.toString().includes('printConferencia')) {
-                        
-                        if (isAndroidApp) {
-                            e.preventDefault();
-                            Android.printConferencia();
-                        }
-                    }
-                });
-                
-                console.log("✅ Impressão Android configurada com sucesso!");
-            }
+function setupAndroidPrint() {
+    // Verifica se está no APK Android
+    const isAndroidApp = typeof Android !== 'undefined';
+    
+    if (isAndroidApp) {
+        console.log("📱 APK Android detectado.");
+        
+        // 🚨 MUDANÇA IMPORTANTE:
+        // Removemos o bloqueio que forçava usar o 'Android.printConferencia()'.
+        // O código antigo interceptava o 'window.print' e redirecionava para o App,
+        // mas como o App está falhando ao salvar, vamos deixar o navegador/WebView
+        // usar o sistema de impressão padrão do Android (que funciona).
+        
+        // Se houver algum botão antigo chamando especificamente a função nativa, 
+        // vamos garantir que ele chame o print normal do navegador.
+        
+        // Restaura o print padrão caso tenha sido modificado anteriormente
+        if (window.print.toString().includes('Android.printConferencia')) {
+            window.print = function() {
+                // Força a chamada nativa do sistema (WebView)
+                // Isso abrirá a tela cinza do Android onde você escolhe "Salvar como PDF"
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+                iframe.contentWindow.print();
+                setTimeout(() => document.body.removeChild(iframe), 1000);
+            };
         }
-
-        // --- FUNÇÕES PARA CACHE DE AJUSTES DA CONFERÊNCIA ---
+        
+        console.log("✅ Impressão configurada para usar o sistema nativo (mais seguro).");
+    }
+}
 
         /**
          * ✅ CARREGAR AJUSTES DO CACHE LOCAL
