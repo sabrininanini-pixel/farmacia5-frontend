@@ -4699,262 +4699,223 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /**
- * ✅ EXPORTAR PDF IDÊNTICO AO BOTÃO IMPRIMIR - VERSÃO CORRIGIDA
+ * ✅ EXPORTAR PDF IDÊNTICO - DOWNLOAD DIRETO
  */
 function exportarPDFIdentico() {
-    console.log('🎯 Exportação PDF - Modo impressão nativo...');
+    console.log('🎯 Exportação PDF - Download direto...');
     
-    showNotification('Preparando PDF...', 'loading', 3000);
+    showNotification('Gerando PDF...', 'loading', 5000);
     
     try {
-        // ✅ 1. SALVA O ESTADO ATUAL DA PÁGINA
-        const bodyOriginal = document.body.innerHTML;
-        const displayOriginal = document.body.style.display;
+        // ✅ 1. CAPTURA O CONTEÚDO COMPLETO
+        const conferenciaContent = document.getElementById('conferencia-content');
+        if (!conferenciaContent) {
+            showNotification('Conteúdo da conferência não encontrado', 'error');
+            return;
+        }
+
+        // ✅ 2. CRIA UM CLONE PARA MANIPULAÇÃO
+        const element = conferenciaContent.cloneNode(true);
         
-        // ✅ 2. PREPARA UMA VERSÃO OTIMIZADA PARA IMPRESSÃO
-        const contentToPrint = document.getElementById('conferencia-content').cloneNode(true);
-        
-        // ✅ 3. REMOVE ELEMENTOS DESNECESSÁRIOS (mas mantém tudo importante)
-        const elementosRemover = contentToPrint.querySelectorAll(
-            'button, .print-hidden, nav, header, .flex.border-b, .tab-button'
+        // ✅ 3. REMOVE ELEMENTOS DESNECESSÁRIOS
+        const elementosRemover = element.querySelectorAll(
+            'button, .print-hidden, nav, header, .flex.border-b, .tab-button, .opcao-danos-btn'
         );
         elementosRemover.forEach(el => el.remove());
         
-        // ✅ 4. APLICA ESTILOS ESPECÍFICOS PARA IMPRESSÃO
-        const style = document.createElement('style');
-        style.innerHTML = `
-            /* ✅ ESTILOS DE IMPRESSÃO ESPECÍFICOS */
-            @media print {
-                body {
-                    margin: 0 !important;
-                    padding: 10px !important;
-                    width: 210mm !important;
-                    min-height: 297mm;
-                    font-size: 10pt !important;
-                    background: white !important;
-                    color: black !important;
-                    font-family: Arial, sans-serif !important;
-                }
-                
-                .container-impressao {
-                    width: 100% !important;
-                    max-width: 100% !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    background: white !important;
-                }
-                
-                /* ✅ INFORMAÇÕES DAS NOTAS FISCAIS */
-                .mb-4 > div {
-                    background: #e3f2fd !important;
-                    padding: 8px 10px !important;
-                    margin-bottom: 8px !important;
-                    border: 1px solid #90caf9 !important;
-                    border-radius: 4px;
-                    font-size: 9pt !important;
-                    font-weight: normal !important;
-                    color: #000 !important;
-                    page-break-inside: avoid;
-                }
-                
-                /* ✅ TABELA PRINCIPAL */
-                .mock-table {
-                    width: 100% !important;
-                    max-width: 100% !important;
-                    font-size: 8pt !important;
-                    border-collapse: collapse;
-                    page-break-inside: auto;
-                }
-                
-                .mock-table th, 
-                .mock-table td {
-                    border: 1px solid #ccc !important;
-                    padding: 4px 5px !important;
-                    font-size: 8pt !important;
-                    line-height: 1.2 !important;
-                    word-break: break-word !important;
-                    white-space: normal !important;
+        // ✅ 4. PREPARA A COLUNA DANOS/DEFEITO - REMOVE BOTÕES E MANTÉM CONTEÚDO
+        const celulasDanos = element.querySelectorAll('#conferencia-table td:nth-child(7)');
+        celulasDanos.forEach(celula => {
+            const botao = celula.querySelector('.opcao-danos-btn');
+            if (botao) botao.remove();
+            
+            // Garante que o conteúdo editável seja visível
+            const editavel = celula.querySelector('[contenteditable="true"]');
+            if (editavel) {
+                editavel.style.border = 'none';
+                editavel.style.background = 'transparent';
+                editavel.style.padding = '0';
+            }
+        });
+
+        // ✅ 5. APLICA ESTILOS DIRETAMENTE NO ELEMENTO
+        element.style.cssText = `
+            width: 210mm;
+            min-height: 297mm;
+            padding: 15mm;
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            background: white;
+            color: black;
+            margin: 0 auto;
+            box-sizing: border-box;
+        `;
+
+        // ✅ 6. ESTILOS ESPECÍFICOS PARA A TABELA
+        const tabela = element.querySelector('#conferencia-table');
+        if (tabela) {
+            tabela.style.cssText = `
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 8pt;
+                table-layout: fixed;
+            `;
+
+            // Aplica estilos nas células
+            const todasCelulas = tabela.querySelectorAll('th, td');
+            todasCelulas.forEach((celula, index) => {
+                celula.style.cssText = `
+                    border: 1px solid #ccc;
+                    padding: 4px 5px;
+                    word-break: break-word;
+                    white-space: normal;
                     vertical-align: top;
+                    font-size: 8pt;
+                    line-height: 1.2;
+                `;
+
+                // Larguras específicas
+                const colIndex = index % 7;
+                if (colIndex === 0) celula.style.width = '15%';
+                else if (colIndex === 1) celula.style.width = '35%';
+                else if (colIndex === 2 || colIndex === 3 || colIndex === 4) {
+                    celula.style.width = '10%';
+                    celula.style.textAlign = 'center';
                 }
-                
-                .mock-table th {
-                    background-color: #f8f9fa !important;
-                    font-weight: bold !important;
-                    color: black !important;
-                    text-align: center;
+                else if (colIndex === 5) {
+                    celula.style.width = '5%';
+                    celula.style.textAlign = 'center';
                 }
-                
-                /* ✅ LARGURAS DAS COLUNAS */
-                #conferencia-table th:nth-child(1),
-                #conferencia-table td:nth-child(1) {
-                    width: 15% !important; /* Código de Barras */
+                else if (colIndex === 6) celula.style.width = '25%';
+
+                if (celula.tagName === 'TH') {
+                    celula.style.cssText += `
+                        background-color: #f8f9fa;
+                        font-weight: bold;
+                        text-align: center;
+                    `;
                 }
-                
-                #conferencia-table th:nth-child(2),
-                #conferencia-table td:nth-child(2) {
-                    width: 35% !important; /* Descrição */
+
+                // Mantém cores das divergências
+                if (celula.classList.contains('bg-fee2e2')) {
+                    celula.style.backgroundColor = '#fee2e2';
+                    celula.style.color = '#b91c1c';
                 }
-                
-                #conferencia-table th:nth-child(3),
-                #conferencia-table td:nth-child(3),
-                #conferencia-table th:nth-child(4),
-                #conferencia-table td:nth-child(4),
-                #conferencia-table th:nth-child(5),
-                #conferencia-table td:nth-child(5) {
-                    width: 10% !important; /* Colunas numéricas */
-                    text-align: center !important;
+                if (celula.classList.contains('bg-green-100')) {
+                    celula.style.backgroundColor = '#d1fae5';
+                    celula.style.color = '#047857';
                 }
-                
-                #conferencia-table th:nth-child(6),
-                #conferencia-table td:nth-child(6) {
-                    width: 5% !important; /* Corrigir */
-                    text-align: center !important;
+                if (celula.classList.contains('bg-red-100')) {
+                    celula.style.backgroundColor = '#fecaca';
                 }
-                
-                #conferencia-table th:nth-child(7),
-                #conferencia-table td:nth-child(7) {
-                    width: 25% !important; /* Danos/Defeito */
+            });
+
+            // Oculta coluna "Corrigir"
+            const todasLinhas = tabela.querySelectorAll('tr');
+            todasLinhas.forEach(linha => {
+                const celulas = linha.querySelectorAll('td, th');
+                if (celulas.length > 5) {
+                    celulas[5].style.display = 'none';
                 }
-                
-                /* ✅ CORES DAS DIVERGÊNCIAS */
-                .bg-fee2e2, .text-b91c1c {
-                    background-color: #fee2e2 !important;
-                    color: #b91c1c !important;
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-                
-                .bg-green-100, .text-green-700 {
-                    background-color: #d1fae5 !important;
-                    color: #047857 !important;
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-                
-                .bg-red-100 {
-                    background-color: #fecaca !important;
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-                
-                .bg-yellow-50 {
-                    background-color: #fefce8 !important;
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-                
-                /* ✅ OCULTAR COLUNA CORRIGIR NA IMPRESSÃO */
-                #conferencia-table th:nth-child(6),
-                #conferencia-table td:nth-child(6) {
-                    display: none !important;
-                }
-                
-                /* ✅ GARANTIR QUE BOTÕES NÃO APAREÇAM */
-                button, .opcao-danos-btn, .igualar-btn {
-                    display: none !important;
-                }
-                
-                /* ✅ CABEÇALHO FIXO */
-                .mock-table thead {
-                    display: table-header-group;
-                }
-                
-                /* ✅ EVITAR QUEBRA DE PÁGINA DENTRO DAS LINHAS */
-                .mock-table tr {
-                    page-break-inside: avoid;
-                    page-break-after: auto;
-                }
-            }
-            
-            /* ✅ ESTILOS PARA VISUALIZAÇÃO (antes da impressão) */
-            .visualizacao-impressao {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                background: white;
-                z-index: 9999;
-                padding: 20px;
-                overflow: auto;
-                font-family: Arial, sans-serif;
-            }
-            
-            .visualizacao-impressao .mb-4 > div {
+            });
+        }
+
+        // ✅ 7. ESTILOS PARA INFORMAÇÕES DAS NOTAS
+        const notasInfo = element.querySelectorAll('.mb-4 > div');
+        notasInfo.forEach(nota => {
+            nota.style.cssText = `
                 background: #e3f2fd;
                 padding: 8px 10px;
                 margin-bottom: 8px;
                 border: 1px solid #90caf9;
                 border-radius: 4px;
                 font-size: 9pt;
-            }
-            
-            .visualizacao-impressao .mock-table {
-                width: 100%;
-                font-size: 8pt;
-                border-collapse: collapse;
-            }
-            
-            .visualizacao-impressao .mock-table th,
-            .visualizacao-impressao .mock-table td {
-                border: 1px solid #ccc;
-                padding: 4px 5px;
-            }
-            
-            .visualizacao-impressao .mock-table th {
-                background: #f8f9fa;
-                font-weight: bold;
-            }
+                color: #000;
+            `;
+        });
+
+        // ✅ 8. ADICIONA CABEÇALHO
+        const cabecalho = document.createElement('div');
+        cabecalho.style.cssText = `
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
         `;
-        
-        // ✅ 5. CRIA UM CONTAINER DE VISUALIZAÇÃO
-        const container = document.createElement('div');
-        container.className = 'visualizacao-impressao';
-        container.appendChild(style);
-        container.appendChild(contentToPrint);
-        
-        // ✅ 6. SUBSTITUI O BODY TEMPORARIAMENTE
-        document.body.innerHTML = '';
-        document.body.appendChild(container);
-        document.body.style.display = 'block';
-        
-        // ✅ 7. AGUARDA O RENDER E CHAMA A IMPRESSÃO NATIVA
-        setTimeout(() => {
-            // Primeiro mostra preview, depois imprime
-            const preview = confirm('Deseja ver a visualização antes de imprimir/salvar? Clique em OK para visualizar, Cancelar para imprimir diretamente.');
-            
-            if (preview) {
-                // Mostra preview e dá opção de imprimir
-                const imprimir = confirm('Visualização pronta! Clique em OK para imprimir/salvar como PDF.');
-                if (imprimir) {
-                    window.print();
-                }
-            } else {
-                // Imprime diretamente
-                window.print();
+        cabecalho.innerHTML = `
+            <h1 style="margin: 0; font-size: 16pt; color: #1e3a8a;">Conferência de Nota Fiscal</h1>
+            <p style="margin: 5px 0 0 0; font-size: 10pt; color: #666;">
+                Gerado em ${new Date().toLocaleString('pt-BR')} - Sistema GTGO
+            </p>
+        `;
+
+        element.insertBefore(cabecalho, element.firstChild);
+
+        // ✅ 9. CONFIGURAÇÕES DO PDF
+        const options = {
+            margin: [15, 15, 15, 15],
+            filename: `conferencia_nfe_${getDataAtual()}.pdf`,
+            image: { 
+                type: 'jpeg', 
+                quality: 0.98 
+            },
+            html2canvas: { 
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                width: 800,
+                height: element.scrollHeight
+            },
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait' 
             }
-            
-            // ✅ 8. RESTAURA A PÁGINA ORIGINAL
-            setTimeout(() => {
-                document.body.innerHTML = bodyOriginal;
-                document.body.style.display = displayOriginal;
-                showNotification('PDF pronto para salvar/imprimir!', 'success', 3000);
-            }, 1000);
-            
-        }, 1000);
+        };
+
+        // ✅ 10. CRIA CONTAINER TEMPORÁRIO
+        const container = document.createElement('div');
+        container.style.cssText = `
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            width: 210mm;
+            background: white;
+        `;
+        container.appendChild(element);
+        document.body.appendChild(container);
+
+        // ✅ 11. GERA E BAIXA O PDF
+        console.log('📄 Iniciando geração do PDF...');
         
+        html2pdf()
+            .set(options)
+            .from(element)
+            .save()
+            .then(() => {
+                console.log('✅ PDF gerado com sucesso!');
+                showNotification('PDF baixado com sucesso!', 'success', 4000);
+                document.body.removeChild(container);
+            })
+            .catch((error) => {
+                console.error('❌ Erro ao gerar PDF:', error);
+                showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
+                document.body.removeChild(container);
+            });
+
     } catch (error) {
         console.error('❌ Erro na exportação de PDF:', error);
         showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
-        
-        // ✅ RESTAURA A PÁGINA EM CASO DE ERRO
-        try {
-            document.body.innerHTML = bodyOriginal;
-            document.body.style.display = displayOriginal;
-        } catch (e) {
-            location.reload(); // Fallback extremo
-        }
     }
+}
+
+/**
+ * ✅ FUNÇÃO AUXILIAR - Data formatada
+ */
+function getDataAtual() {
+    const agora = new Date();
+    return `${agora.getFullYear()}-${(agora.getMonth()+1).toString().padStart(2, '0')}-${agora.getDate().toString().padStart(2, '0')}_${agora.getHours().toString().padStart(2, '0')}-${agora.getMinutes().toString().padStart(2, '0')}`;
 }
 		
     </script>
