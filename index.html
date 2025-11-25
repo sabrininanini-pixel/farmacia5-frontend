@@ -3255,20 +3255,23 @@ function applyConferenciaStyles(numCols) {
             }
         }
 
-        async function igualarContagem(rowIndex, quantidadeNF) {
+       async function igualarContagem(rowIndex, quantidadeNF) {
     try {
         showNotification(`Ajustando contagem localmente...`, 'loading');
         
         // ✅ SALVA NO CACHE LOCAL (não envia para o Sheets)
         const adjustments = loadConferenceAdjustments();
         
-        // ✅ SALVAR VALOR ORIGINAL DA DIFERENÇA ANTES DE IGUALAR
+        // ✅ SALVAR VALORES ORIGINAIS ANTES DE IGUALAR
         const table = document.getElementById('conferencia-table');
         const row = table.querySelector(`tr[data-row-index="${rowIndex}"]`);
         if (row) {
             const cells = row.querySelectorAll('td');
             const diferencaOriginal = cells[4] ? cells[4].textContent.trim() : '0';
+            const contagemLojaOriginal = cells[3] ? cells[3].textContent.trim() : '0';
+            
             adjustments[`original_E${rowIndex}`] = diferencaOriginal;
+            adjustments[`original_D${rowIndex}`] = contagemLojaOriginal;
         }
         
         // Salva os ajustes para esta linha
@@ -3280,7 +3283,7 @@ function applyConferenciaStyles(numCols) {
         // ✅ ATUALIZA APENAS A VISUALIZAÇÃO NO FRONTEND
         updateFrontendDisplay(rowIndex, quantidadeNF, 0);
         
-        // ✅ TRANSFORMAR BOTÃO EM "IGUALADO" + SETA
+        // ✅ TRANSFORMAR BOTÃO EM "OK" + X
         transformarBotaoIgualado(rowIndex);
         
         hideNotification();
@@ -3307,13 +3310,15 @@ function desfazerIgualar(rowIndex) {
     try {
         const adjustments = loadConferenceAdjustments();
         
-        // ✅ RESTAURA VALORES ORIGINAIS
+        // ✅ RESTAURA VALORES ORIGINAIS DA DIFERENÇA E CONTAGEM LOJA
         const diferencaOriginal = adjustments[`original_E${rowIndex}`] || '0';
+        const contagemLojaOriginal = adjustments[`original_D${rowIndex}`] || '0';
         
         // Remove os ajustes
         delete adjustments[`D${rowIndex}`];
         delete adjustments[`E${rowIndex}`];
         delete adjustments[`original_E${rowIndex}`];
+        delete adjustments[`original_D${rowIndex}`];
         
         saveConferenceAdjustments(adjustments);
         
@@ -3323,9 +3328,12 @@ function desfazerIgualar(rowIndex) {
         if (row) {
             const cells = row.querySelectorAll('td');
             
-            // Restaura valores nas células (se necessário)
+            // Restaura valores nas células
             if (cells[3] && cells[4]) {
-                // Atualiza a diferença para o valor original
+                // Coluna D (Contagem Loja) volta para o valor original
+                cells[3].textContent = contagemLojaOriginal;
+                
+                // Coluna E (Diferença) volta para o valor original
                 cells[4].textContent = diferencaOriginal;
                 
                 // Reaplica estilos
@@ -3343,7 +3351,6 @@ function desfazerIgualar(rowIndex) {
         showNotification('Erro ao desfazer: ' + error.message, 'error');
     }
 }
-
 
 
 /**
@@ -3447,29 +3454,29 @@ function updateSingleRowStyles(rowIndex) {
          * ✅ ATUALIZA A VISUALIZAÇÃO NO FRONTEND
          */
         function updateFrontendDisplay(rowIndex, contagemLoja, diferenca) {
-            const table = document.getElementById('conferencia-table');
-            if (!table) return;
-            
-            const rows = table.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-                if (row.getAttribute('data-row-index') === rowIndex.toString()) {
-                    const cells = row.querySelectorAll('td');
-                    if (cells.length >= 7) {
-                        // Atualiza coluna "Contagem Loja" (índice 3)
-                        if (cells[3]) {
-                            cells[3].textContent = contagemLoja;
-                        }
-                        
-                        // Atualiza coluna "Diferença" (índice 4)
-                        if (cells[4]) {
-                            cells[4].textContent = diferenca;
-                            // Reaplica os estilos
-                            applyConferenciaStyles(7);
-                        }
-                    }
+    const table = document.getElementById('conferencia-table');
+    if (!table) return;
+    
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        if (row.getAttribute('data-row-index') === rowIndex.toString()) {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 7) {
+                // Atualiza coluna "Contagem Loja" (índice 3)
+                if (cells[3]) {
+                    cells[3].textContent = contagemLoja;
                 }
-            });
+                
+                // Atualiza coluna "Diferença" (índice 4)
+                if (cells[4]) {
+                    cells[4].textContent = diferenca;
+                    // Reaplica os estilos
+                    aplicarConferenciaStyles(7);
+                }
+            }
         }
+    });
+}
 
 /**
  * ✅ EXPORTAR EXCEL CORRIGIDO - Inclui informações das notas e exporta apenas o visível
