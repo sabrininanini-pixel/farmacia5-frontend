@@ -4699,318 +4699,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /**
- * ✅ EXPORTAR PDF - VERSÃO MANUAL QUE FUNCIONA
+ * ✅ EXPORTAR PDF IDÊNTICO - HTML2PDF.js (TESTE CRU)
  */
 function exportarPDFIdentico() {
-    console.log('🎯 Exportação PDF - Construção manual...');
+    console.log('🎯 Iniciando html2pdf.js...');
     
-    showNotification('Gerando PDF...', 'loading', 5000);
+    showNotification('Gerando PDF idêntico à tela...', 'loading', 5000);
     
-    try {
-        // ✅ 1. CAPTURA OS DADOS DA TABELA VISÍVEL
-        const tabelaConferencia = document.getElementById('conferencia-table');
-        if (!tabelaConferencia) {
-            showNotification('Tabela de conferência não encontrada', 'error');
-            return;
-        }
-
-        // ✅ 2. CAPTURA INFORMAÇÕES DAS NOTAS FISCAIS
-        const notasInfoElements = document.querySelectorAll('#dynamic-table-content-conferencia .mb-4 > div');
-        let notasInfoHTML = '';
-        notasInfoElements.forEach(nota => {
-            const texto = nota.textContent.trim();
-            if (texto) {
-                notasInfoHTML += `
-                    <div class="nota-info">
-                        ${texto}
-                    </div>
-                `;
-            }
-        });
-
-        // ✅ 3. CONSTRÓI O HTML COMPLETO MANUALMENTE
-        let htmlContent = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Conferência de Nota Fiscal</title>
-                <style>
-                    /* ✅ ESTILOS GLOBAIS */
-                    body {
-                        font-family: Arial, sans-serif;
-                        font-size: 10pt;
-                        color: #000000;
-                        background: #ffffff;
-                        margin: 0;
-                        padding: 15mm;
-                        width: 210mm;
-                        min-height: 297mm;
-                        box-sizing: border-box;
-                    }
-                    
-                    /* ✅ CABEÇALHO */
-                    .header {
-                        text-align: center;
-                        margin-bottom: 15px;
-                        border-bottom: 2px solid #333333;
-                        padding-bottom: 10px;
-                    }
-                    
-                    .header h1 {
-                        margin: 0;
-                        font-size: 16pt;
-                        color: #1e3a8a;
-                    }
-                    
-                    .header p {
-                        margin: 5px 0 0 0;
-                        font-size: 10pt;
-                        color: #666666;
-                    }
-                    
-                    /* ✅ INFORMAÇÕES DAS NOTAS */
-                    .notas-container {
-                        margin-bottom: 15px;
-                    }
-                    
-                    .nota-info {
-                        background: #e3f2fd;
-                        padding: 8px 10px;
-                        margin-bottom: 8px;
-                        border: 1px solid #90caf9;
-                        border-radius: 4px;
-                        font-size: 9pt;
-                        color: #000000;
-                    }
-                    
-                    /* ✅ TABELA */
-                    .tabela-conferencia {
-                        width: 100%;
-                        border-collapse: collapse;
-                        font-size: 8pt;
-                        table-layout: fixed;
-                    }
-                    
-                    .tabela-conferencia th,
-                    .tabela-conferencia td {
-                        border: 1px solid #cccccc;
-                        padding: 4px 5px;
-                        word-break: break-word;
-                        white-space: normal;
-                        vertical-align: top;
-                        line-height: 1.2;
-                    }
-                    
-                    .tabela-conferencia th {
-                        background-color: #f8f9fa;
-                        font-weight: bold;
-                        text-align: center;
-                        color: #000000;
-                    }
-                    
-                    /* ✅ LARGURAS DAS COLUNAS */
-                    .col-codigo { width: 15%; }
-                    .col-descricao { width: 35%; }
-                    .col-quantidade { width: 8%; text-align: center; }
-                    .col-contagem { width: 8%; text-align: center; }
-                    .col-diferenca { width: 8%; text-align: center; }
-                    .col-corrigir { width: 6%; text-align: center; display: none; }
-                    .col-danos { width: 20%; }
-                    
-                    /* ✅ CORES DAS DIVERGÊNCIAS */
-                    .diferenca-negativa {
-                        background-color: #fee2e2 !important;
-                        color: #b91c1c !important;
-                    }
-                    
-                    .diferenca-positiva {
-                        background-color: #d1fae5 !important;
-                        color: #047857 !important;
-                    }
-                    
-                    .danos-preenchido {
-                        background-color: #fecaca !important;
-                    }
-                    
-                    /* ✅ QUEBRA DE PÁGINA */
-                    .quebrar-pagina {
-                        page-break-after: always;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h1>Conferência de Nota Fiscal</h1>
-                    <p>Gerado em ${new Date().toLocaleString('pt-BR')} - Sistema GTGO</p>
-                </div>
-        `;
-
-        // ✅ 4. ADICIONA INFORMAÇÕES DAS NOTAS
-        if (notasInfoHTML) {
-            htmlContent += `
-                <div class="notas-container">
-                    ${notasInfoHTML}
-                </div>
-            `;
-        }
-
-        // ✅ 5. INICIA A TABELA
-        htmlContent += `
-            <table class="tabela-conferencia">
-                <thead>
-                    <tr>
-                        <th class="col-codigo">Código de Barras</th>
-                        <th class="col-descricao">Descrição do Produto</th>
-                        <th class="col-quantidade">Quantidade NF</th>
-                        <th class="col-contagem">Contagem Loja</th>
-                        <th class="col-diferenca">Diferença</th>
-                        <th class="col-corrigir">Corrigir</th>
-                        <th class="col-danos">Danos/Defeito e Obs</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        // ✅ 6. ADICIONA AS LINHAS DA TABELA
-        const linhas = tabelaConferencia.querySelectorAll('tbody tr');
-        let linhaCount = 0;
-        
-        linhas.forEach(linha => {
-            // Verifica se a linha está visível
-            const estilo = window.getComputedStyle(linha);
-            if (estilo.display === 'none') return;
-            
-            const celulas = linha.querySelectorAll('td');
-            if (celulas.length >= 7) {
-                linhaCount++;
-                
-                const codigoBarras = celulas[0]?.textContent?.trim() || '';
-                const descricao = celulas[1]?.textContent?.trim() || '';
-                const quantidadeNF = celulas[2]?.textContent?.trim() || '';
-                const contagemLoja = celulas[3]?.textContent?.trim() || '';
-                const diferenca = celulas[4]?.textContent?.trim() || '';
-                
-                // ✅ CAPTURA CONTEÚDO REAL DA COLUNA DANOS/DEFEITO
-                let danosDefeito = '';
-                const celulaDanos = celulas[6];
-                if (celulaDanos) {
-                    const elementoEditavel = celulaDanos.querySelector('[contenteditable="true"]');
-                    danosDefeito = elementoEditavel ? 
-                        elementoEditavel.textContent.trim() : 
-                        celulaDanos.textContent.trim();
-                }
-
-                // ✅ DETERMINA CLASSES DE ESTILO
-                let classeDiferenca = '';
-                const diferencaNum = parseFloat(diferenca.replace(',', '.'));
-                if (!isNaN(diferencaNum)) {
-                    if (diferencaNum < 0) {
-                        classeDiferenca = 'diferenca-negativa';
-                    } else if (diferencaNum > 0) {
-                        classeDiferenca = 'diferenca-positiva';
-                    }
-                }
-
-                let classeDanos = danosDefeito ? 'danos-preenchido' : '';
-
-                // ✅ ADICIONA LINHA AO HTML
-                htmlContent += `
-                    <tr>
-                        <td class="col-codigo">${codigoBarras}</td>
-                        <td class="col-descricao">${descricao}</td>
-                        <td class="col-quantidade">${quantidadeNF}</td>
-                        <td class="col-contagem">${contagemLoja}</td>
-                        <td class="col-diferenca ${classeDiferenca}">${diferenca}</td>
-                        <td class="col-corrigir"></td>
-                        <td class="col-danos ${classeDanos}">${danosDefeito}</td>
-                    </tr>
-                `;
-
-                // ✅ ADICIONA QUEBRA DE PÁGINA APÓS 40 LINHAS
-                if (linhaCount % 40 === 0) {
-                    htmlContent += `</tbody></table><div class="quebrar-pagina"></div>
-                    <table class="tabela-conferencia">
-                        <thead>
-                            <tr>
-                                <th class="col-codigo">Código de Barras</th>
-                                <th class="col-descricao">Descrição do Produto</th>
-                                <th class="col-quantidade">Quantidade NF</th>
-                                <th class="col-contagem">Contagem Loja</th>
-                                <th class="col-diferenca">Diferença</th>
-                                <th class="col-corrigir">Corrigir</th>
-                                <th class="col-danos">Danos/Defeito e Obs</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
-                }
-            }
-        });
-
-        // ✅ 7. FINALIZA O HTML
-        htmlContent += `
-                </tbody>
-            </table>
-            </body>
-            </html>
-        `;
-
-        // ✅ 8. CRIA BLOB E BAIXA O PDF
-        console.log('📄 Gerando PDF a partir do HTML...');
-        
-        // Cria um iframe temporário
-        const iframe = document.createElement('iframe');
-        iframe.style.cssText = 'position: fixed; left: -9999px; top: 0; width: 210mm; height: 297mm; border: none;';
-        document.body.appendChild(iframe);
-        
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-        iframeDoc.open();
-        iframeDoc.write(htmlContent);
-        iframeDoc.close();
-
-        // ✅ 9. CONFIGURA E GERA O PDF
-        const options = {
-            margin: [15, 15, 15, 15],
-            filename: `conferencia_nfe_${getDataAtual()}.pdf`,
-            image: { 
-                type: 'jpeg', 
-                quality: 0.98 
-            },
-            html2canvas: { 
-                scale: 2,
-                useCORS: true,
-                logging: true,
-                backgroundColor: '#ffffff',
-                width: 800,
-                windowWidth: 800
-            },
-            jsPDF: { 
-                unit: 'mm', 
-                format: 'a4', 
-                orientation: 'portrait' 
-            }
-        };
-
-        // ✅ 10. GERA O PDF DIRETAMENTE
-        html2pdf()
-            .set(options)
-            .from(iframeDoc.body)
-            .save()
-            .then(() => {
-                console.log('✅ PDF gerado com sucesso!');
-                showNotification('PDF baixado com sucesso!', 'success', 4000);
-                document.body.removeChild(iframe);
-            })
-            .catch((error) => {
-                console.error('❌ Erro ao gerar PDF:', error);
-                showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
-                document.body.removeChild(iframe);
-            });
-
-    } catch (error) {
-        console.error('❌ Erro na exportação de PDF:', error);
-        showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
+    // ✅ CAPTURA o elemento completo da conferência
+    const element = document.getElementById('conferencia-content');
+    
+    if (!element) {
+        showNotification('Erro: Elemento não encontrado', 'error');
+        return;
     }
+    
+    console.log('📄 Elemento capturado:', element);
+    
+    // ✅ CONFIGURAÇÕES BÁSICAS
+    const options = {
+        margin: [10, 10, 10, 10], // [top, left, bottom, right]
+        filename: `conferencia_${getDataAtual()}.pdf`,
+        image: { 
+            type: 'jpeg', 
+            quality: 0.95 
+        },
+        html2canvas: { 
+            scale: 2, // Alta qualidade
+            useCORS: true,
+            logging: true, // Para debug
+            backgroundColor: '#ffffff'
+        },
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait' 
+        }
+    };
+    
+    // ✅ EXECUTA A CONVERSÃO
+    html2pdf()
+        .set(options)
+        .from(element)
+        .save()
+        .then(() => {
+            console.log('✅ PDF gerado com sucesso!');
+            showNotification('PDF idêntico gerado com sucesso!', 'success', 4000);
+        })
+        .catch((error) => {
+            console.error('❌ Erro html2pdf:', error);
+            showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
+        });
 }
 
 /**
