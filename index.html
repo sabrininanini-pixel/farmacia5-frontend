@@ -4699,209 +4699,146 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /**
- * ✅ EXPORTAR PDF FORMATADO - VERSÃO MANUAL E CONFIÁVEL
+ * ✅ EXPORTAR PDF FORMATADO - VERSÃO FINAL CORRIGIDA
  */
 function exportarPDFIdentico() {
-    console.log('🎯 Iniciando exportação de PDF manual...');
+    console.log('🎯 Iniciando exportação de PDF formatado...');
     
     showNotification('Gerando PDF formatado...', 'loading', 5000);
     
     try {
-        // ✅ 1. CAPTURA OS DADOS DIRETAMENTE DA TABELA VISÍVEL
-        const tabelaConferencia = document.getElementById('conferencia-table');
-        if (!tabelaConferencia) {
-            showNotification('Tabela de conferência não encontrada', 'error');
+        // 🚨 MUDANÇA 1: Usar o elemento que contém TUDO (Notas e Tabela)
+        const conferenciaWrapper = document.getElementById('conferencia-content');
+        if (!conferenciaWrapper) {
+            showNotification('Elemento principal da conferência (conferencia-content) não encontrado', 'error');
             return;
         }
 
-        // ✅ 2. CAPTURA INFORMAÇÕES DAS NOTAS FISCAIS
-        const notasInfoElements = document.querySelectorAll('#dynamic-table-content-conferencia .mb-4 > div');
-        let notasInfoHTML = '';
-        notasInfoElements.forEach(nota => {
-            const texto = nota.textContent.trim();
-            if (texto) {
-                notasInfoHTML += `<div style="background: #e3f2fd; padding: 8px; margin-bottom: 5px; border: 1px solid #90caf9; border-radius: 4px; font-size: 9pt; font-family: Arial, sans-serif;">
-                    ${texto}
-                </div>`;
-            }
-        });
+        // ✅ 2. CRIA UM CLONE COMPLETO DO CONTEÚDO
+        const element = conferenciaWrapper.cloneNode(true); // 'element' agora contém NF-Infos e Tabela
+        
+        // ✅ 3. REMOVE ELEMENTOS DESNECESSÁRIOS DO CLONE
+        // Oculta/remove o que não é de impressão
+        const elementosParaRemover = element.querySelectorAll(
+            '.print-hidden, button, nav, header, #paste-modal, #notifications-container, .tab-button, .flex.border-b, .flex.flex-wrap' // Mantendo a remoção de wrappers
+        );
+        elementosParaRemover.forEach(el => el.remove());
 
-        // ✅ 3. CONSTRÓI O HTML MANUALMENTE COM OS DADOS REAIS
-        let htmlContent = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body { 
-                        font-family: Arial, sans-serif; 
-                        font-size: 10pt; 
-                        color: #000; 
-                        background: white; 
-                        margin: 0; 
-                        padding: 15px; 
-                    }
-                    .header { 
-                        text-align: center; 
-                        margin-bottom: 15px; 
-                        border-bottom: 2px solid #333; 
-                        padding-bottom: 10px; 
-                    }
-                    .header h1 { 
-                        margin: 0; 
-                        font-size: 16pt; 
-                        color: #1e3a8a; 
-                    }
-                    .header p { 
-                        margin: 5px 0 0 0; 
-                        font-size: 10pt; 
-                        color: #666; 
-                    }
-                    .notas-info { 
-                        margin-bottom: 15px; 
-                    }
-                    table { 
-                        width: 100%; 
-                        border-collapse: collapse; 
-                        font-size: 8pt; 
-                        table-layout: fixed;
-                    }
-                    th, td { 
-                        border: 1px solid #ccc; 
-                        padding: 4px; 
-                        word-break: break-word; 
-                        vertical-align: top;
-                    }
-                    th { 
-                        background-color: #f8f9fa; 
-                        font-weight: bold; 
-                        text-align: center; 
-                    }
-                    .codigo-barras { width: 15%; }
-                    .descricao { width: 30%; }
-                    .quantidade { width: 8%; text-align: center; }
-                    .contagem { width: 8%; text-align: center; }
-                    .diferenca { width: 8%; text-align: center; }
-                    .corrigir { width: 6%; text-align: center; }
-                    .danos { width: 25%; }
-                    .diferenca-negativa { background-color: #fee2e2; color: #b91c1c; }
-                    .diferenca-positiva { background-color: #d1fae5; color: #047857; }
-                    .danos-preenchido { background-color: #fecaca; }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h1>Conferência de Nota Fiscal</h1>
-                    <p>Gerado em ${new Date().toLocaleString('pt-BR')} - Sistema GTGO</p>
-                </div>
-        `;
+        // ✅ 4. APLICA ESTILOS DE CORPO DE DOCUMENTO DIRETAMENTE NO CLONE
+        element.style.padding = '10px';
+        element.style.fontFamily = 'Arial, sans-serif';
+        element.style.fontSize = '10pt';
+        element.style.color = '#000';
+        element.style.background = 'white';
+        // Simula A4: Força largura para evitar scrollbars no html2canvas
+        element.style.width = '794px'; 
+        element.style.maxWidth = '794px';
+        element.style.margin = '0';
+        
+        // ✅ 5. APLICA ESTILOS ESPECÍFICOS NA TABELA (E TRATA OBS)
+        const tabela = element.querySelector('#conferencia-table');
+        if (tabela) {
+            tabela.style.width = '100%';
+            tabela.style.maxWidth = '100%';
+            tabela.style.fontSize = '8pt';
+            tabela.style.borderCollapse = 'collapse';
+            tabela.style.tableLayout = 'fixed'; // Ajuda a respeitar as larguras
 
-        // ✅ 4. ADICIONA INFORMAÇÕES DAS NOTAS FISCAIS
-        if (notasInfoHTML) {
-            htmlContent += `<div class="notas-info">${notasInfoHTML}</div>`;
-        }
+            // Itera sobre as células para aplicar estilos e larguras
+            tabela.querySelectorAll('th, td').forEach(celula => {
+                celula.style.border = '1px solid #ccc';
+                celula.style.padding = '3px 4px';
+                celula.style.fontSize = '8pt';
+                celula.style.lineHeight = '1.1';
+                celula.style.wordBreak = 'break-word';
+                celula.style.whiteSpace = 'normal'; // CRÍTICO: Permite quebra de linha
+                celula.style.verticalAlign = 'top';
 
-        // ✅ 5. CONSTRÓI A TABELA MANUALMENTE
-        htmlContent += `
-            <table>
-                <thead>
-                    <tr>
-                        <th class="codigo-barras">Código de Barras</th>
-                        <th class="descricao">Descrição do Produto</th>
-                        <th class="quantidade">Quantidade NF</th>
-                        <th class="contagem">Contagem Loja</th>
-                        <th class="diferenca">Diferença</th>
-                        <th class="corrigir">Corrigir</th>
-                        <th class="danos">Danos/Defeito e Obs</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        // ✅ 6. ADICIONA AS LINHAS DA TABELA
-        const linhas = tabelaConferencia.querySelectorAll('tbody tr');
-        linhas.forEach(linha => {
-            // Verifica se a linha está visível (não oculta por filtro)
-            const estilo = window.getComputedStyle(linha);
-            if (estilo.display === 'none') return;
-
-            const celulas = linha.querySelectorAll('td');
-            if (celulas.length >= 7) {
-                const codigoBarras = celulas[0]?.textContent?.trim() || '';
-                const descricao = celulas[1]?.textContent?.trim() || '';
-                const quantidadeNF = celulas[2]?.textContent?.trim() || '';
-                const contagemLoja = celulas[3]?.textContent?.trim() || '';
-                const diferenca = celulas[4]?.textContent?.trim() || '';
-                const corrigir = celulas[5]?.textContent?.trim() || '';
+                // Remove classes que possam interferir na largura/visualização
+                celula.classList.remove('scroll-mode-cell', 'scroll-mode-cell-numeric', 'expand-mode-cell', 'scroll-mode-cell-code', 'truncate-mode-cell');
+            });
+            
+            // ✅ CORREÇÃO CRÍTICA PARA COLUNA OBS/DANOS (7ª coluna no HTML original)
+            const todasLinhas = tabela.querySelectorAll('tr');
+            todasLinhas.forEach(linha => {
+                const celulas = linha.querySelectorAll('td, th');
                 
-                // ✅ CAPTURA O CONTEÚDO REAL DA COLUNA DANOS/DEFEITO (ignora o botão +)
-                let danosDefeito = '';
-                const celulaDanos = celulas[6];
-                if (celulaDanos) {
-                    const elementoEditavel = celulaDanos.querySelector('[contenteditable="true"]');
-                    danosDefeito = elementoEditavel ? elementoEditavel.textContent.trim() : celulaDanos.textContent.trim();
+                // Oculta coluna "Corrigir" (índice 5)
+                if (celulas.length > 5) {
+                    celulas[5].style.display = 'none';
                 }
 
-                // ✅ DETERMINA AS CLASSES DE ESTILO
-                let classeDiferenca = '';
-                const diferencaNum = parseFloat(diferenca.replace(',', '.'));
-                if (!isNaN(diferencaNum)) {
-                    if (diferencaNum < 0) classeDiferenca = 'diferenca-negativa';
-                    else if (diferencaNum > 0) classeDiferenca = 'diferenca-positiva';
+                // Ajusta a célula de Observação/Danos (índice 6)
+                if (celulas.length > 6) {
+                    const celulaObs = celulas[6];
+                    // Remove botões internos e garante que o conteúdo editável seja texto
+                    const conteudoEditavel = celulaObs.querySelector('[contenteditable="true"]');
+                    if (conteudoEditavel) {
+                        // Substitui o elemento editável pelo seu texto puro
+                        const texto = conteudoEditavel.textContent || '';
+                        celulaObs.innerHTML = texto;
+                        celulaObs.style.minHeight = 'auto'; // Garante quebra de texto
+                    }
+                    // Remove botões que podem estar na célula
+                    celulaObs.querySelectorAll('button, .opcao-danos-btn').forEach(btn => btn.remove());
                 }
+            });
+            
+            // ✅ DEFINIÇÃO DAS LARGURAS APÓS A OCUlTAÇÃO DA COLUNA 6
+            // A largura total deve somar 100%. Usamos os seletores nth-child corrigidos (a 6ª é ignorada)
+            
+            // Coluna 1 (15%) - Código
+            tabela.querySelectorAll('th:nth-child(1), td:nth-child(1)').forEach(el => el.style.width = '15%');
+            // Coluna 2 (40%) - Descrição
+            tabela.querySelectorAll('th:nth-child(2), td:nth-child(2)').forEach(el => el.style.width = '40%');
+            
+            // Colunas 3, 4, 5 (10% cada = 30%) - Numéricas
+            tabela.querySelectorAll('th:nth-child(3), td:nth-child(3), th:nth-child(4), td:nth-child(4), th:nth-child(5), td:nth-child(5)').forEach(el => {
+                el.style.width = '10%';
+                el.style.textAlign = 'center';
+            });
+            
+            // Coluna 7 (15%) - Obs/Danos
+            tabela.querySelectorAll('th:nth-child(7), td:nth-child(7)').forEach(el => el.style.width = '15%');
+        }
+        
+        // ✅ 6. CRIA CONTAINER TEMPORÁRIO E ADICIONA CABEÇALHO SUPERIOR
+        const container = document.createElement('div');
+        container.style.position = 'fixed'; // Para tirar do fluxo e não afetar o layout
+        container.style.left = '-9999px';
+        container.style.top = '0';
+        container.style.width = '794px'; // Garante a largura do clone
+        container.style.background = 'white';
+        container.style.padding = '0'; 
 
-                let classeDanos = danosDefeito ? 'danos-preenchido' : '';
-
-                htmlContent += `
-                    <tr>
-                        <td class="codigo-barras">${codigoBarras}</td>
-                        <td class="descricao">${descricao}</td>
-                        <td class="quantidade">${quantidadeNF}</td>
-                        <td class="contagem">${contagemLoja}</td>
-                        <td class="diferenca ${classeDiferenca}">${diferenca}</td>
-                        <td class="corrigir">${corrigir}</td>
-                        <td class="danos ${classeDanos}">${danosDefeito}</td>
-                    </tr>
-                `;
-            }
-        });
-
-        htmlContent += `
-                </tbody>
-            </table>
-            </body>
-            </html>
+        // Adiciona um cabeçalho fixo no topo do PDF
+        const cabecalho = document.createElement('div');
+        cabecalho.innerHTML = `
+            <div style="text-align: center; margin-bottom: 15px; border-bottom: 2px solid #333; padding: 15px 0 10px 0; background-color: #f7f7f7;">
+                <h1 style="margin: 0; font-size: 16pt; color: #1e3a8a;">Conferência de Nota Fiscal</h1>
+                <p style="margin: 5px 0 0 0; font-size: 10pt; color: #666;">
+                    Gerado em ${new Date().toLocaleString('pt-BR')} - Sistema GTGO
+                </p>
+            </div>
         `;
-
-        // ✅ 7. CRIA UM IFRAME PARA GERAR O PDF
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'fixed';
-        iframe.style.left = '-9999px';
-        iframe.style.top = '0';
-        iframe.style.width = '210mm';
-        iframe.style.height = '297mm';
-        iframe.style.border = 'none';
         
-        document.body.appendChild(iframe);
+        // ✅ ORDEM CORRETA: CABEÇALHO -> CONTEÚDO (INFOS NF + TABELA)
+        container.appendChild(cabecalho);
+        container.appendChild(element); // O 'element' já tem as infos da NF acima da tabela
+        document.body.appendChild(container);
         
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-        iframeDoc.open();
-        iframeDoc.write(htmlContent);
-        iframeDoc.close();
-
-        // ✅ 8. CONFIGURAÇÕES DO PDF
+        // ✅ 7. CONFIGURAÇÕES DO PDF
         const options = {
-            margin: [10, 15, 10, 15],
-            filename: `conferencia_nfe_${getDataAtual()}.pdf`,
-            image: { 
-                type: 'jpeg', 
-                quality: 0.98 
-            },
+            margin: [10, 10, 10, 10],
+            filename: `conferencia_${getDataAtual()}.pdf`,
+            image: { type: 'jpeg', quality: 0.95 },
             html2canvas: { 
                 scale: 2,
                 useCORS: true,
                 logging: true,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                windowWidth: 800, // Largura de renderização, ajustada para a simulação A4
+                width: 800 
             },
             jsPDF: { 
                 unit: 'mm', 
@@ -4909,31 +4846,32 @@ function exportarPDFIdentico() {
                 orientation: 'portrait' 
             }
         };
-
-        // ✅ 9. USA O CONTEÚDO DO IFRAME PARA GERAR O PDF
-        setTimeout(() => {
-            html2pdf()
-                .set(options)
-                .from(iframeDoc.body)
-                .save()
-                .then(() => {
-                    console.log('✅ PDF gerado com sucesso!');
-                    showNotification('PDF formatado gerado com sucesso!', 'success', 4000);
-                    document.body.removeChild(iframe);
-                })
-                .catch((error) => {
-                    console.error('❌ Erro ao gerar PDF:', error);
-                    showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
-                    document.body.removeChild(iframe);
-                });
-        }, 1000);
+        
+        console.log('📄 Elemento preparado para PDF:', container);
+        
+        // 🚨 MUDANÇA 2: Usa o CONTEINER como fonte do html2pdf
+        html2pdf()
+            .set(options)
+            .from(container) // 👈 CORREÇÃO: Usar o container que engloba tudo
+            .save()
+            // ... (o restante do .then e .catch está correto)
+            .then(() => {
+                console.log('✅ PDF gerado com sucesso!');
+                showNotification('PDF formatado gerado com sucesso!', 'success', 4000);
+                document.body.removeChild(container);
+            })
+            .catch((error) => {
+                console.error('❌ Erro ao gerar PDF:', error);
+                showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
+                document.body.removeChild(container);
+            });
 
     } catch (error) {
         console.error('❌ Erro na exportação de PDF:', error);
         showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
     }
 }
-
+		
 /**
  * ✅ FUNÇÃO AUXILIAR - Data formatada para nome do arquivo
  */
