@@ -4804,13 +4804,17 @@ function exportarPDFIdentico() {
         
         // ✅ 6. CRIA CONTAINER TEMPORÁRIO E ADICIONA CABEÇALHO SUPERIOR
         const container = document.createElement('div');
-        container.style.position = 'fixed'; // Para tirar do fluxo e não afetar o layout
-        container.style.left = '-9999px';
-        container.style.top = '0';
-        container.style.width = '794px'; // Garante a largura do clone
-        container.style.background = 'white';
-        container.style.padding = '0'; 
+        container.style.position = 'absolute';
+container.style.top = '0';
+container.style.left = '0';
+container.style.opacity = '0';        // invisível, mas renderizado
+container.style.pointerEvents = 'none';
+container.style.width = '794px';
+container.style.zIndex = '-1';        // fora da interação
+container.style.background = 'white';
 
+
+		
         // Adiciona um cabeçalho fixo no topo do PDF
         const cabecalho = document.createElement('div');
         cabecalho.innerHTML = `
