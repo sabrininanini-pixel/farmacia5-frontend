@@ -4698,7 +4698,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /**
- * ✅ EXPORTAR PDF FORMATADO - IGUAL AO BOTÃO IMPRIMIR/SALVAR PDF
+ * ✅ EXPORTAR PDF FORMATADO - COM ESTILOS DE IMPRESSÃO CORRETOS
  */
 function exportarPDFIdentico() {
     console.log('🎯 Iniciando exportação de PDF formatado...');
@@ -4708,24 +4708,27 @@ function exportarPDFIdentico() {
     try {
         // ✅ 1. CAPTURA APENAS O CONTEÚDO ESSENCIAL (igual ao print)
         const element = document.createElement('div');
-        element.style.padding = '20px';
+        element.style.padding = '10px';
         element.style.fontFamily = 'Arial, sans-serif';
-        element.style.fontSize = '12pt';
-        element.style.color = '#333';
+        element.style.fontSize = '10pt';
+        element.style.color = '#000';
+        element.style.background = 'white';
+        element.style.width = '210mm';
+        element.style.maxWidth = '210mm';
+        element.style.margin = '0 auto';
         
         // ✅ 2. ADICIONA INFORMAÇÕES DAS NOTAS FISCAIS (igual ao print)
         const notasInfoElements = document.querySelectorAll('#dynamic-table-content-conferencia .mb-4 > div');
         
         if (notasInfoElements.length > 0) {
             const infoDiv = document.createElement('div');
-            infoDiv.style.marginBottom = '20px';
-            infoDiv.style.borderBottom = '2px solid #333';
-            infoDiv.style.paddingBottom = '15px';
+            infoDiv.className = 'mb-4';
+            infoDiv.style.marginBottom = '8px';
             
             // Título "Notas Fiscais na Conferencia"
             const tituloDiv = document.createElement('div');
-            tituloDiv.style.fontSize = '14px';
-            tituloDiv.style.marginBottom = '10px';
+            tituloDiv.style.fontSize = '10px';
+            tituloDiv.style.marginBottom = '5px';
             tituloDiv.style.fontWeight = 'bold';
             tituloDiv.textContent = `Notas Fiscais na Conferencia: ${notasInfoElements.length}`;
             infoDiv.appendChild(tituloDiv);
@@ -4733,12 +4736,12 @@ function exportarPDFIdentico() {
             // Informações de cada nota fiscal
             notasInfoElements.forEach(notaElement => {
                 const notaDiv = document.createElement('div');
-                notaDiv.style.fontSize = '12px';
-                notaDiv.style.marginBottom = '5px';
-                notaDiv.style.padding = '8px';
-                notaDiv.style.backgroundColor = '#dbeafe'; // Azul claro igual ao print
-                notaDiv.style.border = '1px solid #93c5fd';
-                notaDiv.style.borderRadius = '4px';
+                notaDiv.style.background = '#e5e7eb';
+                notaDiv.style.padding = '4px 6px';
+                notaDiv.style.marginBottom = '2px';
+                notaDiv.style.fontSize = '7pt';
+                notaDiv.style.border = '1px solid #d1d5db';
+                notaDiv.style.borderRadius = '2px';
                 
                 let textoNota = notaElement.textContent.trim();
                 
@@ -4757,14 +4760,14 @@ function exportarPDFIdentico() {
         // ✅ 3. ADICIONA TÍTULO "CÓDIGO DE BARRAS"
         const tituloCodigos = document.createElement('h3');
         tituloCodigos.textContent = 'CÓDIGO DE BARRAS';
-        tituloCodigos.style.fontSize = '14px';
+        tituloCodigos.style.fontSize = '11px';
         tituloCodigos.style.fontWeight = 'bold';
-        tituloCodigos.style.marginBottom = '15px';
+        tituloCodigos.style.marginBottom = '10px';
         tituloCodigos.style.borderBottom = '1px solid #ccc';
-        tituloCodigos.style.paddingBottom = '5px';
+        tituloCodigos.style.paddingBottom = '3px';
         element.appendChild(tituloCodigos);
 
-        // ✅ 4. CRIA UMA CÓPIA LIMPA DA TABELA (apenas colunas essenciais)
+        // ✅ 4. CRIA UMA CÓPIA DA TABELA COMPLETA (com todas as colunas)
         const tabelaOriginal = document.getElementById('conferencia-table');
         if (!tabelaOriginal) {
             showNotification('Tabela de conferência não encontrada', 'error');
@@ -4772,67 +4775,112 @@ function exportarPDFIdentico() {
         }
 
         const tabelaClone = tabelaOriginal.cloneNode(true);
+        tabelaClone.id = 'conferencia-table-pdf';
         
-        // Remove elementos desnecessários
-        const botoesCorrigir = tabelaClone.querySelectorAll('button');
-        botoesCorrigir.forEach(btn => btn.remove());
-        
-        // Remove a coluna "Corrigir" (6ª coluna) se existir
-        const todasLinhas = tabelaClone.querySelectorAll('tr');
-        todasLinhas.forEach(linha => {
-            const celulas = linha.querySelectorAll('td, th');
-            if (celulas.length >= 7) {
-                // Remove a coluna "Corrigir" (índice 5) e "Danos/Defeito" (índice 6)
-                celulas[6]?.remove(); // Remove Danos/Defeito
-                celulas[5]?.remove(); // Remove Corrigir
-            }
-        });
-
-        // Aplica estilos de impressão à tabela
+        // ✅ APLICA ESTILOS DE IMPRESSÃO DIRETAMENTE NA TABELA
         tabelaClone.style.width = '100%';
+        tabelaClone.style.maxWidth = '100%';
+        tabelaClone.style.fontSize = '8pt';
         tabelaClone.style.borderCollapse = 'collapse';
-        tabelaClone.style.fontSize = '10pt';
+        tabelaClone.style.pageBreakInside = 'auto';
         
-        // Estiliza células
+        // ✅ APLICA ESTILOS ESPECÍFICOS PARA CABER NA PÁGINA
         const todasCelulas = tabelaClone.querySelectorAll('th, td');
         todasCelulas.forEach(celula => {
-            celula.style.border = '1px solid #ddd';
-            celula.style.padding = '8px';
-            celula.style.textAlign = 'left';
+            celula.style.border = '1px solid #ccc';
+            celula.style.padding = '3px 4px';
+            celula.style.fontSize = '8pt';
+            celula.style.lineHeight = '1.1';
+            celula.style.wordBreak = 'break-word';
+            celula.style.wordWrap = 'break-word';
+            celula.style.overflowWrap = 'break-word';
+            celula.style.whiteSpace = 'normal';
+            celula.style.hyphens = 'auto';
+            
+            // Remove todas as classes de largura fixa
+            celula.classList.remove('scroll-mode-cell', 'scroll-mode-cell-numeric', 'expand-mode-cell', 'scroll-mode-cell-code', 'truncate-mode-cell');
             
             // Cabeçalhos com fundo cinza
             if (celula.tagName === 'TH') {
                 celula.style.backgroundColor = '#f8f9fa';
                 celula.style.fontWeight = 'bold';
+                celula.style.color = 'black';
             }
             
-            // Centraliza colunas numéricas
+            // ✅ APLICA LARGURAS ESPECÍFICAS POR COLUNA (igual ao CSS de impressão)
             const index = Array.from(celula.parentNode.children).indexOf(celula);
-            if (index === 2 || index === 3) { // Quantidade NF e Contagem Loja
+            if (index === 0) {
+                // Coluna 1: Código de Barras (15%)
+                celula.style.width = '15%';
+            } else if (index === 1) {
+                // Coluna 2: Descrição (40%)
+                celula.style.width = '40%';
+            } else if (index >= 2 && index <= 4) {
+                // Colunas 3-5: Numéricas (10% cada)
+                celula.style.width = '10%';
                 celula.style.textAlign = 'center';
+            } else if (index === 5) {
+                // Coluna 6: Corrigir (oculta na impressão)
+                celula.style.display = 'none';
+            } else if (index === 6) {
+                // Coluna 7: Danos/Defeito (15%)
+                celula.style.width = '15%';
+            }
+            
+            // ✅ MANTÉM CORES DAS DIVERGÊNCIAS
+            if (celula.classList.contains('bg-fee2e2') || celula.classList.contains('text-b91c1c') || celula.classList.contains('bg-red-100')) {
+                celula.style.backgroundColor = '#fee2e2';
+                celula.style.color = '#b91c1c';
+            }
+            if (celula.classList.contains('bg-green-100') || celula.classList.contains('text-green-700')) {
+                celula.style.backgroundColor = '#d1fae5';
+                celula.style.color = '#047857';
+            }
+            if (celula.classList.contains('bg-yellow-50')) {
+                celula.style.backgroundColor = '#fefce8';
+            }
+        });
+
+        // ✅ REMOVE BOTÕES DA COLUNA "CORRIGIR"
+        const botoesCorrigir = tabelaClone.querySelectorAll('button');
+        botoesCorrigir.forEach(btn => btn.remove());
+        
+        // ✅ OCULTA COMPLETAMENTE A COLUNA "CORRIGIR" (índice 5)
+        const todasLinhas = tabelaClone.querySelectorAll('tr');
+        todasLinhas.forEach(linha => {
+            const celulas = linha.querySelectorAll('td, th');
+            if (celulas.length >= 7) {
+                // Oculta a coluna "Corrigir" (índice 5)
+                if (celulas[5]) {
+                    celulas[5].style.display = 'none';
+                }
             }
         });
 
         element.appendChild(tabelaClone);
 
-        // ✅ 5. CONFIGURAÇÕES DO PDF
+        // ✅ 5. CONFIGURAÇÕES DO PDF OTIMIZADAS PARA A4
         const options = {
-            margin: [10, 10, 10, 10],
+            margin: [5, 5, 5, 5], // Margens menores
             filename: `conferencia_${getDataAtual()}.pdf`,
             image: { 
                 type: 'jpeg', 
-                quality: 0.95 
+                quality: 0.98 
             },
             html2canvas: { 
                 scale: 2,
                 useCORS: true,
                 logging: false,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                width: 800, // Largura fixa para controle
+                height: element.scrollHeight,
+                windowWidth: 800
             },
             jsPDF: { 
                 unit: 'mm', 
                 format: 'a4', 
-                orientation: 'portrait' 
+                orientation: 'portrait',
+                compress: true
             }
         };
         
