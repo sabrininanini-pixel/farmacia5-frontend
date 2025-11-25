@@ -5270,11 +5270,11 @@ async function exportarPDFIdentico() {
         try {
             const resultado = await gerarPDFParaAPK();
 
-			// ✅ TIMEOUT DE SEGURANÇA - fecha após 15 segundos mesmo se não voltar
+            // ✅ TIMEOUT DE SEGURANÇA - fecha após 15 segundos mesmo se não voltar
             setTimeout(() => {
                 hideNotification();
             }, 15000);
-			
+            
             Android.receberPDFGerado(resultado); // 👈 ENVIA PARA APK
         } catch (error) {
             showNotification('Erro no APK: ' + error.message, 'error');
@@ -5404,10 +5404,39 @@ async function exportarPDFIdentico() {
                 console.log(`📄 Página ${i + 1}/${paginas.length} processada`);
             }
 
-            // ✅ 9. SALVAR PDF
+            // ✅ 9. SALVAR PDF - COM COMPARTILHAMENTO NO MOBILE (PARTE MODIFICADA)
             const fileName = `conferencia_nfe_${getDataAtual()}.pdf`;
+            const pdfBlob = pdf.output('blob');
+            
+            // ✅ VERIFICA SE É MOBILE E PODE COMPARTILHAR
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile && navigator.share && navigator.canShare) {
+                try {
+                    // ✅ TENTA COMPARTILHAR NO MOBILE
+                    const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+                    
+                    if (navigator.canShare({ files: [file] })) {
+                        hideNotification();
+                        showNotification('Abrindo compartilhamento...', 'success', 2000);
+                        
+                        await navigator.share({
+                            files: [file],
+                            title: 'Conferência NFe',
+                            text: `PDF da conferência - ${paginas.length} páginas`
+                        });
+                        
+                        console.log('✅ PDF compartilhado no mobile!');
+                        return; // ✅ COMPARTILHOU COM SUCESSO - PARA AQUI
+                    }
+                } catch (shareError) {
+                    console.log('Compartilhamento falhou, fazendo download...', shareError);
+                    // Continua para o download normal abaixo
+                }
+            }
+            
+            // ✅ FALLBACK - DOWNLOAD NORMAL (DESKTOP OU MOBILE SEM SHARE)
             pdf.save(fileName);
-
             console.log('✅ PDF com múltiplas páginas gerado com sucesso!');
             showNotification(`PDF com ${paginas.length} páginas baixado!`, 'success', 4000);
 
@@ -5417,7 +5446,6 @@ async function exportarPDFIdentico() {
         }
     }
 }
-
 /**
  * ✅ FUNÇÃO ALTERNATIVA - DIVISÃO AUTOMÁTICA POR ALTURA
  */
