@@ -1803,12 +1803,12 @@ function realizarMudancaParaConferencia(sheetName) {
                     const jaIgualado = adjustments[`E${sheetRowIndex}`] === "0";
                     
                     if (jaIgualado) {
-                        // ✅ MOSTRAR "OK" + X VERMELHO
+                        // ✅ MOSTRAR "OK" + SETA VOLTAR
 html += `<td class="text-center">
     <div class="flex items-center justify-center gap-2">
         <span class="text-green-600 font-medium text-sm">OK</span>
         <button onclick="desfazerIgualar('${sheetRowIndex}')" 
-                class="text-red-500 hover:text-red-700 transition duration-150 text-sm font-bold"
+                class="text-gray-600 hover:text-gray-800 transition duration-150 text-lg"
                 title="Desfazer igualação">
             ↶
         </button>
@@ -3369,7 +3369,7 @@ function transformarBotaoIgualado(rowIndex) {
     <div class="flex items-center justify-center gap-2">
         <span class="text-green-600 font-medium text-sm">OK</span>
         <button onclick="desfazerIgualar('${rowIndex}')" 
-                class="text-red-500 hover:text-red-700 transition duration-150 text-sm font-bold"
+                class="text-gray-600 hover:text-gray-800 transition duration-150 text-lg"
                 title="Desfazer igualação">
             ↶
         </button>
