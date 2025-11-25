@@ -4701,89 +4701,143 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /**
- * ✅ EXPORTAR PDF IDENTICO - VERSÃO FINAL
+ * ✅ EXPORTAR PDF - VERSÃO OTIMIZADA COM html2canvas + jsPDF
  */
 async function exportarPDFIdentico() {
-    console.log('🎯 Iniciando exportação de PDF formatado...');
-    showNotification('Gerando PDF formatado...', 'loading', 5000);
+    console.log('🎯 Exportação PDF - Método direto html2canvas + jsPDF...');
+    
+    showNotification('Gerando PDF de alta qualidade...', 'loading', 5000);
+    
+    try {
+        // ✅ 1. CAPTURA O ELEMENTO ORIGINAL
+        const originalEl = document.getElementById('conferencia-content');
+        if (!originalEl) {
+            showNotification('Conteúdo da conferência não encontrado', 'error');
+            return;
+        }
 
-    const originalElement = document.getElementById('conferencia-content');
-    if (!originalElement) {
-        showNotification('Erro: Elemento da conferência não encontrado', 'error');
-        return;
-    }
-
-    // 1️⃣ CLONE DO ELEMENTO
-    const clone = originalElement.cloneNode(true);
-    clone.style.position = 'absolute';
-    clone.style.top = '0';
-    clone.style.left = '0';
-    clone.style.width = 'max-content';
-    clone.style.maxWidth = 'none';
-    clone.style.overflow = 'visible';
-    clone.style.opacity = '0'; // invisível mas renderizado
-    clone.style.zIndex = '-1';
-
-    // Adiciona ao DOM
-    document.body.appendChild(clone);
-
-    // 2️⃣ REMOVE ELEMENTOS DESNECESSÁRIOS
-    clone.querySelectorAll(
-        'button, .print-hidden, nav, header, .flex.border-b, .flex.flex-wrap, .tab-button'
-    ).forEach(el => el.remove());
-
-    clone.querySelectorAll('td, th').forEach(celula => {
-        celula.style.whiteSpace = 'normal';
-    });
-
-    // 3️⃣ CALCULA LARGURA REAL DA TABELA
-    const tabela = clone.querySelector('table');
-    const larguraReal = tabela ? tabela.scrollWidth : clone.scrollWidth;
-    const larguraForcada = larguraReal + 100; // margem extra
-    console.log(`📏 Largura calculada: ${larguraForcada}px`);
-
-    // 4️⃣ CARREGA html2pdf se não existir
-    if (!window.html2pdf) {
-        await new Promise(res => {
-            const s = document.createElement('script');
-            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-            s.onload = res;
-            document.head.appendChild(s);
+        // ✅ 2. CLONAR E PREPARAR O ELEMENTO
+        const el = originalEl.cloneNode(true);
+        
+        // ✅ 3. REMOVER ELEMENTOS DESNECESSÁRIOS
+        el.querySelectorAll('button, .print-hidden, nav, header, .flex.border-b, .flex.flex-wrap, .tab-button, .opcao-danos-btn').forEach(btn => btn.remove());
+        
+        // ✅ 4. PREPARAR COLUNA DANOS/DEFEITO
+        const celulasDanos = el.querySelectorAll('#conferencia-table td:nth-child(7)');
+        celulasDanos.forEach(celula => {
+            const botao = celula.querySelector('.opcao-danos-btn');
+            if (botao) botao.remove();
         });
-    }
 
-    // 5️⃣ CONFIGURAÇÕES DO PDF
-    const options = {
-        margin: [10, 10, 10, 10],
-        filename: `conferencia_${getDataAtual()}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-            scale: 2, // boa resolução
+        // ✅ 5. ADICIONAR ESTILOS DE IMPRESSÃO TEMPORÁRIOS
+        const style = document.createElement('style');
+        style.textContent = `
+            .print-optimized {
+                background: white !important;
+                color: black !important;
+                font-family: Arial, sans-serif !important;
+            }
+            .print-optimized table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            .print-optimized th, .print-optimized td {
+                border: 1px solid #ccc !important;
+                padding: 4px !important;
+            }
+            .print-optimized th {
+                background: #f8f9fa !important;
+                font-weight: bold !important;
+            }
+        `;
+        el.appendChild(style);
+        el.classList.add('print-optimized');
+
+        // ✅ 6. CRIAR CONTAINER TEMPORÁRIO
+        const container = document.createElement('div');
+        container.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 1000px; /* Largura fixa para consistência */
+            background: white;
+            z-index: 10000;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        `;
+        container.appendChild(el);
+        document.body.appendChild(container);
+
+        // ✅ 7. CONFIGURAÇÕES HTML2CANVAS OTIMIZADAS
+        const canvas = await html2canvas(el, {
+            scale: 1.5, // 🔥 Aumentei para melhor qualidade
             useCORS: true,
             backgroundColor: '#ffffff',
-            windowWidth: larguraForcada,
-            width: larguraForcada
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
+            logging: false,
+            width: container.scrollWidth,
+            height: container.scrollHeight,
+            windowWidth: container.scrollWidth,
+            scrollX: 0,
+            scrollY: 0,
+            onclone: function(clonedDoc) {
+                // Garante que o clone tenha os mesmos estilos
+                const clonedContainer = clonedDoc.querySelector('.print-optimized');
+                if (clonedContainer) {
+                    clonedContainer.style.width = '1000px';
+                    clonedContainer.style.background = 'white';
+                }
+            }
+        });
 
-    // 6️⃣ GERA E SALVA PDF
-    try {
-        await html2pdf()
-            .set(options)
-            .from(clone)
-            .save();
+        // ✅ 8. REMOVER CONTAINER TEMPORÁRIO
+        document.body.removeChild(container);
+
+        // ✅ 9. CONVERTER PARA IMAGEM COM QUALIDADE OTIMIZADA
+        const imgData = canvas.toDataURL('image/jpeg', 0.85); // 🔥 JPEG com 85% qualidade
+
+        console.log('📐 Dimensões do canvas:', canvas.width, 'x', canvas.height);
+        console.log('💾 Tamanho da imagem:', (imgData.length / 1024 / 1024).toFixed(2), 'MB');
+
+        // ✅ 10. CRIAR PDF COM DIMENSIONAMENTO CORRETO
+        const pdf = new jspdf.jsPDF({
+            orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+            unit: 'px',
+            format: 'a4'
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        // ✅ 11. CALCULAR DIMENSÕES PARA CABER NO A4
+        let imgWidth = pdfWidth;
+        let imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        // Se a imagem for muito alta, ajusta para caber na página
+        if (imgHeight > pdfHeight) {
+            imgHeight = pdfHeight;
+            imgWidth = (canvas.width * pdfHeight) / canvas.height;
+        }
+
+        // Centralizar na página
+        const x = (pdfWidth - imgWidth) / 2;
+        const y = (pdfHeight - imgHeight) / 2;
+
+        // ✅ 12. ADICIONAR IMAGEM AO PDF
+        pdf.addImage(imgData, 'JPEG', x, y, imgWidth, imgHeight, undefined, 'FAST');
+
+        // ✅ 13. SALVAR PDF
+        const fileName = `conferencia_nfe_${getDataAtual()}.pdf`;
+        pdf.save(fileName);
 
         console.log('✅ PDF gerado com sucesso!');
-        showNotification('PDF formatado gerado com sucesso!', 'success', 4000);
-    } catch (err) {
-        console.error('❌ Erro ao gerar PDF:', err);
-        showNotification('Erro ao gerar PDF: ' + err.message, 'error', 5000);
-    } finally {
-        // 7️⃣ REMOVE CLONE DO DOM
-        clone.remove();
+        showNotification('PDF baixado com alta qualidade!', 'success', 4000);
+
+    } catch (error) {
+        console.error('❌ Erro na exportação de PDF:', error);
+        showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
     }
 }
+
 /**
  * ✅ FUNÇÃO AUXILIAR - Data formatada
  */
