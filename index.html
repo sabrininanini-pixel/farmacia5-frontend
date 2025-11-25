@@ -4699,118 +4699,77 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /**
- * ✅ EXPORTAR PDF IDÊNTICO - DOWNLOAD DIRETO
+ * ✅ EXPORTAR PDF FORMATADO - ABORDAGEM CORRIGIDA
  */
 function exportarPDFIdentico() {
-    console.log('🎯 Exportação PDF - Download direto...');
+    console.log('🎯 Iniciando exportação de PDF formatado...');
     
-    showNotification('Gerando PDF...', 'loading', 5000);
+    showNotification('Gerando PDF formatado...', 'loading', 5000);
     
     try {
-        // ✅ 1. CAPTURA O CONTEÚDO COMPLETO
+        // ✅ 1. CAPTURA O ELEMENTO REAL DA PÁGINA (não criar um novo)
         const conferenciaContent = document.getElementById('conferencia-content');
         if (!conferenciaContent) {
-            showNotification('Conteúdo da conferência não encontrado', 'error');
+            showNotification('Elemento da conferência não encontrado', 'error');
             return;
         }
 
-        // ✅ 2. CRIA UM CLONE PARA MANIPULAÇÃO
+        // ✅ 2. CRIA UM CLONE DO ELEMENTO REAL
         const element = conferenciaContent.cloneNode(true);
         
-        // ✅ 3. REMOVE ELEMENTOS DESNECESSÁRIOS
-        const elementosRemover = element.querySelectorAll(
-            'button, .print-hidden, nav, header, .flex.border-b, .tab-button, .opcao-danos-btn'
+        // ✅ 3. REMOVE ELEMENTOS DESNECESSÁRIOS DO CLONE
+        const elementosParaRemover = element.querySelectorAll(
+            '.print-hidden, button, .flex, .border-b, .tab-button, nav, header'
         );
-        elementosRemover.forEach(el => el.remove());
+        elementosParaRemover.forEach(el => el.remove());
         
-        // ✅ 4. PREPARA A COLUNA DANOS/DEFEITO - REMOVE BOTÕES E MANTÉM CONTEÚDO
-        const celulasDanos = element.querySelectorAll('#conferencia-table td:nth-child(7)');
-        celulasDanos.forEach(celula => {
-            const botao = celula.querySelector('.opcao-danos-btn');
-            if (botao) botao.remove();
-            
-            // Garante que o conteúdo editável seja visível
-            const editavel = celula.querySelector('[contenteditable="true"]');
-            if (editavel) {
-                editavel.style.border = 'none';
-                editavel.style.background = 'transparent';
-                editavel.style.padding = '0';
-            }
-        });
-
-        // ✅ 5. APLICA ESTILOS DIRETAMENTE NO ELEMENTO
-        element.style.cssText = `
-            width: 210mm;
-            min-height: 297mm;
-            padding: 15mm;
-            font-family: Arial, sans-serif;
-            font-size: 10pt;
-            background: white;
-            color: black;
-            margin: 0 auto;
-            box-sizing: border-box;
-        `;
-
-        // ✅ 6. ESTILOS ESPECÍFICOS PARA A TABELA
+        // Remove botões específicos
+        const botoes = element.querySelectorAll('button');
+        botoes.forEach(btn => btn.remove());
+        
+        // ✅ 4. APLICA ESTILOS DE IMPRESSÃO DIRETAMENTE NO CLONE
+        element.style.padding = '10px';
+        element.style.fontFamily = 'Arial, sans-serif';
+        element.style.fontSize = '10pt';
+        element.style.color = '#000';
+        element.style.background = 'white';
+        element.style.width = '100%';
+        element.style.margin = '0';
+        
+        // ✅ 5. APLICA ESTILOS ESPECÍFICOS NA TABELA
         const tabela = element.querySelector('#conferencia-table');
         if (tabela) {
-            tabela.style.cssText = `
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 8pt;
-                table-layout: fixed;
-            `;
-
+            tabela.style.width = '100%';
+            tabela.style.maxWidth = '100%';
+            tabela.style.fontSize = '8pt';
+            tabela.style.borderCollapse = 'collapse';
+            
             // Aplica estilos nas células
             const todasCelulas = tabela.querySelectorAll('th, td');
-            todasCelulas.forEach((celula, index) => {
-                celula.style.cssText = `
-                    border: 1px solid #ccc;
-                    padding: 4px 5px;
-                    word-break: break-word;
-                    white-space: normal;
-                    vertical-align: top;
-                    font-size: 8pt;
-                    line-height: 1.2;
-                `;
-
-                // Larguras específicas
-                const colIndex = index % 7;
-                if (colIndex === 0) celula.style.width = '15%';
-                else if (colIndex === 1) celula.style.width = '35%';
-                else if (colIndex === 2 || colIndex === 3 || colIndex === 4) {
-                    celula.style.width = '10%';
-                    celula.style.textAlign = 'center';
-                }
-                else if (colIndex === 5) {
-                    celula.style.width = '5%';
-                    celula.style.textAlign = 'center';
-                }
-                else if (colIndex === 6) celula.style.width = '25%';
-
+            todasCelulas.forEach(celula => {
+                celula.style.border = '1px solid #ccc';
+                celula.style.padding = '3px 4px';
+                celula.style.fontSize = '8pt';
+                celula.style.lineHeight = '1.1';
+                celula.style.wordBreak = 'break-word';
+                celula.style.whiteSpace = 'normal';
+                
+                // Remove classes de modo que possam interferir
+                celula.classList.remove('scroll-mode-cell', 'scroll-mode-cell-numeric', 'expand-mode-cell');
+                
                 if (celula.tagName === 'TH') {
-                    celula.style.cssText += `
-                        background-color: #f8f9fa;
-                        font-weight: bold;
-                        text-align: center;
-                    `;
+                    celula.style.backgroundColor = '#f8f9fa';
+                    celula.style.fontWeight = 'bold';
                 }
-
-                // Mantém cores das divergências
-                if (celula.classList.contains('bg-fee2e2')) {
-                    celula.style.backgroundColor = '#fee2e2';
-                    celula.style.color = '#b91c1c';
-                }
-                if (celula.classList.contains('bg-green-100')) {
-                    celula.style.backgroundColor = '#d1fae5';
-                    celula.style.color = '#047857';
-                }
-                if (celula.classList.contains('bg-red-100')) {
-                    celula.style.backgroundColor = '#fecaca';
+                
+                // Centraliza colunas numéricas
+                const index = Array.from(celula.parentNode.children).indexOf(celula);
+                if (index === 2 || index === 3 || index === 4) { // Colunas numéricas
+                    celula.style.textAlign = 'center';
                 }
             });
-
-            // Oculta coluna "Corrigir"
+            
+            // Oculta coluna "Corrigir" (índice 5)
             const todasLinhas = tabela.querySelectorAll('tr');
             todasLinhas.forEach(linha => {
                 const celulas = linha.querySelectorAll('td, th');
@@ -4819,53 +4778,34 @@ function exportarPDFIdentico() {
                 }
             });
         }
-
-        // ✅ 7. ESTILOS PARA INFORMAÇÕES DAS NOTAS
-        const notasInfo = element.querySelectorAll('.mb-4 > div');
-        notasInfo.forEach(nota => {
-            nota.style.cssText = `
-                background: #e3f2fd;
-                padding: 8px 10px;
-                margin-bottom: 8px;
-                border: 1px solid #90caf9;
-                border-radius: 4px;
-                font-size: 9pt;
-                color: #000;
-            `;
-        });
-
-        // ✅ 8. ADICIONA CABEÇALHO
-        const cabecalho = document.createElement('div');
-        cabecalho.style.cssText = `
-            text-align: center;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 10px;
-        `;
-        cabecalho.innerHTML = `
-            <h1 style="margin: 0; font-size: 16pt; color: #1e3a8a;">Conferência de Nota Fiscal</h1>
-            <p style="margin: 5px 0 0 0; font-size: 10pt; color: #666;">
-                Gerado em ${new Date().toLocaleString('pt-BR')} - Sistema GTGO
-            </p>
-        `;
-
-        element.insertBefore(cabecalho, element.firstChild);
-
-        // ✅ 9. CONFIGURAÇÕES DO PDF
+        
+        // ✅ 6. CRIA UM CONTAINER TEMPORÁRIO VISÍVEL
+        const container = document.createElement('div');
+        container.style.position = 'fixed';
+        container.style.left = '-9999px';
+        container.style.top = '0';
+        container.style.width = '210mm';
+        container.style.background = 'white';
+        container.style.padding = '10px';
+        container.appendChild(element);
+        document.body.appendChild(container);
+        
+        // ✅ 7. CONFIGURAÇÕES DO PDF
         const options = {
-            margin: [15, 15, 15, 15],
-            filename: `conferencia_nfe_${getDataAtual()}.pdf`,
+            margin: [10, 10, 10, 10],
+            filename: `conferencia_${getDataAtual()}.pdf`,
             image: { 
                 type: 'jpeg', 
-                quality: 0.98 
+                quality: 0.95 
             },
             html2canvas: { 
                 scale: 2,
                 useCORS: true,
-                logging: false,
+                logging: true,
                 backgroundColor: '#ffffff',
-                width: 800,
-                height: element.scrollHeight
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: 800
             },
             jsPDF: { 
                 unit: 'mm', 
@@ -4873,34 +4813,24 @@ function exportarPDFIdentico() {
                 orientation: 'portrait' 
             }
         };
-
-        // ✅ 10. CRIA CONTAINER TEMPORÁRIO
-        const container = document.createElement('div');
-        container.style.cssText = `
-            position: fixed;
-            left: -9999px;
-            top: 0;
-            width: 210mm;
-            background: white;
-        `;
-        container.appendChild(element);
-        document.body.appendChild(container);
-
-        // ✅ 11. GERA E BAIXA O PDF
-        console.log('📄 Iniciando geração do PDF...');
         
+        console.log('📄 Elemento preparado para PDF:', element);
+        
+        // ✅ 8. EXECUTA A CONVERSÃO
         html2pdf()
             .set(options)
             .from(element)
             .save()
             .then(() => {
                 console.log('✅ PDF gerado com sucesso!');
-                showNotification('PDF baixado com sucesso!', 'success', 4000);
+                showNotification('PDF formatado gerado com sucesso!', 'success', 4000);
+                // Remove o container temporário
                 document.body.removeChild(container);
             })
             .catch((error) => {
                 console.error('❌ Erro ao gerar PDF:', error);
                 showNotification('Erro ao gerar PDF: ' + error.message, 'error', 5000);
+                // Remove o container temporário mesmo em caso de erro
                 document.body.removeChild(container);
             });
 
