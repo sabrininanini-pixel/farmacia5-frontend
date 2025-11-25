@@ -5265,10 +5265,16 @@ async function exportarPDFIdentico() {
     
     if (isAndroidApp) {
         // ✅ NO APK - USA A FUNÇÃO COMPLETA
-        showNotification('Gerando PDF no APK...', 'loading', 5000);
+        showNotification('Gerando PDF...', 'loading');
         
         try {
             const resultado = await gerarPDFParaAPK();
+
+			// ✅ TIMEOUT DE SEGURANÇA - fecha após 15 segundos mesmo se não voltar
+            setTimeout(() => {
+                hideNotification();
+            }, 15000);
+			
             Android.receberPDFGerado(resultado); // 👈 ENVIA PARA APK
         } catch (error) {
             showNotification('Erro no APK: ' + error.message, 'error');
