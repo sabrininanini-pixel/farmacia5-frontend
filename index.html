@@ -4699,86 +4699,86 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /**
- * ✅ EXPORTAR PDF IDENTICO - VERSÃO FINAL E ROBUSTA (Opacidade e Atraso)
+ * ✅ EXPORTAR PDF IDENTICO - VERSÃO FINAL
  */
 async function exportarPDFIdentico() {
     console.log('🎯 Iniciando exportação de PDF formatado...');
-    
     showNotification('Gerando PDF formatado...', 'loading', 5000);
-    
+
     const originalElement = document.getElementById('conferencia-content');
     if (!originalElement) {
         showNotification('Erro: Elemento da conferência não encontrado', 'error');
         return;
     }
 
-    // 1. CRIA O CLONE
+    // 1️⃣ CLONE DO ELEMENTO
     const clone = originalElement.cloneNode(true);
-    
-    // 2. APLICA ESTILOS DE EXPANSÃO E FORÇA VISIBILIDADE (CRÍTICO)
     clone.style.position = 'absolute';
     clone.style.top = '0';
-    clone.style.left = '0'; // 🚨 Põe o clone no canto superior esquerdo
-    clone.style.zIndex = '9999'; 
-    clone.style.opacity = '0.0001'; // 🚨 Torna quase invisível, mas o navegador o renderiza
-    
+    clone.style.left = '0';
     clone.style.width = 'max-content';
     clone.style.maxWidth = 'none';
     clone.style.overflow = 'visible';
-    
-    document.body.appendChild(clone);
-    
-    // 3. PASSO CRÍTICO: ESPERA O NAVEGADOR RENDERIZAR O CLONE
-    // Isso é o que faltava na sua função do index e o que faz o console funcionar.
-    await new Promise(resolve => setTimeout(resolve, 50)); 
-    
-    // 4. CÁLCULO DA LARGURA REAL
-    const tabela = clone.querySelector('table');
-    const larguraReal = tabela ? tabela.scrollWidth : clone.scrollWidth;
-    const larguraForcada = larguraReal + 100; // Margem de segurança de 100px
-    
-    console.log(`📏 Largura calculada: ${larguraForcada}px`);
+    clone.style.opacity = '0'; // invisível mas renderizado
+    clone.style.zIndex = '-1';
 
-    // 5. LIMPEZA FINAL (Remove botões e ajusta estilos)
+    // Adiciona ao DOM
+    document.body.appendChild(clone);
+
+    // 2️⃣ REMOVE ELEMENTOS DESNECESSÁRIOS
     clone.querySelectorAll(
         'button, .print-hidden, nav, header, .flex.border-b, .flex.flex-wrap, .tab-button'
     ).forEach(el => el.remove());
 
     clone.querySelectorAll('td, th').forEach(celula => {
-        celula.style.whiteSpace = 'normal'; 
-        // ... (Lógica de cores e edição aqui)
+        celula.style.whiteSpace = 'normal';
     });
 
-    // 6. CONFIGURAÇÕES DO PDF
+    // 3️⃣ CALCULA LARGURA REAL DA TABELA
+    const tabela = clone.querySelector('table');
+    const larguraReal = tabela ? tabela.scrollWidth : clone.scrollWidth;
+    const larguraForcada = larguraReal + 100; // margem extra
+    console.log(`📏 Largura calculada: ${larguraForcada}px`);
+
+    // 4️⃣ CARREGA html2pdf se não existir
+    if (!window.html2pdf) {
+        await new Promise(res => {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            s.onload = res;
+            document.head.appendChild(s);
+        });
+    }
+
+    // 5️⃣ CONFIGURAÇÕES DO PDF
     const options = {
-        margin: [10, 10, 10, 10], 
+        margin: [10, 10, 10, 10],
         filename: `conferencia_${getDataAtual()}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
-            scale: 1.5, // Qualidade intermediária
+            scale: 2, // boa resolução
             useCORS: true,
             backgroundColor: '#ffffff',
             windowWidth: larguraForcada,
-            width: larguraForcada 
+            width: larguraForcada
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
     };
 
-    // 7. EXECUTA A CONVERSÃO E SALVA
+    // 6️⃣ GERA E SALVA PDF
     try {
-        await html2pdf() 
+        await html2pdf()
             .set(options)
             .from(clone)
             .save();
-        
+
         console.log('✅ PDF gerado com sucesso!');
         showNotification('PDF formatado gerado com sucesso!', 'success', 4000);
-
     } catch (err) {
         console.error('❌ Erro ao gerar PDF:', err);
         showNotification('Erro ao gerar PDF: ' + err.message, 'error', 5000);
     } finally {
-        // Garante que o clone seja removido do DOM
+        // 7️⃣ REMOVE CLONE DO DOM
         clone.remove();
     }
 }
