@@ -246,14 +246,25 @@ body {
     /* --- Estilos de Impressão (A4) --- */
     /* ---------------------------------------------------------------- */
    @media print {
+    /* 🚨 CORREÇÃO CRÍTICA 1: Define o tamanho da página A4 e remove margens padrão
+       Isto ajuda o WebKit (iOS) a renderizar corretamente. */
+    @page {
+        size: A4;
+        margin: 0; 
+    }
+
     * {
         box-sizing: border-box;
     }
     
     body {
         margin: 0 !important;
-        padding: 10px !important;
-        width: 100% !important;
+        padding: 10px !important; 
+        
+        /* 🚨 CORREÇÃO CRÍTICA 2: Força a largura exata de uma folha A4 (210mm) */
+        width: 210mm !important; 
+        max-width: 210mm !important;
+
         min-height: 297mm;
         font-size: 10pt !important;
         line-height: 1.2 !important;
@@ -291,8 +302,11 @@ body {
         border: 1px solid #ccc !important;
         font-size: 8pt !important;
         line-height: 1.1 !important;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
+        /* Força quebra de texto agressiva em todas as células */
+        word-break: break-word !important; 
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important; /* Importante para não manter linha única */
     }
     
     .mock-table th {
@@ -312,7 +326,7 @@ body {
         text-overflow: clip !important;
     }
     
-    /* ✅ FORÇAR QUEBRA DE TEXTO LONGO */
+    /* ✅ REFORÇAR QUEBRA DE TEXTO LONGO */
     .mock-table td {
         word-break: break-word;
         hyphens: auto;
@@ -334,15 +348,13 @@ body {
     #conferencia-table th:nth-child(4),
     #conferencia-table td:nth-child(4),
     #conferencia-table th:nth-child(5),
-    #conferencia-table td:nth-child(5),
-    #conferencia-table th:nth-child(6),
-    #conferencia-table td:nth-child(6) {
+    #conferencia-table td:nth-child(5) {
         width: 10% !important; /* Colunas numéricas */
         text-align: center !important;
     }
     
     /* ✅ MANTER CORES DAS DIVERGÊNCIAS MESMO NA IMPRESSÃO */
-    .bg-fee2e2, .text-b91c1c {
+    .bg-fee2e2, .text-b91c1c, .bg-red-100 {
         background-color: #fee2e2 !important;
         color: #b91c1c !important;
         -webkit-print-color-adjust: exact;
@@ -390,18 +402,12 @@ body {
         border: 1px solid #d1d5db !important;
     }
 
-	       .bg-red-100 {
-        background-color: #fee2e2 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-
-	    /* ✅ OCULTAR COLUNA AJUSTAR NA IMPRESSÃO */
+	/* ✅ OCULTAR COLUNA AJUSTAR NA IMPRESSÃO */
     #conferencia-table th:nth-child(6),
     #conferencia-table td:nth-child(6) {
         display: none !important;
     }
-
+}
 }
     
     /* ---------------------------------------------------------------- */
@@ -609,6 +615,8 @@ body {
         display: none !important;
     }
 }
+
+
 		   
 </style>
 </head>
@@ -1486,6 +1494,14 @@ function realizarMudancaParaConferencia(sheetName) {
                             <span>Forçar Envio</span>
                             <span id="pending-count" class="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">0</span>
                         </button>
+
+						 <button onclick="alternarModoDesktop()" class="btn-desktop-mode mobile-only flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-800 rounded-lg shadow-sm hover:bg-gray-200 transition duration-150 text-sm font-medium border border-gray-300">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        <span id="desktop-mode-text-contagem">Modo Desktop</span>
+    </button>
+						
                     </div>
                     <div id="dynamic-table-content-contagem">
                         <p class="text-center text-gray-400 py-10">Carregando dados...</p>
@@ -4176,7 +4192,7 @@ async function mostrarOpcoesDanos(botao, sheetRange) {
     menu.className = 'menu-danos-defeito absolute z-50 bg-white border border-gray-300 rounded-lg shadow-lg p-2 min-w-64';
     
     let html = `
-        <div class="text-sm font-medium text-gray-700 mb-2">Adicionar defeito:</div>
+        <div class="text-sm font-medium text-gray-700 mb-2">Adicionar observação:</div>
         <div class="space-y-1 max-h-72 overflow-y-auto" id="lista-opcoes-danos">`;
     
  
@@ -4226,11 +4242,11 @@ opcoesDanosDefeito.forEach((opcao, index) => {
     // Campo para texto customizado COM BOTÃO +
     html += `
 <div class="space-y-1 max-h-64 overflow-y-auto" id="lista-opcoes-danos" style="scroll-behavior: smooth;">
-            <div class="text-xs text-gray-600 mb-1">Adicionar novo defeito:</div>
+            <div class="text-xs text-gray-600 mb-1">Adicionar nova frase na lista:</div>
             <div class="flex gap-1">
                 <input type="text" 
                        id="input-dano-customizado" 
-                       placeholder="Digite novo defeito..." 
+                       placeholder="Digite aqui..." 
                        class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm">
                 <button onclick="adicionarNovoDefeitoLista('${sheetRange}')" 
                         class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm flex items-center justify-center">
@@ -4545,7 +4561,7 @@ function resetarParaModoMobile() {
     localStorage.removeItem('viewportOriginal');
     
     console.log('✅ Reset completo - Modo Mobile ativado');
-    showNotification('📱 Modo Mobile ativado', 'success', 3000);
+    showNotification('Modo Mobile', 'success', 3000);
 }
 
 /**
@@ -4553,7 +4569,7 @@ function resetarParaModoMobile() {
  */
 function detectarDispositivoMobile() {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(userAgent);
     const isAndroidApp = typeof Android !== 'undefined';
     
     console.log('📱 Detecção:', { isMobile, isAndroidApp });
@@ -4605,9 +4621,9 @@ function alternarModoDesktop() {
     
     // Feedback visual
     if (modoDesktopAtivo) {
-        showNotification('🖥️ Modo Desktop ativado', 'success', 3000);
+        showNotification('Modo Desktop', 'success', 3000);
     } else {
-        showNotification('📱 Modo Mobile ativado', 'info', 3000);
+        showNotification('Modo Mobile', 'info', 3000);
     }
 }
 
