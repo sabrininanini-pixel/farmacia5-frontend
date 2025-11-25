@@ -4699,55 +4699,54 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /**
- * ✅ EXPORTAR PDF IDENTICO - VERSÃO FINAL (Síncrona, Atraso para Largura e Limpeza)
+ * ✅ EXPORTAR PDF IDENTICO - VERSÃO FINAL E ROBUSTA (Opacidade e Atraso)
  */
 async function exportarPDFIdentico() {
     console.log('🎯 Iniciando exportação de PDF formatado...');
     
     showNotification('Gerando PDF formatado...', 'loading', 5000);
     
-    // 1. CAPTURA O ELEMENTO PRINCIPAL
     const originalElement = document.getElementById('conferencia-content');
     if (!originalElement) {
         showNotification('Erro: Elemento da conferência não encontrado', 'error');
         return;
     }
 
-    // 2. CRIA UM CLONE COMPLETO E PREPARA PARA CÁLCULO
+    // 1. CRIA O CLONE
     const clone = originalElement.cloneNode(true);
     
-    // 3. APLICA ESTILOS DE EXPANSÃO E ESCONDE O CLONE
+    // 2. APLICA ESTILOS DE EXPANSÃO E FORÇA VISIBILIDADE (CRÍTICO)
     clone.style.position = 'absolute';
     clone.style.top = '0';
-    clone.style.transform = 'translateY(-20000px)'; // Esconde com segurança
-    clone.style.zIndex = '-1'; 
+    clone.style.left = '0'; // 🚨 Põe o clone no canto superior esquerdo
+    clone.style.zIndex = '9999'; 
+    clone.style.opacity = '0.0001'; // 🚨 Torna quase invisível, mas o navegador o renderiza
+    
     clone.style.width = 'max-content';
     clone.style.maxWidth = 'none';
     clone.style.overflow = 'visible';
     
-    // Adiciona o clone temporariamente ao DOM
     document.body.appendChild(clone);
     
-    // 🚨 PASSO CRÍTICO: ESPERA O NAVEGADOR RENDERIZAR O CLONE (imita o console)
-    // Isso garante que o scrollWidth seja calculado corretamente.
+    // 3. PASSO CRÍTICO: ESPERA O NAVEGADOR RENDERIZAR O CLONE
+    // Isso é o que faltava na sua função do index e o que faz o console funcionar.
     await new Promise(resolve => setTimeout(resolve, 50)); 
     
     // 4. CÁLCULO DA LARGURA REAL
     const tabela = clone.querySelector('table');
     const larguraReal = tabela ? tabela.scrollWidth : clone.scrollWidth;
-    const larguraForcada = larguraReal + 100; // Margem de segurança
+    const larguraForcada = larguraReal + 100; // Margem de segurança de 100px
     
     console.log(`📏 Largura calculada: ${larguraForcada}px`);
 
-    // 5. LIMPEZA FINAL E ESTILOS (Remove botões e ajusta formatação)
+    // 5. LIMPEZA FINAL (Remove botões e ajusta estilos)
     clone.querySelectorAll(
         'button, .print-hidden, nav, header, .flex.border-b, .flex.flex-wrap, .tab-button'
     ).forEach(el => el.remove());
 
     clone.querySelectorAll('td, th').forEach(celula => {
-        // Garante quebra de texto
         celula.style.whiteSpace = 'normal'; 
-        // Lógica de tratamento de conteúdo editável/cores aqui se necessário
+        // ... (Lógica de cores e edição aqui)
     });
 
     // 6. CONFIGURAÇÕES DO PDF
@@ -4756,13 +4755,13 @@ async function exportarPDFIdentico() {
         filename: `conferencia_${getDataAtual()}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
-            scale: 1.5, // Qualidade intermediária (ideal entre 1 e 2)
+            scale: 1.5, // Qualidade intermediária
             useCORS: true,
             backgroundColor: '#ffffff',
             windowWidth: larguraForcada,
             width: larguraForcada 
         },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } // Paisagem para tabelas largas
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
     };
 
     // 7. EXECUTA A CONVERSÃO E SALVA
